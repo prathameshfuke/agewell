@@ -1,0 +1,297 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+    font-family: 'Romelio';
+    src: url('./assets/fonts/Romelio.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+
+@font-face {
+    font-family: 'Butler';
+    src: url('./assets/fonts/Butler.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Butler';
+    src: url('./assets/fonts/Butler-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Butler';
+    src: url('./assets/fonts/Butler-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Butler';
+    src: url('./assets/fonts/Butler-Black.woff2') format('woff2');
+    font-weight: 900;
+    font-style: normal;
+}
+
+:root {
+    /* Simplified Color Palette - Optimized for Elderly Users */
+    --primary: #5C7A6E;           /* Main sage green */
+    --primary-light: #9BB5A5;     /* Light sage */
+    --primary-dark: #3A4E46;      /* Dark sage */
+    --primary-bg: #E8F0EB;        /* Very light sage */
+    
+    --secondary: #FAF8F5;         /* Cream background */
+    --secondary-dark: #C9B9A4;    /* Cream border */
+    
+    --accent: #EF4444;            /* Emergency red */
+    --accent-light: #FEE2E2;      /* Light red */
+    
+    /* Legacy support */
+    --bg-cream: #FAF8F5;
+    --bg-surface: #FFFFFF;
+    --text-main: #3A4E46;         /* High contrast dark sage */
+    --text-muted: #5C7A6E;        /* Medium contrast sage */
+}
+
+::selection {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+body {
+    margin: 0;
+    font-family: 'Poppins', 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--secondary);
+    color: var(--primary-dark);
+    font-size: 20px;              /* Increased from 18px for elderly users */
+    font-weight: 600;             /* Semibold by default */
+    line-height: 1.5;             /* Improved readability */
+    letter-spacing: 0.025em;      /* Slight spacing for clarity */
+    overflow-wrap: break-word;    /* Prevent long words from overflowing */
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* Headings - Larger and Bolder for Elderly Users */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: 'Butler', serif;
+    font-weight: 700;             /* Bold by default */
+    color: var(--primary-dark);
+    line-height: 1.3;
+}
+
+h1 {
+    font-size: 48px;              /* Extra large */
+}
+
+h2 {
+    font-size: 36px;              /* Large */
+}
+
+h3 {
+    font-size: 32px;              /* Medium */
+}
+
+/* Ensure all interactive elements are easily tappable */
+button,
+a {
+    min-height: 48px;             /* Minimum touch target */
+    font-weight: 600;             /* Semibold for emphasis */
+}
+
+@layer components {
+    /* ========================================
+       DESIGN SYSTEM - AgeWell+ UI Consistency
+       ======================================== */
+
+    /* === CARDS === */
+    .card {
+        @apply bg-white rounded-3xl p-6 border-2 border-sage-200 shadow-soft;
+    }
+
+    .card-sm {
+        @apply bg-white rounded-2xl p-5 border-2 border-sage-200 shadow-soft;
+    }
+
+    .card-interactive {
+        @apply card transition-all duration-200 hover:shadow-card-hover hover:border-sage-300 cursor-pointer active:scale-[0.98];
+    }
+
+    /* === BUTTONS === */
+    /* Base button styles - Larger targets */
+    .btn {
+        @apply px-6 py-4 rounded-2xl font-bold transition-all duration-200 active:scale-95 min-h-[56px] flex items-center justify-center gap-2 text-lg;
+    }
+
+    /* Primary - Deep Sage */
+    .btn-primary {
+        @apply btn bg-sage-700 text-white hover:bg-sage-800 shadow-soft border-2 border-transparent;
+    }
+
+    /* Secondary - Outlined High Contrast */
+    .btn-secondary {
+        @apply btn bg-white text-sage-800 border-2 border-sage-600 hover:bg-sage-50;
+    }
+
+    /* Ghost - No background */
+    .btn-ghost {
+        @apply btn bg-transparent text-sage-700 hover:bg-sage-100;
+    }
+
+    /* Danger - Vivid Red */
+    .btn-danger {
+        @apply btn bg-rose-600 text-white hover:bg-rose-700;
+    }
+
+    /* Cream variant for caregiver flows */
+    .btn-cream {
+        @apply btn bg-cream-600 text-white hover:bg-cream-700;
+    }
+
+    /* Icon button - circular large */
+    .btn-icon {
+        @apply w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 active:scale-95;
+    }
+
+    .btn-icon-primary {
+        @apply btn-icon bg-sage-100 text-sage-800 hover:bg-sage-200;
+    }
+
+    .btn-icon-secondary {
+        @apply btn-icon bg-white border-2 border-sage-200 text-sage-700 hover:border-sage-300;
+    }
+
+    /* === PAGE LAYOUT === */
+    .page-container {
+        @apply min-h-screen bg-[#FFFCF5] font-sans;
+    }
+
+    .page-header {
+        @apply px-6 py-6 bg-[#FFFCF5] sticky top-0 z-20;
+    }
+
+    .page-main {
+        @apply px-6 space-y-6 pb-40;
+        /* More bottom padding for nav */
+    }
+
+    /* === FORM INPUTS === */
+    .input {
+        @apply w-full px-5 py-4 border-2 border-sage-300 rounded-2xl focus:border-sage-600 focus:outline-none text-lg bg-white transition-colors text-sage-900 placeholder:text-sage-400;
+    }
+
+    .input-error {
+        @apply input border-rose-400 focus:border-rose-600;
+    }
+
+    /* === STATUS BADGES === */
+    .badge {
+        @apply inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold;
+    }
+
+    .badge-success {
+        @apply badge bg-sage-100 text-sage-800 border-2 border-sage-200;
+    }
+
+    .badge-warning {
+        @apply badge bg-amber-50 text-amber-800 border-2 border-amber-200;
+    }
+
+    .badge-danger {
+        @apply badge bg-rose-50 text-rose-700 border-2 border-rose-200;
+    }
+
+    .badge-neutral {
+        @apply badge bg-gray-100 text-gray-700 border-2 border-gray-200;
+    }
+
+    /* === NAVIGATION === */
+    .bottom-nav {
+        @apply fixed bottom-0 left-0 right-0 bg-white border-t-2 border-sage-200 px-2 flex justify-between items-center z-50;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+        padding-top: 1rem;
+    }
+
+    .nav-item {
+        @apply flex flex-col items-center gap-1.5 flex-1 transition-colors min-h-[60px] justify-center;
+    }
+
+    .nav-item-active {
+        @apply nav-item text-sage-800;
+    }
+
+    .nav-item-inactive {
+        @apply nav-item text-sage-400 hover:text-sage-600;
+    }
+
+    /* === TEXT STYLES === */
+    .text-label {
+        @apply text-sage-600 text-sm font-bold uppercase tracking-wider;
+    }
+
+    .text-heading {
+        @apply font-serif font-bold text-sage-900;
+    }
+
+    .text-body {
+        @apply text-sage-800 text-lg;
+    }
+
+    .text-muted {
+        @apply text-sage-500;
+    }
+
+    /* === UTILITY === */
+    .section-divider {
+        @apply border-t-2 border-sage-100 my-6;
+    }
+
+    .loading-spinner {
+        @apply w-10 h-10 border-4 border-sage-200 border-t-sage-700 rounded-full animate-spin;
+    }
+
+    /* === MOBILE TEXT UTILITIES === */
+    /* Prevent aggressive word-breaking on mobile */
+    .text-no-break {
+        word-break: normal;
+        overflow-wrap: normal;
+        hyphens: none;
+    }
+
+    /* Better word-breaking for long medicine/medication names */
+    .text-break-better {
+        word-break: keep-all;
+        overflow-wrap: break-word;
+        hyphens: auto;
+    }
+
+    /* For very long words that must break */
+    .text-break-safe {
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        hyphens: auto;
+    }
+
+    /* Ensure text doesn't overflow container */
+    .text-overflow-safe {
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        word-break: break-word;
+        min-width: 0;
+    }
+}

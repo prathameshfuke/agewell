@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AgeWell+ Health Snapshot</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;family=Noto+Serif:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#9caf88",
+                        "background-light": "#f6f4ee",
+                        "background-dark": "#191b17",
+                        "card-beige": "#FAF8F3",
+                        "charcoal": "#333C3B",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"],
+                        "serif": ["Noto Serif", "serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .serif-title {
+            font-family: 'Noto Serif', serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen">
+<div class="relative flex h-full min-h-screen w-full flex-col max-w-[430px] mx-auto overflow-x-hidden shadow-2xl bg-background-light dark:bg-background-dark">
+<!-- TopAppBar -->
+<div class="flex items-center bg-transparent p-6 pb-2 justify-between">
+<div class="text-charcoal dark:text-white flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
+<span class="material-symbols-outlined" style="font-size: 28px;">account_circle</span>
+</div>
+<h2 class="text-charcoal dark:text-white text-xl font-bold leading-tight tracking-tight flex-1 text-center serif-title">AgeWell+</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex size-12 cursor-pointer items-center justify-center rounded-full bg-white dark:bg-zinc-800 shadow-sm">
+<span class="material-symbols-outlined text-charcoal dark:text-white">notifications</span>
+</button>
+</div>
+</div>
+<!-- Header / HeadlineText -->
+<div class="px-6 pt-8 pb-2">
+<h1 class="text-charcoal dark:text-white tracking-tight text-3xl font-bold leading-tight serif-title">Good morning, Arthur</h1>
+<p class="text-charcoal/70 dark:text-white/70 text-lg font-normal leading-normal mt-2">Everything looks great today.</p>
+</div>
+<!-- Main Daily Status (Glassmorphism inspired) -->
+<div class="px-6 py-4">
+<div class="bg-primary/20 dark:bg-primary/10 border border-primary/30 rounded-xl p-5 flex items-center gap-4">
+<div class="bg-primary text-white p-3 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">task_alt</span>
+</div>
+<div>
+<p class="text-charcoal dark:text-white font-semibold text-lg">Daily Summary</p>
+<p class="text-charcoal/80 dark:text-white/60 text-sm">Your vitals are stable and within target range.</p>
+</div>
+</div>
+</div>
+<!-- Metric Cards Container -->
+<div class="flex flex-col gap-4 px-6 pb-24">
+<!-- Heart Rate Card -->
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-card-beige dark:bg-zinc-900 p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-white/50">
+<div class="flex flex-col justify-between flex-1">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-red-400" style="font-size: 20px;">favorite</span>
+<p class="text-charcoal/60 dark:text-white/60 text-sm font-medium uppercase tracking-wider">Heart Rate</p>
+</div>
+<p class="text-charcoal dark:text-white text-3xl font-bold leading-none">72 <span class="text-lg font-normal opacity-60">bpm</span></p>
+<div class="mt-2 flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<p class="text-primary text-base font-semibold leading-normal">Normal</p>
+</div>
+</div>
+<button class="mt-4 flex items-center justify-center rounded-lg h-10 px-4 bg-primary/10 text-charcoal dark:text-white gap-2 text-sm font-bold w-fit">
+<span>Details</span>
+<span class="material-symbols-outlined" style="font-size: 18px;">chevron_right</span>
+</button>
+</div>
+<div class="w-28 h-28 bg-center bg-no-repeat bg-cover rounded-xl shrink-0" data-alt="Abstract soft red pulse wave pattern" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA-ttujGcseZn7JNLFTKZ2fVi5toZ7_2GR6aQZNxHOxYk5T5AcgWjukxFbebxy8STAgZzjJ0U_ceP8q2dHRS1Rx84PeJJ8quRQnq0DXcWBJPR_6D6vXA7Z6WDoEwqhs4imU9IClpGmnCaZ_aGM1oVf8nOSO3mOiMQF_FYUZlrZog6WOK4ww5Aa10fYSDJLz90b2MooW2Gf0RNeECuYvHTVsZjAw1s0kOCJ354jQaCO7gBBd8J5DUd6bPac0GgqAxWAlJX1kr5LxYg");'>
+</div>
+</div>
+<!-- Sleep Card -->
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-card-beige dark:bg-zinc-900 p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-white/50">
+<div class="flex flex-col justify-between flex-1">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-indigo-400" style="font-size: 20px;">bedtime</span>
+<p class="text-charcoal/60 dark:text-white/60 text-sm font-medium uppercase tracking-wider">Sleep</p>
+</div>
+<p class="text-charcoal dark:text-white text-3xl font-bold leading-none">7h 15m</p>
+<div class="mt-2 flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<p class="text-primary text-base font-semibold leading-normal">Restful</p>
+</div>
+</div>
+<button class="mt-4 flex items-center justify-center rounded-lg h-10 px-4 bg-primary/10 text-charcoal dark:text-white gap-2 text-sm font-bold w-fit">
+<span>Details</span>
+<span class="material-symbols-outlined" style="font-size: 18px;">chevron_right</span>
+</button>
+</div>
+<div class="w-28 h-28 bg-center bg-no-repeat bg-cover rounded-xl shrink-0" data-alt="Calming deep blue night sky with stars" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCR3Pn1-UJE9x4FYHEyRn9YLkUjZ-Qq-9P2Ca27nr-aH3feVQuHRpslh74pyH7Pvfcbn3VzZNEL3NjR881KmTGvRrhmqqmSunBQfVoFvpTmARQ4egNhHngb6gK4FxI8CvUvJ00v2ddVA5XThlTtgRpDjjvs6VBiLwMb1j5xD2-ATMKF0vVCXQYcAChfwtOzGQ-Huph7WedEHLqpvdTn0RG1CKL-yd4qmsRdWfQXGkbi8U_fC94LB7jTrjt15-xOkQE5yxeQ9xkzKQ");'>
+</div>
+</div>
+<!-- Steps Card (Custom) -->
+<div class="flex flex-col gap-4 rounded-xl bg-card-beige dark:bg-zinc-900 p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-white/50">
+<div class="flex justify-between items-start">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary" style="font-size: 20px;">footprint</span>
+<p class="text-charcoal/60 dark:text-white/60 text-sm font-medium uppercase tracking-wider">Steps</p>
+</div>
+<p class="text-charcoal dark:text-white text-3xl font-bold leading-none">3,420</p>
+<p class="text-charcoal/50 dark:text-white/40 text-sm">Goal: 5,000</p>
+</div>
+<div class="flex flex-col items-end gap-2">
+<div class="bg-primary/20 text-primary px-3 py-1 rounded-full text-sm font-bold">
+                            On Track
+                        </div>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="w-full bg-white dark:bg-zinc-800 h-4 rounded-full overflow-hidden mt-2">
+<div class="bg-primary h-full rounded-full" style="width: 68%;"></div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 px-6 py-3 flex justify-between items-center z-50">
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="text-[10px] font-bold">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-charcoal/40 dark:text-white/40">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[10px] font-bold">Health</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-charcoal/40 dark:text-white/40">
+<span class="material-symbols-outlined">health_and_safety</span>
+<span class="text-[10px] font-bold">Safety</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-charcoal/40 dark:text-white/40">
+<span class="material-symbols-outlined">group</span>
+<span class="text-[10px] font-bold">Care</span>
+</button>
+</div>
+</div>
+</body></html>

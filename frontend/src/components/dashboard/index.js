@@ -1,0 +1,11 @@
+// Dashboard Components - AgeWell+ Dashboard UI
+export { default as WeeklyHealthSummary } from './WeeklyHealthSummary'
+export { default as QuickActionsGrid } from './QuickActionsGrid'
+export { default as HealthOverviewCard } from './HealthOverviewCard'
+export { default as VitalsStatsRow } from './VitalsStatsRow'
+export { default as ActivityTimeline } from './ActivityTimeline'
+export { default as EmergencyContactCard } from './EmergencyContactCard'
+export { default as EnvironmentWidget } from './EnvironmentWidget'
+export { default as SmartControlPanel } from './SmartControlPanel'
+export { default as CareTeamAvatars } from './CareTeamAvatars'
+export { default as CareTeamCard } from './CareTeamCard'

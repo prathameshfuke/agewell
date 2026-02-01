@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AgeWell+ | Today's Medications</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;family=Noto+Serif:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#9caf88",
+                        "background-light": "#f7f7f7",
+                        "background-dark": "#191b17",
+                        "sage-deep": "#333c3b",
+                        "warm-grey": "#757a71",
+                        "alert-soft": "#e07a5f",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"],
+                        "serif": ["Noto Serif", "serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(156, 175, 136, 0.2);
+        }
+        .dark .glass-card {
+            background: rgba(25, 27, 23, 0.8);
+            border: 1px solid rgba(156, 175, 136, 0.1);
+        }
+        .pill-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-sage-deep dark:text-gray-100 min-h-screen pb-24">
+<!-- Top Navigation / Status Header -->
+<header class="sticky top-0 z-50 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md px-6 pt-8 pb-4">
+<div class="flex items-center justify-between mb-2">
+<div>
+<p class="text-sm font-medium text-warm-grey dark:text-gray-400 uppercase tracking-widest">AgeWell+</p>
+<h1 class="font-serif text-3xl font-bold text-sage-deep dark:text-white">Today's Meds</h1>
+<p class="text-warm-grey dark:text-gray-400">Monday, Oct 24</p>
+</div>
+<button class="w-14 h-14 rounded-full bg-alert-soft/10 text-alert-soft flex items-center justify-center border-2 border-alert-soft/20">
+<span class="material-symbols-outlined text-3xl">emergency</span>
+</button>
+</div>
+<!-- Progress Summary -->
+<div class="mt-6 p-5 rounded-xl glass-card pill-shadow">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">check_circle</span>
+<span class="font-bold text-lg">Daily Progress</span>
+</div>
+<span class="font-bold text-primary text-xl">3 of 5</span>
+</div>
+<div class="w-full bg-gray-200 dark:bg-gray-700 h-4 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full w-3/5"></div>
+</div>
+<p class="mt-3 text-sm text-warm-grey dark:text-gray-400 font-medium">Almost there! Just 2 more to go today.</p>
+</div>
+</header>
+<main class="px-6 py-4 space-y-8">
+<!-- Morning Section -->
+<section>
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">light_mode</span>
+</div>
+<h2 class="text-xl font-bold tracking-tight">Morning <span class="text-warm-grey font-normal">— 8:00 AM</span></h2>
+</div>
+<div class="space-y-4">
+<!-- Taken Medication -->
+<div class="bg-white dark:bg-zinc-900 rounded-xl pill-shadow overflow-hidden opacity-70 border-l-8 border-primary">
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="text-2xl font-bold text-sage-deep dark:text-white line-through decoration-primary">Aspirin</h3>
+<p class="text-lg text-warm-grey">1 Tablet • Heart Health</p>
+</div>
+<span class="material-symbols-outlined text-primary text-4xl">check_circle</span>
+</div>
+<div class="flex gap-3">
+<div class="flex-1 bg-primary text-white py-3 rounded-lg text-center font-bold">
+                                Taken at 8:05 AM
+                            </div>
+</div>
+</div>
+</div>
+<!-- Another Morning Med -->
+<div class="bg-white dark:bg-zinc-900 rounded-xl pill-shadow overflow-hidden border-l-8 border-primary">
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="text-2xl font-bold text-sage-deep dark:text-white">Multivitamin</h3>
+<p class="text-lg text-warm-grey">1 Capsule • General Health</p>
+</div>
+<div class="w-12 h-12 bg-gray-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-warm-grey">pill</span>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="flex-1 bg-primary text-white py-3 rounded-lg text-center font-bold">
+                                Taken
+                            </div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Afternoon Section -->
+<section>
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">wb_sunny</span>
+</div>
+<h2 class="text-xl font-bold tracking-tight">Afternoon <span class="text-warm-grey font-normal">— 1:00 PM</span></h2>
+</div>
+<div class="bg-white dark:bg-zinc-900 rounded-xl pill-shadow overflow-hidden border-l-8 border-amber-400">
+<div class="p-6">
+<div class="mb-4">
+<h3 class="text-2xl font-bold text-sage-deep dark:text-white">Lisinopril</h3>
+<p class="text-lg text-warm-grey">1 Tablet • Blood Pressure</p>
+<div class="mt-4 flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-900/30">
+<span class="material-symbols-outlined text-amber-600">info</span>
+<p class="text-sm text-amber-800 dark:text-amber-200">Take with a full glass of water</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3 mb-3">
+<button class="bg-primary text-white h-16 rounded-xl font-bold text-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined">done</span> Taken
+                        </button>
+<button class="bg-gray-100 dark:bg-zinc-800 text-sage-deep dark:text-white h-16 rounded-xl font-bold text-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined">close</span> Not Taken
+                        </button>
+</div>
+<button class="w-full h-12 text-warm-grey dark:text-gray-400 font-medium flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 dark:border-zinc-800 rounded-xl">
+<span class="material-symbols-outlined">question_mark</span> Not Sure / Need Help
+                    </button>
+</div>
+</div>
+</section>
+<!-- Evening Section (Locked/Upcoming) -->
+<section class="opacity-60">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-zinc-800 flex items-center justify-center text-warm-grey">
+<span class="material-symbols-outlined">dark_mode</span>
+</div>
+<h2 class="text-xl font-bold tracking-tight">Evening <span class="text-warm-grey font-normal">— 8:00 PM</span></h2>
+</div>
+<div class="bg-white dark:bg-zinc-900 rounded-xl pill-shadow overflow-hidden border-l-8 border-gray-300">
+<div class="p-6 flex items-center justify-between">
+<div>
+<h3 class="text-xl font-bold text-sage-deep dark:text-white">Melatonin</h3>
+<p class="text-warm-grey">1 Tablet • Sleep Aid</p>
+</div>
+<span class="material-symbols-outlined text-warm-grey">lock</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 w-full bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-t border-gray-200 dark:border-zinc-800 px-6 py-4 flex justify-between items-center z-50">
+<button class="flex flex-col items-center gap-1 text-warm-grey dark:text-gray-400">
+<span class="material-symbols-outlined text-3xl">home</span>
+<span class="text-xs font-bold uppercase tracking-tighter">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1">pill</span>
+<span class="text-xs font-bold uppercase tracking-tighter">Meds</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-warm-grey dark:text-gray-400">
+<span class="material-symbols-outlined text-3xl">favorite</span>
+<span class="text-xs font-bold uppercase tracking-tighter">Vitals</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-warm-grey dark:text-gray-400">
+<span class="material-symbols-outlined text-3xl">forum</span>
+<span class="text-xs font-bold uppercase tracking-tighter">Chat</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-warm-grey dark:text-gray-400">
+<span class="material-symbols-outlined text-3xl">person</span>
+<span class="text-xs font-bold uppercase tracking-tighter">Profile</span>
+</button>
+</nav>
+</body></html>

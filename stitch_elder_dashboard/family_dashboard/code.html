@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AgeWell+ Family Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#9caf88",
+                        "background-light": "#f7f7f7",
+                        "background-dark": "#191b17",
+                        "soft-red": "#E07A5F",
+                        "accent-blue": "#8EA4B0"
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"],
+                        "serif": ["Noto Serif", "serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .dark .glass-card {
+            background: rgba(40, 44, 36, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#141514] dark:text-white transition-colors duration-300">
+<div class="relative mx-auto max-w-[430px] min-h-screen shadow-2xl flex flex-col pb-24">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 flex items-center bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md p-4 justify-between border-b border-gray-200 dark:border-gray-800">
+<div class="flex items-center gap-3">
+<div class="size-10 shrink-0 overflow-hidden rounded-full border-2 border-primary">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Portrait of an elderly woman smiling warmly" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCzWeHPvr5_1Xa8vhr41nP-iugOMC49tdBEpiisaJwX1aaVMIAUWB6ykbX5U_urROTF_E_fnWAUTSxvfVfEeyw1o5sqTYzx0jy-sZa_7REYjqi3oH4FNIw8QDL8uDCYuI2b7U-3QM9sTxGQJXF498P0WqH9qQZR0I8xxYU_JMqXKG88u2LHKQ6y1bfeecPCXT86JWXDoU9-dkx_fy-QHwcY-3NG-9Jy1QlBj3XoNa9x4N6iw9U7_8_BHmTC-c6isB38fvNQKip4JQ");'>
+</div>
+</div>
+<div>
+<h2 class="text-[#141514] dark:text-white text-sm font-medium leading-none">Caring for</h2>
+<p class="font-serif text-lg font-bold leading-tight">Martha Evans</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex size-10 items-center justify-center rounded-full bg-white dark:bg-zinc-800 shadow-sm border border-gray-100 dark:border-zinc-700">
+<span class="material-symbols-outlined text-gray-600 dark:text-zinc-300" style="font-size: 20px;">notifications</span>
+</button>
+<button class="flex size-10 items-center justify-center rounded-full bg-white dark:bg-zinc-800 shadow-sm border border-gray-100 dark:border-zinc-700">
+<span class="material-symbols-outlined text-gray-600 dark:text-zinc-300" style="font-size: 20px;">settings</span>
+</button>
+</div>
+</header>
+<!-- Narrative Status Hero -->
+<div class="p-4 pt-6">
+<div class="relative overflow-hidden rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] glass-card">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined !text-7xl">wb_sunny</span>
+</div>
+<div class="p-6 relative z-10">
+<div class="flex items-center gap-2 mb-2">
+<span class="flex size-2 rounded-full bg-primary animate-pulse"></span>
+<p class="text-primary text-xs font-bold uppercase tracking-widest">Active Now</p>
+</div>
+<h1 class="font-serif text-2xl text-[#141514] dark:text-white leading-snug mb-2">Mom is doing well today.</h1>
+<p class="text-[#757a71] dark:text-zinc-400 text-sm font-normal leading-relaxed">
+                        She has completed all her morning tasks and went for a short walk in the garden.
+                    </p>
+</div>
+</div>
+</div>
+<!-- Metric Grid -->
+<div class="grid grid-cols-2 gap-3 p-4">
+<div class="flex flex-col gap-3 rounded-xl border border-[#e0e2df] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+<div class="flex items-center justify-between">
+<div class="p-2 rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined">schedule</span>
+</div>
+</div>
+<div class="flex flex-col gap-1 mt-1">
+<h2 class="text-[#141514] dark:text-white text-xl font-bold font-display">10:30 AM</h2>
+<p class="text-[#757a71] dark:text-zinc-400 text-xs font-medium uppercase tracking-tight">Last Check-in</p>
+<p class="text-[#757a71] dark:text-zinc-500 text-[11px] mt-1">Kitchen movement detected</p>
+</div>
+</div>
+<div class="flex flex-col gap-3 rounded-xl border border-[#e0e2df] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+<div class="flex items-center justify-between">
+<div class="p-2 rounded-lg bg-accent-blue/10 text-accent-blue">
+<span class="material-symbols-outlined">medication</span>
+</div>
+<div class="flex items-center gap-1 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full border border-green-100 dark:border-green-800">
+<span class="size-1.5 rounded-full bg-green-500"></span>
+<span class="text-[10px] font-bold text-green-700 dark:text-green-400">ON TRACK</span>
+</div>
+</div>
+<div class="flex flex-col gap-1 mt-1">
+<h2 class="text-[#141514] dark:text-white text-xl font-bold font-display">90%</h2>
+<p class="text-[#757a71] dark:text-zinc-400 text-xs font-medium uppercase tracking-tight">Medication Adherence</p>
+<p class="text-[#757a71] dark:text-zinc-500 text-[11px] mt-1">Missed: 0 this week</p>
+</div>
+</div>
+</div>
+<!-- Section Activity -->
+<div class="flex items-center justify-between px-4 mt-2">
+<h3 class="text-[#141514] dark:text-white text-lg font-bold font-serif">Recent Activity</h3>
+<button class="text-primary text-sm font-bold">View Log</button>
+</div>
+<div class="px-4 py-2">
+<div class="bg-white dark:bg-zinc-900 rounded-xl border border-[#e0e2df] dark:border-zinc-800 overflow-hidden shadow-sm">
+<div class="grid grid-cols-[48px_1fr] gap-x-0">
+<!-- Item 1 -->
+<div class="flex flex-col items-center pt-5">
+<div class="z-10 flex size-8 items-center justify-center rounded-full bg-primary/20 text-primary">
+<span class="material-symbols-outlined !text-lg">restaurant</span>
+</div>
+<div class="w-[2px] bg-[#e0e2df] dark:bg-zinc-800 grow my-1"></div>
+</div>
+<div class="flex flex-1 flex-col py-4 pr-4 border-b border-gray-50 dark:border-zinc-800 last:border-0">
+<p class="text-[#141514] dark:text-white text-sm font-semibold">Breakfast taken</p>
+<p class="text-[#757a71] dark:text-zinc-400 text-xs">8:15 AM • 12.4g protein</p>
+</div>
+<!-- Item 2 -->
+<div class="flex flex-col items-center">
+<div class="w-[2px] bg-[#e0e2df] dark:bg-zinc-800 h-4"></div>
+<div class="z-10 flex size-8 items-center justify-center rounded-full bg-primary/20 text-primary">
+<span class="material-symbols-outlined !text-lg">directions_walk</span>
+</div>
+<div class="w-[2px] bg-[#e0e2df] dark:bg-zinc-800 grow my-1"></div>
+</div>
+<div class="flex flex-1 flex-col py-4 pr-4 border-b border-gray-50 dark:border-zinc-800 last:border-0">
+<p class="text-[#141514] dark:text-white text-sm font-semibold">Morning walk completed</p>
+<p class="text-[#757a71] dark:text-zinc-400 text-xs">9:30 AM • 1,420 steps</p>
+</div>
+<!-- Item 3 -->
+<div class="flex flex-col items-center">
+<div class="w-[2px] bg-[#e0e2df] dark:bg-zinc-800 h-4"></div>
+<div class="z-10 flex size-8 items-center justify-center rounded-full bg-accent-blue/20 text-accent-blue">
+<span class="material-symbols-outlined !text-lg">pill</span>
+</div>
+<div class="h-4"></div>
+</div>
+<div class="flex flex-1 flex-col py-4 pr-4 border-b border-gray-50 dark:border-zinc-800 last:border-0">
+<p class="text-[#141514] dark:text-white text-sm font-semibold">Morning dose taken</p>
+<p class="text-[#757a71] dark:text-zinc-400 text-xs">10:05 AM • Multi-vitamin</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Actions -->
+<div class="p-4 grid grid-cols-2 gap-3">
+<button class="flex items-center justify-center gap-2 h-14 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">call</span>
+<span>Call Mom</span>
+</button>
+<button class="flex items-center justify-center gap-2 h-14 rounded-xl bg-white dark:bg-zinc-900 border border-primary text-primary font-bold">
+<span class="material-symbols-outlined">chat</span>
+<span>Message</span>
+</button>
+</div>
+<!-- Emergency Footer Button -->
+<div class="px-4 pb-4 mt-auto">
+<button class="w-full flex items-center justify-center gap-2 py-3 text-soft-red font-medium text-sm">
+<span class="material-symbols-outlined !text-lg">error</span>
+<span>Emergency Support</span>
+</button>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto bg-white/95 dark:bg-background-dark/95 backdrop-blur-lg border-t border-gray-100 dark:border-zinc-800 flex justify-around items-center h-20 px-6 z-50">
+<div class="flex flex-col items-center text-primary">
+<span class="material-symbols-outlined !text-2xl font-bold">home</span>
+<span class="text-[10px] font-bold mt-1">Home</span>
+</div>
+<div class="flex flex-col items-center text-gray-400 dark:text-zinc-500">
+<span class="material-symbols-outlined !text-2xl">favorite</span>
+<span class="text-[10px] font-medium mt-1">Health</span>
+</div>
+<div class="flex flex-col items-center text-gray-400 dark:text-zinc-500">
+<div class="relative">
+<span class="material-symbols-outlined !text-2xl">calendar_month</span>
+<span class="absolute -top-1 -right-1 size-2.5 bg-soft-red rounded-full border-2 border-white dark:border-zinc-900"></span>
+</div>
+<span class="text-[10px] font-medium mt-1">Schedule</span>
+</div>
+<div class="flex flex-col items-center text-gray-400 dark:text-zinc-500">
+<span class="material-symbols-outlined !text-2xl">group</span>
+<span class="text-[10px] font-medium mt-1">Care Team</span>
+</div>
+</nav>
+<!-- Home Indicator (iOS style) -->
+<div class="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto flex justify-center pb-2 pointer-events-none">
+<div class="h-1 w-32 bg-gray-300 dark:bg-zinc-700 rounded-full"></div>
+</div>
+</div>
+</body></html>

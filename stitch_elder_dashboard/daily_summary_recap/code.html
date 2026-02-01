@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#9caf88",
+                        "background-light": "#f6f4ee",
+                        "background-dark": "#191b17",
+                        "soft-charcoal": "#333c3b",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"],
+                        "serif": ["Noto Serif", "serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .serif-title {
+            font-family: 'Noto Serif', serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-soft-charcoal dark:text-slate-200 min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<div class="flex items-center px-6 py-6 justify-between">
+<div class="size-12 flex items-center justify-center rounded-full bg-white/50 dark:bg-white/10 shadow-sm border border-black/5 cursor-pointer">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h2 class="font-display font-semibold text-lg tracking-tight">Daily Summary</h2>
+<div class="size-12 flex items-center justify-center rounded-full bg-white/50 dark:bg-white/10 shadow-sm border border-black/5 cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+</div>
+</div>
+<div class="flex-1 px-6 flex flex-col">
+<!-- Hero Section with Header Image -->
+<div class="relative overflow-hidden rounded-xl bg-white dark:bg-zinc-900 shadow-sm mb-8 border border-black/5">
+<div class="w-full h-48 bg-cover bg-center" data-alt="Calm evening sky with stars and moon" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC53PtUqdAxLB2ee_3CWS-z3aG9J3Bftpnl-y7c_t13HWit_959IWiNw_abmu_Mma8SdEGo8chG7bV7A1NrmZ8oXfdWHFwl44SXk-Wi2u80EaGrfFLK6Xj3UUG9iYJwXYjzSqVXKEyEfXNHvtrzEvD6JEL4dYugfnsora8kaK_lj1RjvnXyayZnowgxb6pgsCfzDQ0fzvOkT4aFc3b7PHozZLgKHdl-5UYe67JEwHhnK7jhMJSJWohGqHNqVcsgcZLv01V5rG_NUg");'>
+<div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+</div>
+<div class="absolute bottom-4 left-6">
+<h1 class="serif-title text-3xl font-bold text-white drop-shadow-md">Good Evening, Arthur</h1>
+</div>
+</div>
+<!-- Affirmation Message -->
+<div class="mb-8">
+<p class="text-xl font-display font-light leading-relaxed">
+                You’ve had a wonderful day. Everything is looked after, and you can rest easy now.
+            </p>
+</div>
+<!-- Accomplishment Modular Cards -->
+<div class="space-y-4">
+<!-- Medication Card -->
+<div class="bg-white dark:bg-zinc-900 p-5 rounded-xl flex items-center justify-between border border-black/5 shadow-sm">
+<div class="flex items-center gap-5">
+<div class="bg-primary/20 text-primary p-3 rounded-lg">
+<span class="material-symbols-outlined text-3xl">check_circle</span>
+</div>
+<div>
+<p class="font-display font-semibold text-lg">Medications Complete</p>
+<p class="text-sm opacity-70">100% adherence today</p>
+</div>
+</div>
+<span class="material-symbols-outlined opacity-30">chevron_right</span>
+</div>
+<!-- Check-in Card -->
+<div class="bg-white dark:bg-zinc-900 p-5 rounded-xl flex items-center justify-between border border-black/5 shadow-sm">
+<div class="flex items-center gap-5">
+<div class="bg-primary/20 text-primary p-3 rounded-lg">
+<span class="material-symbols-outlined text-3xl">favorite</span>
+</div>
+<div>
+<p class="font-display font-semibold text-lg">Checked in 3 times</p>
+<p class="text-sm opacity-70">Your family knows you're safe</p>
+</div>
+</div>
+<span class="material-symbols-outlined opacity-30">chevron_right</span>
+</div>
+<!-- Mood Summary -->
+<div class="bg-white dark:bg-zinc-900 p-5 rounded-xl flex items-center justify-between border border-black/5 shadow-sm">
+<div class="flex items-center gap-5">
+<div class="bg-primary/20 text-primary p-3 rounded-lg">
+<span class="material-symbols-outlined text-3xl">self_improvement</span>
+</div>
+<div>
+<p class="font-display font-semibold text-lg">Feeling Peaceful</p>
+<p class="text-sm opacity-70">Based on your mood log</p>
+</div>
+</div>
+<span class="material-symbols-outlined opacity-30">chevron_right</span>
+</div>
+</div>
+<!-- Spacer for flow -->
+<div class="flex-1 min-h-[40px]"></div>
+<!-- Final Action Section -->
+<div class="pb-10 pt-4">
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-display font-bold text-xl py-6 rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">
+<span class="material-symbols-outlined">bedtime</span>
+                Rest Well
+            </button>
+<p class="text-center mt-6 text-sm font-light opacity-60 italic">
+                Closing the app will silence non-essential notifications until 7:00 AM.
+            </p>
+</div>
+</div>
+<!-- Bottom Navigation -->
+<div class="bg-white dark:bg-zinc-900 border-t border-black/5 px-8 py-4 flex justify-between items-center safe-area-bottom">
+<div class="flex flex-col items-center gap-1 opacity-40">
+<span class="material-symbols-outlined text-2xl">home</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Home</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-3xl">task_alt</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Recap</span>
+</div>
+<div class="flex flex-col items-center gap-1 opacity-40">
+<span class="material-symbols-outlined text-2xl">group</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Care</span>
+</div>
+<div class="flex flex-col items-center gap-1 opacity-40">
+<span class="material-symbols-outlined text-2xl">calendar_today</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Plans</span>
+</div>
+</div>
+</body></html>

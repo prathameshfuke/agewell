@@ -1,0 +1,3 @@
+/* App-level overrides for AgeWell */
+.app-root { min-height: 100%; display: flex; }
+/* Reuse global styles from index.css. Place any page-specific tweaks below. */

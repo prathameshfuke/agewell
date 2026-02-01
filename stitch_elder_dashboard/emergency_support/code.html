@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AgeWell+ Emergency Support</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;family=Noto+Serif:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#9caf88",
+              "emergency-red": "#E07A5F",
+              "charcoal": "#333C3B",
+              "background-light": "#f6f4ee",
+              "background-dark": "#191b17",
+            },
+            fontFamily: {
+              "display": ["Lexend", "sans-serif"],
+              "serif": ["Noto Serif", "serif"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .soft-ui-button {
+        box-shadow: 0 10px 25px -5px rgba(224, 122, 95, 0.4), 0 8px 10px -6px rgba(224, 122, 95, 0.4);
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+      .dark .glass-card {
+        background: rgba(40, 42, 38, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-charcoal dark:text-gray-100 min-h-screen flex flex-col">
+<!-- Top Navigation -->
+<header class="flex items-center p-4 justify-between bg-transparent">
+<button class="flex items-center justify-center size-12 bg-white dark:bg-zinc-800 rounded-full shadow-sm">
+<span class="material-symbols-outlined text-charcoal dark:text-white">arrow_back</span>
+</button>
+<h2 class="text-charcoal dark:text-white text-lg font-bold flex-1 text-center pr-12">Emergency Support</h2>
+</header>
+<main class="flex-1 flex flex-col items-center px-6 pt-8 pb-12 justify-between">
+<!-- Instructional Header -->
+<div class="text-center">
+<h1 class="font-serif text-[#E07A5F] dark:text-[#E07A5F] text-4xl mb-4">Need Help?</h1>
+<p class="text-charcoal dark:text-gray-300 text-xl font-medium max-w-xs mx-auto leading-relaxed">
+                Press and hold the button for 3 seconds to call for help.
+            </p>
+</div>
+<!-- Central Emergency Button -->
+<div class="relative flex flex-col items-center">
+<!-- Outer Ring Decoration -->
+<div class="absolute inset-0 -m-8 border-2 border-emergency-red/20 rounded-full animate-pulse"></div>
+<div class="absolute inset-0 -m-16 border border-emergency-red/10 rounded-full"></div>
+<!-- Main Button Action -->
+<button class="soft-ui-button w-64 h-64 rounded-full bg-emergency-red flex flex-col items-center justify-center text-white border-8 border-white dark:border-zinc-900 active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-6xl mb-2" style="font-variation-settings: 'FILL' 1">sos</span>
+<span class="text-2xl font-bold tracking-wider">HOLD TO CALL</span>
+</button>
+<p class="mt-8 text-emergency-red font-bold text-lg tracking-wide uppercase">Release to cancel</p>
+</div>
+<!-- Context & Contact Info -->
+<div class="w-full max-w-md space-y-4">
+<div class="glass-card rounded-2xl p-5 flex items-center gap-4">
+<div class="size-16 rounded-full overflow-hidden border-2 border-primary/30">
+<img alt="Contact Portrait" class="w-full h-full object-cover" data-alt="Portrait of a caring middle-aged woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUFg7dnum_PJKbO0GwwNF8ckc3-oU7CKjuWaICE_CwdTLX3XEhfWnbXA2FjdEyJI1Aux_Rt1H_oyim49rtw18FmfMHkXi3Snv-AH-M5oCcWdnSr7oCTV0Y60xLb14oHiBdyywDG3FQazjROinQBobHjUSbeO8YB0lLuoCizlHvnzF6Y2kZjuHp6C0Ly2Na6rGTK1tOZ47ZCJY8Xja5nBPLVbqRj6mziOUNdXoRSWcaB1LRGRTpVVPh8HaqvwLbfJxFcqRAys0ZUw"/>
+</div>
+<div class="flex-1">
+<p class="text-xs font-bold uppercase tracking-widest text-primary mb-1">Emergency Contact</p>
+<h3 class="text-xl font-bold text-charcoal dark:text-white">Sarah (Daughter)</h3>
+</div>
+<div class="bg-primary/20 p-2 rounded-full">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1">call</span>
+</div>
+</div>
+<p class="text-center text-sm text-charcoal/60 dark:text-gray-400 px-4">
+                Your location will be shared with Sarah and emergency services immediately.
+            </p>
+<!-- Secondary Action -->
+<div class="pt-4 flex justify-center">
+<button class="bg-primary/10 hover:bg-primary/20 dark:bg-white/5 dark:hover:bg-white/10 px-8 py-3 rounded-full flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-primary dark:text-primary">close</span>
+<span class="text-primary dark:text-primary font-bold">Cancel, I'm okay</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Visual Map Context (Subtle) -->
+<div class="h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent mx-12 mb-8"></div>
+</body></html>

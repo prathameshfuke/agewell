@@ -1,0 +1,141 @@
+╔═══════════════════════════════════════════════════════════════════════╗
+║                                                                       ║
+║              TESSERACT OCR - QUICK INSTALLATION GUIDE                 ║
+║                        For AGEWELL Platform                           ║
+║                                                                       ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+📥 DOWNLOAD TESSERACT OCR 5.5.0 (64-bit Windows)
+═══════════════════════════════════════════════════════════════════════
+
+Direct Download Link:
+https://github.com/tesseract-ocr/tesseract/releases/download/5.5.0/tesseract-ocr-w64-setup-5.5.0.20241111.exe
+
+File Size: ~60 MB
+Version: 5.5.0 (Latest stable)
+Platform: Windows 64-bit
+
+═══════════════════════════════════════════════════════════════════════
+🔧 INSTALLATION STEPS
+═══════════════════════════════════════════════════════════════════════
+
+1. DOWNLOAD
+   - Click the link above or run: download_tesseract.bat
+   - Save the installer to your Downloads folder
+
+2. RUN INSTALLER
+   - Double-click: tesseract-ocr-w64-setup-5.5.0.20241111.exe
+   - Click "Yes" when Windows asks for permission
+
+3. CHOOSE INSTALL LOCATION
+   ⚠️ IMPORTANT: Use default path:
+   
+   C:\Program Files\Tesseract-OCR
+   
+   ❌ DO NOT install to a different location unless necessary
+   ❌ DO NOT install in an existing folder with other files
+
+4. SELECT COMPONENTS
+   ✅ Tesseract OCR Engine (required)
+   ✅ English language data (required)
+   ☐ Additional languages (optional)
+
+5. COMPLETE INSTALLATION
+   - Click "Install"
+   - Wait for completion
+   - Click "Finish"
+
+6. VERIFY INSTALLATION
+   Open Command Prompt and run:
+   
+   tesseract --version
+   
+   You should see:
+   tesseract 5.5.0
+   leptonica-1.84.1
+   ...
+
+═══════════════════════════════════════════════════════════════════════
+✅ VERIFICATION CHECKLIST
+═══════════════════════════════════════════════════════════════════════
+
+□ Downloaded installer
+□ Ran installer as Administrator
+□ Installed to: C:\Program Files\Tesseract-OCR
+□ Selected English language data
+□ Installation completed successfully
+□ Verified with: tesseract --version
+□ Command returns version 5.5.0
+
+═══════════════════════════════════════════════════════════════════════
+🚀 NEXT STEPS FOR AGEWELL
+═══════════════════════════════════════════════════════════════════════
+
+After installing Tesseract:
+
+1. No configuration needed! AGEWELL will auto-detect Tesseract
+
+2. Start AGEWELL:
+   - Run: START_HERE.bat
+   - Choose option 3 (Start Both Servers)
+
+3. Test prescription OCR:
+   - Login to AGEWELL
+   - Go to "Prescription Upload"
+   - Upload a prescription image
+   - AI will extract medications automatically!
+
+═══════════════════════════════════════════════════════════════════════
+🔧 TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════
+
+Problem: "tesseract is not recognized"
+Solution:
+  1. Verify installation folder exists
+  2. Add to PATH: C:\Program Files\Tesseract-OCR
+  3. Restart Command Prompt/PowerShell
+
+Problem: "Failed to load language data"
+Solution:
+  1. Check folder: C:\Program Files\Tesseract-OCR\tessdata
+  2. Verify eng.traineddata exists
+  3. Reinstall if missing
+
+Problem: OCR returns empty text
+Solution:
+  1. Use clear, high-quality images
+  2. Ensure good lighting
+  3. Try PNG format
+  4. Check image is not blurry
+
+═══════════════════════════════════════════════════════════════════════
+📚 MORE INFORMATION
+═══════════════════════════════════════════════════════════════════════
+
+Detailed Guide: INSTALL_TESSERACT.md
+Troubleshooting: TROUBLESHOOTING.md
+AGEWELL Setup: SETUP_GUIDE.md
+
+Official Tesseract:
+- Website: https://tesseract-ocr.github.io/
+- GitHub: https://github.com/tesseract-ocr/tesseract
+- UB Mannheim: https://github.com/UB-Mannheim/tesseract/wiki
+
+═══════════════════════════════════════════════════════════════════════
+💡 QUICK TIPS
+═══════════════════════════════════════════════════════════════════════
+
+✓ Use default installation path for automatic detection
+✓ Install English language data (included by default)
+✓ Verify installation before starting AGEWELL
+✓ Use high-quality images for best OCR results
+✓ Prescription images work best when printed (not handwritten)
+
+═══════════════════════════════════════════════════════════════════════
+
+Ready to go! Once Tesseract is installed, AGEWELL's prescription OCR
+feature will work automatically.
+
+For help, see: INSTALL_TESSERACT.md or TROUBLESHOOTING.md
+
+═══════════════════════════════════════════════════════════════════════
