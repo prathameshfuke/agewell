@@ -1,4 +1,4 @@
-# AgeWell 🌟
+# AgeWell 
 
 > A comprehensive elderly care platform combining medication management, health monitoring, and AI assistance
 
