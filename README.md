@@ -439,7 +439,7 @@ Made with ❤️ by the AgeWell team
 5. Configure CORS properly
 
 ### Frontend Deployment
-1. Build production bundle: `npm run build`
+1. Build production bundle - `npm run build`
 2. Deploy to CDN or static hosting (Vercel, Netlify, etc.)
 3. Configure API endpoint to production backend
 
