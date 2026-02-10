@@ -61,7 +61,7 @@ export function AuthProvider({ children }) {
         setSessionActiveRoleState(role)
     }, [])
 
-    // Initialize auth
+    // Initialize auth — single source of truth via onAuthStateChange
     useEffect(() => {
         if (!isSupabaseConfigured()) {
             setLoading(false)
@@ -71,46 +71,47 @@ export function AuthProvider({ children }) {
 
         let mounted = true
 
-        const init = async () => {
-            try {
-                const { data: { session } } = await supabase.auth.getSession()
+        // Safety timeout: if auth takes more than 5 seconds, stop loading
+        const timeout = setTimeout(() => {
+            if (mounted && loading) {
+                console.warn('Auth initialization timed out after 5s')
+                setLoading(false)
+                setInitialized(true)
+            }
+        }, 5000)
 
-                if (session?.user && mounted) {
-                    setUser(session.user)
-                    const profileData = await fetchProfile(session.user.id)
-                    if (mounted) setProfile(profileData)
+        // Single listener handles ALL auth events including page reload
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (!mounted) return
+
+            console.log('Auth event:', event, !!session)
+
+            if (session?.user) {
+                setUser(session.user)
+                // Fetch profile on any session event
+                const profileData = await fetchProfile(session.user.id)
+                if (mounted) {
+                    setProfile(profileData)
+                    setLoading(false)
+                    setInitialized(true)
                 }
-            } catch (err) {
-                console.error('Auth init error:', err)
-            } finally {
+            } else {
+                // No session (signed out or no user)
+                setUser(null)
+                setProfile(null)
+                if (event === 'SIGNED_OUT') {
+                    setSessionActiveRole(null)
+                }
                 if (mounted) {
                     setLoading(false)
                     setInitialized(true)
                 }
             }
-        }
-
-        init()
-
-        // Auth state listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (!mounted) return
-
-            if (event === 'SIGNED_IN' && session?.user) {
-                setUser(session.user)
-                const profileData = await fetchProfile(session.user.id)
-                if (mounted) setProfile(profileData)
-                setLoading(false)
-            } else if (event === 'SIGNED_OUT') {
-                setUser(null)
-                setProfile(null)
-                setSessionActiveRole(null) // Clear session role on logout
-                setLoading(false)
-            }
         })
 
         return () => {
             mounted = false
+            clearTimeout(timeout)
             subscription.unsubscribe()
         }
     }, [fetchProfile, setSessionActiveRole])
