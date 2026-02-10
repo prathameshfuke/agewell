@@ -117,7 +117,13 @@ export function AuthProvider({ children }) {
 
     // Login with Google
     const login = async () => {
-        await signInWithGoogle()
+        await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback`,
+                skipBrowserRedirect: false
+            }
+        })
     }
 
     // Login with Email
@@ -211,7 +217,10 @@ export function AuthProvider({ children }) {
             .select()
             .single()
 
-        if (error) throw error
+        if (error) {
+            console.error('Complete Onboarding Error:', error)
+            throw error
+        }
         setProfile(data)
 
         // Ensure session role is set
