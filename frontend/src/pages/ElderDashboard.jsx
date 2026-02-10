@@ -130,22 +130,10 @@ export default function ElderDashboard() {
     await api.submitCheckIn(userId, mood)
   }
 
-  const vitals = healthStats?.latest || {
-    heart_rate: 72,
-    blood_pressure_systolic: 120,
-    blood_pressure_diastolic: 80
-  }
+  const vitals = healthStats?.latest || {}
 
   // Calculate weekly health data for chart
-  const weeklyHealthData = healthStats?.weekly || [
-    { value: 68, label: 'Mon' },
-    { value: 72, label: 'Tue' },
-    { value: 70, label: 'Wed' },
-    { value: 74, label: 'Thu' },
-    { value: 71, label: 'Fri' },
-    { value: 69, label: 'Sat' },
-    { value: vitals.heart_rate || 72, label: 'Sun' },
-  ]
+  const weeklyHealthData = healthStats?.weekly || []
 
   return (
     <PageLayout

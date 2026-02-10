@@ -27,27 +27,11 @@ const fetchApi = async (endpoint, options = {}) => {
 }
 
 // Mock data for development
+// Mock data removed - we only use real data or empty states
 const mockData = {
-    medications: [
-        { id: '1', name: 'Metformin', dosage: '500mg', form: 'tablet', schedule_times: ['08:00', '20:00'], frequency: 'twice daily' },
-        { id: '2', name: 'Lisinopril', dosage: '10mg', form: 'pill', schedule_times: ['09:00'], frequency: 'once daily' },
-        { id: '3', name: 'Vitamin D', dosage: '1000 IU', form: 'capsule', schedule_times: ['08:00'], frequency: 'once daily' }
-    ],
-    healthStats: {
-        latest: { spo2: 98, heart_rate: 72, body_temperature: 36.5 },
-        history: []
-    },
-    device: {
-        id: 'demo-device',
-        device_id: 'ESP32-DEMO',
-        name: 'Living Room Dispenser',
-        wifi_status: 'online',
-        slots: [
-            { slot_number: 1, medication_id: '1', current_quantity: 28, led_color: '#4CAF50' },
-            { slot_number: 2, medication_id: '2', current_quantity: 15, led_color: '#2196F3' },
-            { slot_number: 3, medication_id: null, current_quantity: 0, led_color: '#FF9800' }
-        ]
-    }
+    medications: [],
+    healthStats: { latest: {}, history: [] },
+    device: { slots: [] }
 }
 
 // Unified API interface

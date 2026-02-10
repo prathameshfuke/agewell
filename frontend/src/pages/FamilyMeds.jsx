@@ -134,7 +134,9 @@ export default function FamilyMeds() {
                         animate={{ opacity: 1, y: 0 }}
                         className="bg-white rounded-3xl p-8 border-2 border-sage-100 text-center"
                     >
-                        <img src={doneSticker} alt="No meds" className="w-24 h-auto mx-auto mb-4 rounded-2xl" />
+                        <div className="w-24 h-24 bg-sage-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                            <Pill className="w-12 h-12 text-sage-400" />
+                        </div>
                         <h3 className="text-xl font-bold text-sage-800 mb-2">No Medications</h3>
                         <p className="text-sage-500 mb-4">Upload a prescription to add medications</p>
                         <motion.button

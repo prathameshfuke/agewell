@@ -273,8 +273,14 @@ export function AuthProvider({ children }) {
     // Check if onboarding is complete for a role
     const isOnboardingComplete = (role) => {
         if (!profile) return false
-        if (role === 'elderly') return profile.onboarding_elder_completed === true
-        if (role === 'caregiver') return profile.onboarding_caregiver_completed === true
+
+        // Strict check against boolean true
+        if (role === 'elderly') {
+            return profile.onboarding_elder_completed === true
+        }
+        if (role === 'caregiver') {
+            return profile.onboarding_caregiver_completed === true
+        }
         return false
     }
 

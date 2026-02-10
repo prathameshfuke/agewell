@@ -56,7 +56,7 @@ export default function FamilyDashboard() {
                 const missed = adherenceRes.logs.filter(l => l.status === 'missed').length
                 const total = adherenceRes.logs.length
                 setAdherenceStats({
-                    rate: total > 0 ? Math.round((taken / total) * 100) : 100,
+                    rate: total > 0 ? Math.round((taken / total) * 100) : 0,
                     missed
                 })
 
