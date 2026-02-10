@@ -11,18 +11,15 @@ import AnimatedCounter from '../ui/AnimatedCounter'
 export default function HealthOverviewCard({
   elderlyName = 'Your Loved One',
   status = 'Active',
-  heartRate = 72,
-  bloodPressure = { systolic: 120, diastolic: 80 },
+  heartRate = null,
+  bloodPressure = { systolic: null, diastolic: null },
   lastUpdated = 'Just now',
   trendData = [],
   trend = 'stable',
   className = ''
 }) {
-  // Generate mock trend data if none provided
-  const chartData = trendData.length > 0 ? trendData : [
-    { value: 70 }, { value: 72 }, { value: 68 },
-    { value: 74 }, { value: 71 }, { value: 73 }, { value: 72 }
-  ]
+  // Use real trend data or show empty
+  const chartData = trendData.length > 0 ? trendData : []
 
   const getStatusColor = () => {
     if (status === 'Active') return 'bg-white/30'
@@ -79,9 +76,8 @@ export default function HealthOverviewCard({
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-3xl font-bold">
-                <AnimatedCounter value={heartRate} />
+                {heartRate ? <AnimatedCounter value={heartRate} /> : <span>--</span>}
               </span>
-              <span className="text-white/70 text-sm">bpm</span>
               <div className="ml-auto flex items-center gap-1 text-white/70">
                 {getTrendIcon()}
               </div>
@@ -94,24 +90,29 @@ export default function HealthOverviewCard({
               <span className="text-white/70 text-xs font-bold uppercase">Blood Pressure</span>
             </div>
             <div className="flex items-baseline gap-0.5 sm:gap-1 flex-wrap">
-              <span className="text-2xl sm:text-3xl font-bold">{bloodPressure.systolic}</span>
+              <span className="text-2xl sm:text-3xl font-bold">{bloodPressure.systolic ?? '--'}</span>
               <span className="text-white/70 text-base sm:text-lg">/</span>
-              <span className="text-xl sm:text-2xl font-bold">{bloodPressure.diastolic}</span>
-              <span className="text-white/70 text-xs sm:text-sm ml-0.5 sm:ml-1 whitespace-nowrap">mmHg</span>
+              <span className="text-xl sm:text-2xl font-bold">{bloodPressure.diastolic ?? '--'}</span>
             </div>
           </div>
         </div>
 
         {/* Mini Trend Chart */}
-        <div className="bg-white/10 rounded-xl p-3">
-          <div className="text-white/70 text-xs font-bold uppercase mb-2">7-Day Trend</div>
-          <TrendChart
-            data={chartData}
-            color="rgba(255,255,255,0.8)"
-            height={50}
-            showTooltip={false}
-          />
-        </div>
+        {chartData.length > 0 ? (
+          <div className="bg-white/10 rounded-xl p-3">
+            <div className="text-white/70 text-xs font-bold uppercase mb-2">7-Day Trend</div>
+            <TrendChart
+              data={chartData}
+              color="rgba(255,255,255,0.8)"
+              height={50}
+              showTooltip={false}
+            />
+          </div>
+        ) : (
+          <div className="bg-white/10 rounded-xl p-3">
+            <div className="text-white/50 text-xs text-center">Trend data will appear here</div>
+          </div>
+        )}
       </div>
     </motion.div>
   )

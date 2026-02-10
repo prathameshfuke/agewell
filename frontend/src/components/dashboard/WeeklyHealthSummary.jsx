@@ -9,23 +9,16 @@ import AnimatedCounter from '../ui/AnimatedCounter'
  * 
  * Shows heart rate and activity trends with animated stats
  */
-export default function WeeklyHealthSummary({ 
+export default function WeeklyHealthSummary({
   healthData = [],
-  averageHeartRate = 72,
-  averageSteps = 4500,
+  averageHeartRate = null,
+  averageSteps = null,
   trend = 'stable',
   className = ''
 }) {
-  // Generate mock weekly data if none provided
-  const weeklyData = healthData.length > 0 ? healthData : [
-    { value: 68, label: 'Mon' },
-    { value: 72, label: 'Tue' },
-    { value: 70, label: 'Wed' },
-    { value: 74, label: 'Thu' },
-    { value: 71, label: 'Fri' },
-    { value: 69, label: 'Sat' },
-    { value: 72, label: 'Sun' },
-  ]
+  // Use real data or show empty state
+  const weeklyData = healthData.length > 0 ? healthData : []
+  const hasData = weeklyData.length > 0 || averageHeartRate || averageSteps
 
   const getTrendIcon = () => {
     if (trend === 'up') return <TrendingUp className="w-4 h-4 text-sage-600" />
@@ -41,19 +34,23 @@ export default function WeeklyHealthSummary({
 
   return (
     <Card className={className}>
-      <CardHeader 
-        icon={<Activity className="w-5 h-5 text-sage-500" />} 
-        label="Weekly Summary" 
+      <CardHeader
+        icon={<Activity className="w-5 h-5 text-sage-500" />}
+        label="Weekly Summary"
       />
-      
+
       {/* Chart */}
       <div className="mb-4">
-        <TrendChart 
-          data={weeklyData} 
-          color="#7C9A8E" 
-          height={80} 
-          showTooltip={true}
-        />
+        {weeklyData.length > 0 ? (
+          <TrendChart
+            data={weeklyData}
+            color="#7C9A8E"
+            height={80}
+            showTooltip={true}
+          />
+        ) : (
+          <div className="h-20 flex items-center justify-center text-sage-400 text-sm">No health data yet</div>
+        )}
       </div>
 
       {/* Stats Row - Mobile-first: stack on tiny screens, 3 cols from xs up */}
@@ -61,7 +58,7 @@ export default function WeeklyHealthSummary({
         <div className="bg-sage-50 rounded-xl p-3 text-center">
           <div className="text-sage-500 text-xs font-bold uppercase tracking-wide mb-1 break-words">Avg HR</div>
           <div className="text-xl sm:text-2xl font-bold text-sage-800">
-            <AnimatedCounter value={averageHeartRate} />
+            {averageHeartRate ? <AnimatedCounter value={averageHeartRate} /> : <span className="text-sage-400">--</span>}
           </div>
           <div className="text-sage-400 text-xs break-words">bpm</div>
         </div>
@@ -69,7 +66,7 @@ export default function WeeklyHealthSummary({
         <div className="bg-sage-50 rounded-xl p-3 text-center">
           <div className="text-sage-500 text-xs font-bold uppercase tracking-wide mb-1 break-words">Avg Steps</div>
           <div className="text-xl sm:text-2xl font-bold text-sage-800">
-            <AnimatedCounter value={averageSteps} />
+            {averageSteps ? <AnimatedCounter value={averageSteps} /> : <span className="text-sage-400">--</span>}
           </div>
           <div className="text-sage-400 text-xs break-words">daily</div>
         </div>

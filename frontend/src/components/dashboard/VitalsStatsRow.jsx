@@ -8,11 +8,11 @@ import AnimatedCounter from '../ui/AnimatedCounter'
  * Displays Heart Rate, Blood Pressure, Steps, and Sleep
  */
 export default function VitalsStatsRow({
-  heartRate = 72,
-  bloodPressure = { systolic: 120, diastolic: 80 },
-  steps = 4500,
-  sleep = 7.5,
-  trends = { heartRate: 'stable', steps: 'up', sleep: 'stable' },
+  heartRate = null,
+  bloodPressure = { systolic: null, diastolic: null },
+  steps = null,
+  sleep = null,
+  trends = { heartRate: 'stable', steps: 'stable', sleep: 'stable' },
   className = ''
 }) {
   const getTrendIcon = (trend) => {
@@ -35,7 +35,7 @@ export default function VitalsStatsRow({
     {
       icon: Activity,
       label: 'Blood Pressure',
-      value: `${bloodPressure.systolic}/${bloodPressure.diastolic}`,
+      value: bloodPressure.systolic && bloodPressure.diastolic ? `${bloodPressure.systolic}/${bloodPressure.diastolic}` : '--',
       unit: 'mmHg',
       trend: 'stable',
       bgColor: 'bg-sage-50',
@@ -91,10 +91,12 @@ export default function VitalsStatsRow({
           <div className="flex items-baseline gap-1">
             {stat.isString ? (
               <span className="text-xl font-bold text-sage-900">{stat.value}</span>
-            ) : (
+            ) : stat.value != null ? (
               <span className="text-xl font-bold text-sage-900">
                 <AnimatedCounter value={stat.value} suffix={stat.suffix || ''} />
               </span>
+            ) : (
+              <span className="text-xl font-bold text-sage-400">--</span>
             )}
             <span className="text-sage-400 text-xs">{stat.unit}</span>
           </div>
