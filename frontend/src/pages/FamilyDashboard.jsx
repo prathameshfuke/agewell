@@ -179,14 +179,8 @@ export default function FamilyDashboard() {
     const lastCheckIn = activities.find(a => a.type === 'check_in' || a.type === 'medication')
     const lastCheckInTime = lastCheckIn?.time || '—'
 
-    // Extract vitals from health stats
-    const vitals = healthStats?.latest || {
-        heart_rate: 72,
-        blood_pressure_systolic: 120,
-        blood_pressure_diastolic: 80,
-        steps: 4500,
-        sleep: 7.5
-    }
+    // Extract vitals from health stats (no fake fallbacks)
+    const vitals = healthStats?.latest || {}
 
     // Get current month name
     const currentMonth = new Date().toLocaleString('default', { month: 'long' })
@@ -255,10 +249,10 @@ export default function FamilyDashboard() {
                             <HealthOverviewCard
                                 elderlyName={elderlyInfo?.name || 'Your Loved One'}
                                 status={elderlyInfo?.status || 'Active'}
-                                heartRate={vitals.heart_rate || 72}
+                                heartRate={vitals.heart_rate || null}
                                 bloodPressure={{
-                                    systolic: vitals.blood_pressure_systolic || 120,
-                                    diastolic: vitals.blood_pressure_diastolic || 80
+                                    systolic: vitals.blood_pressure_systolic || null,
+                                    diastolic: vitals.blood_pressure_diastolic || null
                                 }}
                                 lastUpdated={elderlyInfo?.detail || 'Just now'}
                                 trendData={healthStats?.weekly || []}
@@ -269,16 +263,16 @@ export default function FamilyDashboard() {
                         {/* Vitals Stats Row */}
                         <PageSection delay={0.05}>
                             <VitalsStatsRow
-                                heartRate={vitals.heart_rate || 72}
+                                heartRate={vitals.heart_rate || null}
                                 bloodPressure={{
-                                    systolic: vitals.blood_pressure_systolic || 120,
-                                    diastolic: vitals.blood_pressure_diastolic || 80
+                                    systolic: vitals.blood_pressure_systolic || null,
+                                    diastolic: vitals.blood_pressure_diastolic || null
                                 }}
-                                steps={vitals.steps || 4500}
-                                sleep={vitals.sleep || 7.5}
+                                steps={vitals.steps || null}
+                                sleep={vitals.sleep || null}
                                 trends={{
                                     heartRate: healthStats?.trends?.heartRate || 'stable',
-                                    steps: healthStats?.trends?.steps || 'up',
+                                    steps: healthStats?.trends?.steps || 'stable',
                                     sleep: healthStats?.trends?.sleep || 'stable'
                                 }}
                             />
@@ -288,8 +282,8 @@ export default function FamilyDashboard() {
                         <PageSection delay={0.1}>
                             <WeeklyHealthSummary
                                 healthData={healthStats?.weekly || []}
-                                averageHeartRate={vitals.heart_rate || 72}
-                                averageSteps={vitals.steps || 4500}
+                                averageHeartRate={vitals.heart_rate || null}
+                                averageSteps={vitals.steps || null}
                                 trend={healthStats?.trend || 'stable'}
                             />
                         </PageSection>

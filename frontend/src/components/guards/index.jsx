@@ -139,8 +139,8 @@ export function PostLoginResolver({ children }) {
 
     useEffect(() => {
         if (initialized && isAuthenticated) {
-            // Strictly clear the session role to ensure a fresh decision
-            sessionStorage.removeItem('sessionActiveRole')
+            // Strictly clear the active role to ensure a fresh decision
+            localStorage.removeItem('activeRole')
         }
     }, [initialized, isAuthenticated])
 

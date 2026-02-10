@@ -16,7 +16,7 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
     const [profile, setProfile] = useState(null)
     const [sessionActiveRole, setSessionActiveRoleState] = useState(() => {
-        return sessionStorage.getItem('sessionActiveRole')
+        return localStorage.getItem('activeRole')
     })
     const [loading, setLoading] = useState(true)
     const [initialized, setInitialized] = useState(false)
@@ -54,9 +54,9 @@ export function AuthProvider({ children }) {
     // Update Session Active Role (State + Storage)
     const setSessionActiveRole = useCallback((role) => {
         if (role) {
-            sessionStorage.setItem('sessionActiveRole', role)
+            localStorage.setItem('activeRole', role)
         } else {
-            sessionStorage.removeItem('sessionActiveRole')
+            localStorage.removeItem('activeRole')
         }
         setSessionActiveRoleState(role)
     }, [])
@@ -168,7 +168,7 @@ export function AuthProvider({ children }) {
         setUser(null)
         setProfile(null)
         // Explicitly clear storage just in case
-        sessionStorage.removeItem('sessionActiveRole')
+        localStorage.removeItem('activeRole')
     }
 
     // Add role to user (Persistent)

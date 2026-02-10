@@ -56,11 +56,10 @@ const ResetHandler = ({ children }) => {
         console.warn('Emergency Reset Triggered')
         localStorage.clear()
         sessionStorage.clear()
-        // Clear cookies manually if possible, or just redirect
         document.cookie.split(";").forEach((c) => {
             document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
         });
-        window.location.href = '/' // Force full reload without query param
+        window.location.href = '/'
         return null
     }
     return children
