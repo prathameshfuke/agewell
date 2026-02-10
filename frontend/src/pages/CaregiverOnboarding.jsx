@@ -23,7 +23,8 @@ export default function CaregiverOnboarding() {
         full_name: '',
         relationship: '',
         notifications_enabled: true,
-        consent_acknowledged: false
+        consent_acknowledged: false,
+        pairing_code: ''
     })
 
     useEffect(() => {
@@ -51,9 +52,15 @@ export default function CaregiverOnboarding() {
             setError('Please enter your name')
             return false
         }
-        if (step === 2 && !formData.relationship.trim()) {
-            setError('Please enter your relationship')
-            return false
+        if (step === 2) {
+            if (!formData.pairing_code.trim() || formData.pairing_code.length !== 6) {
+                setError('Please enter a valid 6-character pairing code')
+                return false
+            }
+            if (!formData.relationship.trim()) {
+                setError('Please enter your relationship')
+                return false
+            }
         }
         if (step === 3 && !formData.consent_acknowledged) {
             setError('Please acknowledge to continue')
@@ -75,15 +82,38 @@ export default function CaregiverOnboarding() {
         setError(null)
 
         try {
+            // Find the elder user by pairing code - importing from lib/supabase here would be ideal but using global for now or assuming context doesn't expose raw client
+            // We need to use the auth context's update function but also query via supabase first.
+            // Since we don't have direct access here, we can rely on a helper or just do it if we import supabase. 
+            // Ideally, completeOnboarding in AuthContext should handle this, but let's do it here.
+
+            // NOTE: We need to import supabase to query. Let's assume it's available or we can use a server function. 
+            // BUT, since we are "making it real" on frontend, let's import it dynamically or assume standard import.
+            // I'll add the import at the top in a separate change if needed, but for now let's use the valid logic pattern.
+
+            // Actually, best to fetch the elder profile first.
+            const { supabase } = await import('../lib/supabase')
+
+            const { data: elderProfile, error: searchError } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('pairing_code', formData.pairing_code)
+                .single()
+
+            if (searchError || !elderProfile) {
+                throw new Error('Invalid pairing code. Please check and try again.')
+            }
+
             await completeOnboarding('caregiver', {
                 full_name: formData.full_name,
                 caregiver_relationship: formData.relationship,
-                notifications_enabled: formData.notifications_enabled
+                notifications_enabled: formData.notifications_enabled,
+                linked_elderly_id: elderProfile.id // Linking here!
             })
             navigate('/family/dashboard', { replace: true })
         } catch (err) {
             console.error('Error:', err)
-            setError('Failed to save. Please try again.')
+            setError(err.message === 'Invalid pairing code. Please check and try again.' ? err.message : 'Failed to save. Please try again.')
             setLoading(false)
         }
     }
@@ -109,11 +139,10 @@ export default function CaregiverOnboarding() {
                 </button>
                 <div className="flex gap-2">
                     {[1, 2, 3].map(s => (
-                        <div 
-                            key={s} 
-                            className={`w-3 h-3 rounded-full transition-colors ${
-                                s === step ? 'bg-cream-500' : s < step ? 'bg-cream-300' : 'bg-cream-100'
-                            }`} 
+                        <div
+                            key={s}
+                            className={`w-3 h-3 rounded-full transition-colors ${s === step ? 'bg-cream-500' : s < step ? 'bg-cream-300' : 'bg-cream-100'
+                                }`}
                         />
                     ))}
                 </div>
@@ -121,9 +150,9 @@ export default function CaregiverOnboarding() {
             </div>
 
             <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
-                <motion.img 
-                    src={twoSticker} 
-                    alt="Caregiver" 
+                <motion.img
+                    src={twoSticker}
+                    alt="Caregiver"
                     className="w-24 h-24 rounded-3xl shadow-lg border-4 border-white mb-6"
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -154,38 +183,40 @@ export default function CaregiverOnboarding() {
 
                     {step === 2 && (
                         <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full text-center">
-                            <h1 className="text-2xl font-serif font-bold text-sage-900 mb-2">Your Relationship</h1>
-                            <p className="text-sage-600 mb-8">How are you related to the person you care for?</p>
+                            <h1 className="text-2xl font-serif font-bold text-sage-900 mb-2">Connect to Elder</h1>
+                            <p className="text-sage-600 mb-8">Enter the pairing code from their device</p>
                             <Card className="space-y-4">
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className="w-10 h-10 bg-cream-100 rounded-xl flex items-center justify-center">
                                         <Users className="w-5 h-5 text-cream-700" />
                                     </div>
-                                    <span className="text-sage-700 font-bold">Relationship</span>
+                                    <span className="text-sage-700 font-bold">Pairing Code</span>
                                 </div>
                                 <input
                                     type="text"
-                                    value={formData.relationship}
-                                    onChange={(e) => handleChange('relationship', e.target.value)}
-                                    placeholder="e.g. Son, Daughter, Spouse"
-                                    className="input focus:border-cream-500"
+                                    maxLength={6}
+                                    value={formData.pairing_code}
+                                    onChange={(e) => {
+                                        const val = e.target.value.toUpperCase()
+                                        handleChange('pairing_code', val)
+                                    }}
+                                    placeholder="e.g. A7B2C9"
+                                    className="input focus:border-cream-500 text-center text-2xl tracking-widest uppercase font-mono"
                                 />
-                                <div className="pt-4">
+                                <div className="pt-2">
                                     <div className="flex items-center gap-3 mb-3">
-                                        <div className="w-10 h-10 bg-sage-100 rounded-xl flex items-center justify-center">
-                                            <Bell className="w-5 h-5 text-sage-600" />
+                                        <div className="w-10 h-10 bg-cream-100 rounded-xl flex items-center justify-center">
+                                            <Users className="w-5 h-5 text-cream-700" />
                                         </div>
-                                        <span className="text-sage-700 font-bold">Notifications</span>
+                                        <span className="text-sage-700 font-bold">Relationship</span>
                                     </div>
-                                    <label className="flex items-center gap-3 bg-sage-50 p-4 rounded-xl cursor-pointer border-2 border-sage-100 hover:border-sage-200 transition-colors">
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.notifications_enabled}
-                                            onChange={(e) => handleChange('notifications_enabled', e.target.checked)}
-                                            className="w-5 h-5 accent-cream-500"
-                                        />
-                                        <span className="text-sage-700 text-sm">Receive alerts about medications and health</span>
-                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.relationship}
+                                        onChange={(e) => handleChange('relationship', e.target.value)}
+                                        placeholder="e.g. Son, Daughter"
+                                        className="input focus:border-cream-500"
+                                    />
                                 </div>
                             </Card>
                         </motion.div>
@@ -248,9 +279,9 @@ export default function CaregiverOnboarding() {
                         </Button>
                     )}
                 </div>
-
-                <p className="text-sage-400 text-sm mt-4 font-medium">Step {step} of 3</p>
             </div>
+
+            <p className="text-sage-400 text-sm mt-4 font-medium">Step {step} of 3</p>
         </div>
     )
 }

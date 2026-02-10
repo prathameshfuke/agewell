@@ -4,12 +4,12 @@ import { CheckCircle, ArrowLeft, AlertTriangle, Edit3, Loader2, ArrowRight } fro
 import { useState, useEffect } from 'react'
 import { api } from '../api/client'
 import FamilyNav from '../components/FamilyNav'
-
-const USER_ID = 1; // Elderly user
+import { useAuth } from '../contexts/AuthContext'
 
 export default function PrescriptionReview() {
     const navigate = useNavigate()
     const location = useLocation()
+    const { profile } = useAuth()
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
     const [medications, setMedications] = useState([])
@@ -51,13 +51,18 @@ export default function PrescriptionReview() {
     }
 
     const handleConfirmAll = async () => {
+        if (!profile?.linked_elderly_id) {
+            alert('No elder linked. Please pair first.')
+            return
+        }
+
         setSaving(true)
 
         try {
             // Add each medication to the backend
             for (const med of medications) {
                 await api.addMedication({
-                    user_id: USER_ID,
+                    user_id: profile.linked_elderly_id,
                     name: med.name,
                     dosage: med.dosage,
                     frequency: med.frequency,
@@ -120,7 +125,7 @@ export default function PrescriptionReview() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.05 }}
                             className={`bg-white rounded-2xl p-5 border-2 ${med.confirmed ? 'border-sage-300 bg-sage-50/50' :
-                                    med.uncertain ? 'border-amber-200' : 'border-sage-100'
+                                med.uncertain ? 'border-amber-200' : 'border-sage-100'
                                 } shadow-sm`}
                         >
                             {/* Medicine Header */}
@@ -253,8 +258,8 @@ export default function PrescriptionReview() {
                     onClick={handleConfirmAll}
                     disabled={saved || saving || medications.length === 0}
                     className={`w-full py-5 rounded-2xl font-bold text-xl flex items-center justify-center gap-3 ${saved
-                            ? 'bg-sage-500 text-white'
-                            : 'bg-sage-800 text-white disabled:opacity-50'
+                        ? 'bg-sage-500 text-white'
+                        : 'bg-sage-800 text-white disabled:opacity-50'
                         }`}
                 >
                     <AnimatePresence mode="wait">

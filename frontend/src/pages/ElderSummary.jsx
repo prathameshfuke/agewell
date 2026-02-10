@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Moon, ChevronRight, Settings, ArrowLeft } from 'lucide-react'
 import ElderNav from '../components/ElderNav'
 import { api } from '../api/client'
+import { useAuth } from '../contexts/AuthContext'
 
 // Import stickers
 import sleepSticker from '../assets/images/stickers/sleep.jpeg'
@@ -10,13 +11,13 @@ import doneSticker from '../assets/images/stickers/done.jpeg'
 import goodmoodSticker from '../assets/images/stickers/goodmood.jpeg'
 import twoSticker from '../assets/images/stickers/two.jpeg'
 
-const USER_ID = 1
-
 export default function ElderSummary() {
     const navigate = useNavigate()
+    const { user } = useAuth()
 
     const handleImOk = async () => {
-        await api.submitCheckIn(USER_ID, 'good')
+        if (!user?.id) return
+        await api.submitCheckIn(user.id, 'good')
         alert("Saved. Your family has been informed.")
     }
 

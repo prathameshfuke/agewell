@@ -12,6 +12,7 @@ import { PageLayout, PageHeader, PageMain, PageSection } from '../components/lay
 import { WeeklyHealthSummary } from '../components/dashboard'
 import QuickActionsGrid from '../components/dashboard/QuickActionsGrid'
 import EnvironmentWidget from '../components/dashboard/EnvironmentWidget'
+import PairingCodeDisplay from '../components/dashboard/PairingCodeDisplay' // New component
 
 // Import stickers
 import goodmoodSticker from '../assets/images/stickers/goodmood.jpeg'
@@ -149,30 +150,12 @@ export default function ElderDashboard() {
   return (
     <PageLayout
       header={
-        <PageHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center gap-4 w-full sm:w-auto">
-              <ProfileDropdown
-                user={user}
-                profile={profile}
-                onLogout={logout}
-                hasCaregiverRole={hasCaregiverRole}
-                onSwitchRole={setActiveRole}
-                triggerImage={
-                  profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <img src={oneSticker} alt="Profile" className="w-full h-full object-cover object-center" />
-                  )
-                }
-              />
-
-              <div className="flex-1 min-w-0">
-                <div className="text-primary text-lg">Good day,</div>
-                <h1 className="text-3xl font-serif font-bold text-primary-dark truncate">{profile?.full_name?.split(' ')[0] || 'Friend'}</h1>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <PageHeader
+          title={`Hello, ${profile?.full_name?.split(' ')[0] || 'User'}`}
+          subtitle="Here's your health summary for today"
+          status={hasCaregiverRole ? 'caregiver' : 'connected'}
+          rightContent={
+            <div className="flex items-center gap-2">
               <IconButton
                 icon={Pill}
                 variant="secondary"
@@ -186,13 +169,21 @@ export default function ElderDashboard() {
                 aria-label="View Notifications"
                 onClick={() => setShowNotifications(true)}
               />
+              <ProfileDropdown user={user} profile={profile} role="elderly" />
             </div>
-          </div>
-        </PageHeader>
+          }
+        />
       }
       nav={<ElderNav onImOk={() => setShowOkModal(true)} />}
     >
       <PageMain>
+        {/* Pairing Code Display - Only show if not linked */}
+        {profile?.pairing_code && !profile.linked_elderly_id && (
+          <PairingCodeDisplay code={profile.pairing_code} />
+        )}
+
+        {/* Quick Actions Grid */}
+        <QuickActionsGrid />
         {/* ADHERENCE + WEEKLY SUMMARY ROW */}
         <PageSection>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -555,6 +546,6 @@ export default function ElderDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
-    </PageLayout>
+    </PageLayout >
   )
 }

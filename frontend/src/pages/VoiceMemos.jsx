@@ -27,8 +27,8 @@ export default function VoiceMemos() {
     const audioRef = useRef(null)
 
     const isCaregiver = profile?.role === 'caregiver'
-    const userId = user?.id || (isCaregiver ? 'mock-caregiver-1' : 'mock-elderly-1')
-    const linkedElderlyId = profile?.linked_elderly_id || 'mock-elderly-1'
+    const userId = user?.id
+    const linkedElderlyId = profile?.linked_elderly_id
 
     useEffect(() => {
         loadMemos()
@@ -327,8 +327,8 @@ export default function VoiceMemos() {
                                             whileTap={{ scale: 0.95 }}
                                             onClick={() => playMemo(memo)}
                                             className={`w-14 h-14 rounded-full flex items-center justify-center ${playingId === memo.id
-                                                    ? 'bg-sage-600 text-white'
-                                                    : 'bg-sage-100 text-sage-600'
+                                                ? 'bg-sage-600 text-white'
+                                                : 'bg-sage-100 text-sage-600'
                                                 }`}
                                         >
                                             {playingId === memo.id ? (

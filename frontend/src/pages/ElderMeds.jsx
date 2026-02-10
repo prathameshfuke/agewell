@@ -8,15 +8,17 @@ import { Card } from '../components/ui'
 import { PageLayout, PageHeader, PageMain, PageSection } from '../components/layout'
 import { api } from '../api/client'
 
+import { useAuth } from '../contexts/AuthContext'
+
 // Import stickers
 import doneSticker from '../assets/images/stickers/done.jpeg'
 import dineSticker from '../assets/images/stickers/dine.jpeg'
 import sleepSticker from '../assets/images/stickers/sleep.jpeg'
 
-const USER_ID = 1;
-
 export default function ElderMeds() {
     const navigate = useNavigate()
+    const { user } = useAuth()
+    const userId = user?.id
 
     const {
         groupedSchedule,
@@ -24,10 +26,11 @@ export default function ElderMeds() {
         error,
         completedMeds,
         pendingMeds
-    } = useMedications(USER_ID)
+    } = useMedications(userId)
 
     const handleImOk = async () => {
-        await api.submitCheckIn(USER_ID, 'good')
+        if (!userId) return
+        await api.submitCheckIn(userId, 'good')
         alert("Saved. Your family has been informed.")
     }
 

@@ -3,8 +3,7 @@ import { motion } from 'framer-motion'
 import { CheckCircle, ArrowLeft } from 'lucide-react'
 import ElderNav from '../components/ElderNav'
 import { api } from '../api/client'
-
-const USER_ID = 1
+import { useAuth } from '../contexts/AuthContext'
 
 const historyData = [
     {
@@ -29,9 +28,11 @@ const historyData = [
 
 export default function ElderHistory() {
     const navigate = useNavigate()
+    const { user } = useAuth()
 
     const handleImOk = async () => {
-        await api.submitCheckIn(USER_ID, 'good')
+        if (!user?.id) return
+        await api.submitCheckIn(user.id, 'good')
         alert("Saved. Your family has been informed.")
     }
 

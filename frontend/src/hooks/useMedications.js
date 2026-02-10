@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
+import { supabase } from '../lib/supabase';
 
 export function useMedications(userId) {
     const [schedule, setSchedule] = useState([]);
@@ -42,10 +43,53 @@ export function useMedications(userId) {
         }
     }, [userId]);
 
+    // Initial fetch
     useEffect(() => {
         fetchSchedule();
         fetchMedications();
     }, [fetchSchedule, fetchMedications]);
+
+    // Real-time subscriptions
+    useEffect(() => {
+        if (!userId || !supabase) return;
+
+        const channel = supabase
+            .channel(`meds-subscription-${userId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'medications',
+                    filter: `user_id=eq.${userId}`
+                },
+                () => {
+                    console.log('Medications changed, reloading...');
+                    fetchMedications();
+                    fetchSchedule();
+                }
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'adherence_logs',
+                    filter: `user_id=eq.${userId}`
+                },
+                () => {
+                    console.log('Adherence logs changed, reloading...');
+                    fetchSchedule();
+                }
+            )
+            .subscribe((status) => {
+                console.log(`Subscription status for ${userId}:`, status);
+            });
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [userId, fetchMedications, fetchSchedule]);
 
     const markAsTaken = async (logId) => {
         // Optimistic update

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, Settings, Clock, Phone, MessageCircle, AlertTriangle, Loader2, Calendar, Heart } from 'lucide-react'
 import { api } from '../api/client'
+import { supabase } from '../lib/supabase'
 import { useActivity } from '../hooks/useActivity'
 import { useNotifications } from '../hooks/useNotifications'
 import FamilyNav from '../components/FamilyNav'
@@ -35,47 +36,103 @@ export default function FamilyDashboard() {
     const [adherenceStats, setAdherenceStats] = useState({ rate: 0, missed: 0 })
     const [adherenceCalendarData, setAdherenceCalendarData] = useState([])
 
-    const { activities, loading: activityLoading, stats } = useActivity(linkedElderlyId)
+    const { activities, loading: activityLoading, stats, refresh: refreshActivity } = useActivity(linkedElderlyId)
     const { unreadCount, notifications } = useNotifications(caregiverId)
 
-    useEffect(() => {
+    // Data loading function wrapped in useCallback for reuse
+    const loadData = useCallback(async () => {
         if (!linkedElderlyId) return
 
-        const loadData = async () => {
-            try {
-                const elderlyProfile = await api.getProfile(linkedElderlyId)
-                const healthRes = await api.getHealthStats(linkedElderlyId)
-                if (healthRes.success) {
-                    setHealthStats(healthRes.stats)
-                }
-
-                const adherenceRes = await api.getAdherenceLogs(linkedElderlyId, 7)
-                if (adherenceRes.success && adherenceRes.logs) {
-                    const taken = adherenceRes.logs.filter(l => l.status === 'taken').length
-                    const missed = adherenceRes.logs.filter(l => l.status === 'missed').length
-                    const total = adherenceRes.logs.length
-                    setAdherenceStats({
-                        rate: total > 0 ? Math.round((taken / total) * 100) : 100,
-                        missed
-                    })
-
-                    // Generate calendar data for heatmap
-                    const calendarData = generateCalendarData(adherenceRes.logs)
-                    setAdherenceCalendarData(calendarData)
-                }
-
-                setElderlyInfo({
-                    name: elderlyProfile?.full_name || 'Your Loved One',
-                    status: 'Active',
-                    summary: 'All systems normal',
-                    detail: 'Last activity 5 min ago',
-                })
-            } catch (err) {
-                console.error('Failed to load data:', err)
+        try {
+            const elderlyProfile = await api.getProfile(linkedElderlyId)
+            const healthRes = await api.getHealthStats(linkedElderlyId)
+            if (healthRes.success) {
+                setHealthStats(healthRes.stats)
             }
+
+            const adherenceRes = await api.getAdherenceLogs(linkedElderlyId, 7)
+            if (adherenceRes.success && adherenceRes.logs) {
+                const taken = adherenceRes.logs.filter(l => l.status === 'taken').length
+                const missed = adherenceRes.logs.filter(l => l.status === 'missed').length
+                const total = adherenceRes.logs.length
+                setAdherenceStats({
+                    rate: total > 0 ? Math.round((taken / total) * 100) : 100,
+                    missed
+                })
+
+                // Generate calendar data for heatmap
+                const calendarData = generateCalendarData(adherenceRes.logs)
+                setAdherenceCalendarData(calendarData)
+            }
+
+            setElderlyInfo({
+                name: elderlyProfile?.full_name || 'Your Loved One',
+                status: 'Active',
+                summary: 'All systems normal',
+                detail: 'Last activity 5 min ago',
+            })
+        } catch (err) {
+            console.error('Failed to load data:', err)
         }
-        loadData()
     }, [linkedElderlyId])
+
+    useEffect(() => {
+        loadData()
+    }, [loadData])
+
+    // Real-time subscriptions
+    useEffect(() => {
+        if (!linkedElderlyId || !supabase) return
+
+        const channel = supabase
+            .channel(`dashboard-subscription-${linkedElderlyId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'adherence_logs',
+                    filter: `user_id=eq.${linkedElderlyId}`
+                },
+                () => {
+                    console.log('Adherence changed, refreshing dashboard...')
+                    loadData()
+                    refreshActivity()
+                }
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'health_readings',
+                    filter: `user_id=eq.${linkedElderlyId}`
+                },
+                () => {
+                    console.log('Health stats changed, refreshing dashboard...')
+                    loadData()
+                    refreshActivity()
+                }
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'alerts',
+                    filter: `user_id=eq.${linkedElderlyId}`
+                },
+                () => {
+                    console.log('Alerts changed, refreshing dashboard...')
+                    refreshActivity()
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [linkedElderlyId, loadData, refreshActivity])
 
     // Generate calendar heatmap data from adherence logs
     const generateCalendarData = (logs) => {

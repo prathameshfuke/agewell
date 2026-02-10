@@ -5,30 +5,77 @@ import { ArrowLeft, CheckCircle, AlertCircle, Clock, Pill, Plus, RefreshCw } fro
 import { api } from '../api/client'
 import FamilyNav from '../components/FamilyNav'
 
+import { useAuth } from '../contexts/AuthContext'
+
 // Import sticker
 import doneSticker from '../assets/images/stickers/done.jpeg'
 
 export default function FamilyMeds() {
     const navigate = useNavigate()
+    const { profile } = useAuth()
     const [medications, setMedications] = useState([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        loadMedications()
-    }, [])
+        if (profile) {
+            loadMedications()
+        }
+    }, [profile])
 
     const loadMedications = async () => {
         setLoading(true)
-        // Get linked elderly's medications
-        const result = await api.getMedications('mock-elderly-1')
-        if (result.success) {
-            // Add mock adherence data
-            const medsWithAdherence = (result.medications || []).map(med => ({
-                ...med,
-                status: Math.random() > 0.3 ? 'consistent' : 'attention',
-                lastWeek: Array(7).fill(0).map(() => Math.random() > 0.2 ? 1 : 0)
-            }))
-            setMedications(medsWithAdherence)
+
+        const elderId = profile?.linked_elderly_id
+
+        if (!elderId) {
+            setLoading(false)
+            return
+        }
+
+        try {
+            // Parallel fetch: Meds + Adherence Logs
+            const [medsRes, logsRes] = await Promise.all([
+                api.getMedications(elderId),
+                api.getAdherenceLogs(elderId, 7) // Last 7 days
+            ])
+
+            if (medsRes.success) {
+                const logs = logsRes.success ? logsRes.logs : []
+                const now = new Date()
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+                const medsWithAdherence = (medsRes.medications || []).map(med => {
+                    // Calculate last 7 days adherence
+                    // Array of 0/1 for last 7 days (including today)
+                    const lastWeek = Array(7).fill(0).map((_, i) => {
+                        const d = new Date(today)
+                        d.setDate(d.getDate() - (6 - i)) // 6 days ago ... to today
+                        const dateStr = d.toISOString().split('T')[0]
+
+                        // Find logs for this med on this date
+                        // Note: logs might have taken_time or created_at
+                        const dayLogs = logs.filter(l =>
+                            (l.medication_id === med.id || l.medication?.id === med.id) &&
+                            (l.taken_at || l.created_at)?.startsWith(dateStr)
+                        )
+
+                        return dayLogs.some(l => l.status === 'taken') ? 1 : 0
+                    })
+
+                    // Calculate status based on recent adherence
+                    const takenCount = lastWeek.filter(x => x === 1).length
+                    const status = takenCount >= 5 ? 'consistent' : 'attention'
+
+                    return {
+                        ...med,
+                        status,
+                        lastWeek
+                    }
+                })
+                setMedications(medsWithAdherence)
+            }
+        } catch (error) {
+            console.error("Error loading meds:", error)
         }
         setLoading(false)
     }
@@ -67,6 +114,19 @@ export default function FamilyMeds() {
                     <div className="bg-white rounded-3xl p-8 border-2 border-sage-100 text-center">
                         <RefreshCw className="w-8 h-8 text-sage-400 animate-spin mx-auto mb-2" />
                         <p className="text-sage-500">Loading medications...</p>
+                    </div>
+                ) : !profile?.linked_elderly_id ? (
+                    <div className="bg-white rounded-3xl p-8 border-2 border-sage-100 text-center">
+                        <AlertCircle className="w-12 h-12 text-sage-400 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-sage-800 mb-2">No Elder Linked</h3>
+                        <p className="text-sage-500 mb-4">You need to pair with an elder to view their medications.</p>
+                        <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => navigate('/family/dashboard')}
+                            className="px-6 py-3 bg-sage-500 text-white rounded-xl font-bold mx-auto"
+                        >
+                            Go to Dashboard to Pair
+                        </motion.button>
                     </div>
                 ) : medications.length === 0 ? (
                     <motion.div
@@ -107,8 +167,8 @@ export default function FamilyMeds() {
                                         </div>
                                     </div>
                                     <div className={`px-3 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 ${med.status === 'consistent'
-                                            ? 'bg-sage-100 text-sage-700'
-                                            : 'bg-amber-100 text-amber-700'
+                                        ? 'bg-sage-100 text-sage-700'
+                                        : 'bg-amber-100 text-amber-700'
                                         }`}>
                                         {med.status === 'consistent' ? (
                                             <><CheckCircle className="w-4 h-4" /> Consistent</>
@@ -126,8 +186,8 @@ export default function FamilyMeds() {
                                             <div
                                                 key={j}
                                                 className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold ${day === 1
-                                                        ? 'bg-sage-200 text-sage-700'
-                                                        : 'bg-rose-100 text-rose-500'
+                                                    ? 'bg-sage-200 text-sage-700'
+                                                    : 'bg-rose-100 text-rose-500'
                                                     }`}
                                             >
                                                 {day === 1 ? '✓' : '✗'}

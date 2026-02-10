@@ -79,11 +79,15 @@ export default function ElderlyOnboarding() {
         setError(null)
 
         try {
+            // Generate a random 6-character pairing code
+            const pairingCode = Math.random().toString(36).substring(2, 8).toUpperCase()
+
             await completeOnboarding('elderly', {
                 full_name: formData.full_name,
                 date_of_birth: formData.date_of_birth || null,
                 emergency_contact_name: formData.emergency_contact_name,
-                emergency_contact_phone: formData.emergency_contact_phone
+                emergency_contact_phone: formData.emergency_contact_phone,
+                pairing_code: pairingCode
             })
             navigate('/elder/dashboard', { replace: true })
         } catch (err) {

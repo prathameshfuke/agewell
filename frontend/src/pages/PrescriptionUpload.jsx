@@ -4,11 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Camera, Image, ArrowLeft, Upload, CheckCircle, Loader2 } from 'lucide-react'
 import { api } from '../api/client'
 import FamilyNav from '../components/FamilyNav'
-
-const USER_ID = 1;
+import { useAuth } from '../contexts/AuthContext'
 
 export default function PrescriptionUpload() {
   const navigate = useNavigate()
+  const { profile } = useAuth()
   const fileInputRef = useRef(null)
   const [preview, setPreview] = useState(null)
   const [file, setFile] = useState(null)
@@ -30,9 +30,14 @@ export default function PrescriptionUpload() {
   const handleUpload = async () => {
     if (!file) return
 
+    if (!profile?.linked_elderly_id) {
+      alert("No elder linked. Please pair first.")
+      return
+    }
+
     setUploading(true)
     try {
-      const result = await api.uploadPrescription(file, USER_ID)
+      const result = await api.uploadPrescription(file, profile.linked_elderly_id)
       if (result.success) {
         setUploadSuccess(true)
         setTimeout(() => {

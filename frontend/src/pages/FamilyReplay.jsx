@@ -3,12 +3,12 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, Calendar, Pill, Heart, AlertCircle, CheckCircle } from 'lucide-react'
 import { useActivity } from '../hooks/useActivity'
 import FamilyNav from '../components/FamilyNav'
-
-const USER_ID = 2; // Caregiver
+import { useAuth } from '../contexts/AuthContext'
 
 export default function FamilyReplay() {
     const navigate = useNavigate()
-    const { activities, grouped, loading, error, stats, selectedDate } = useActivity(USER_ID)
+    const { profile } = useAuth()
+    const { activities, grouped, loading, error, stats, selectedDate } = useActivity(profile?.linked_elderly_id)
 
     const formatDate = (dateStr) => {
         if (!dateStr) {
