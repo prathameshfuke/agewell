@@ -50,6 +50,22 @@ const PageLoader = () => (
     </div>
 )
 
+// Emergency Reset Handler
+const ResetHandler = ({ children }) => {
+    if (window.location.search.includes('reset=true')) {
+        console.warn('Emergency Reset Triggered')
+        localStorage.clear()
+        sessionStorage.clear()
+        // Clear cookies manually if possible, or just redirect
+        document.cookie.split(";").forEach((c) => {
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+        window.location.href = '/' // Force full reload without query param
+        return null
+    }
+    return children
+}
+
 function App() {
     return (
         <AuthProvider>
@@ -59,9 +75,11 @@ function App() {
                     <Routes>
                         {/* HOME - PostLoginResolver redirects authenticated users */}
                         <Route path="/" element={
-                            <PostLoginResolver>
-                                <Home />
-                            </PostLoginResolver>
+                            <ResetHandler>
+                                <PostLoginResolver>
+                                    <Home />
+                                </PostLoginResolver>
+                            </ResetHandler>
                         } />
 
                         {/* AUTH - Open to all */}
