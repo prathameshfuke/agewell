@@ -178,8 +178,8 @@ export function AuthProvider({ children }) {
         const currentRoles = profile?.roles || []
         const newRoles = currentRoles.includes(role) ? currentRoles : [...currentRoles, role]
 
-        // Only update roles in DB, NOT active_role
-        const { data, error } = await supabase
+        // Try Update first
+        let { data, error } = await supabase
             .from('profiles')
             .update({
                 roles: newRoles,
@@ -188,6 +188,26 @@ export function AuthProvider({ children }) {
             .eq('id', user.id)
             .select()
             .single()
+
+        // Handle missing row (PGRST116) by inserting
+        if (error && (error.code === 'PGRST116' || error.message.includes('JSON object requested'))) {
+            console.warn('Profile missing, creating new one...')
+            const { data: insertData, error: insertError } = await supabase
+                .from('profiles')
+                .upsert({
+                    id: user.id,
+                    roles: newRoles,
+                    updated_at: new Date().toISOString(),
+                    full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+                    avatar_url: user.user_metadata?.avatar_url
+                })
+                .select()
+                .single()
+
+            if (insertError) throw insertError
+            data = insertData
+            error = null
+        }
 
         if (error) throw error
         setProfile(data)
@@ -205,8 +225,8 @@ export function AuthProvider({ children }) {
             ? 'onboarding_elder_completed'
             : 'onboarding_caregiver_completed'
 
-        // Only update onboarding status, NOT active_role
-        const { data, error } = await supabase
+        // Try Update first
+        let { data, error } = await supabase
             .from('profiles')
             .update({
                 ...profileData,
@@ -216,6 +236,27 @@ export function AuthProvider({ children }) {
             .eq('id', user.id)
             .select()
             .single()
+
+        // Handle missing row (PGRST116) by inserting
+        if (error && (error.code === 'PGRST116' || error.message.includes('JSON object requested'))) {
+            console.warn('Profile missing during onboarding, creating new one...')
+            const { data: insertData, error: insertError } = await supabase
+                .from('profiles')
+                .upsert({
+                    id: user.id,
+                    ...profileData,
+                    [onboardingField]: true,
+                    updated_at: new Date().toISOString(),
+                    full_name: profileData.full_name || user.user_metadata?.full_name || user.email?.split('@')[0],
+                    avatar_url: user.user_metadata?.avatar_url
+                })
+                .select()
+                .single()
+
+            if (insertError) throw insertError
+            data = insertData
+            error = null
+        }
 
         if (error) {
             console.error('Complete Onboarding Error:', error)

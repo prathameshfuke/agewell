@@ -52,7 +52,7 @@ export default function RoleSelect() {
             }
         } catch (err) {
             console.error('Error:', err)
-            setError('Something went wrong. Please try again.')
+            setError(err.message || 'Something went wrong. Please try again.')
             setLoading(false)
             setSelectedRole(null)
         }
@@ -121,9 +121,8 @@ export default function RoleSelect() {
                         whileTap={{ scale: 0.99 }}
                         onClick={() => handleSelectRole('elderly')}
                         disabled={loading}
-                        className={`bg-white rounded-3xl p-6 text-left border-2 shadow-soft hover:shadow-card-hover transition-all min-h-[120px] ${
-                            selectedRole === 'elderly' ? 'border-sage-500' : hasElderRole ? 'border-sage-300' : 'border-sage-100 hover:border-sage-200'
-                        } ${loading && selectedRole !== 'elderly' ? 'opacity-50' : ''}`}
+                        className={`bg-white rounded-3xl p-6 text-left border-2 shadow-soft hover:shadow-card-hover transition-all min-h-[120px] ${selectedRole === 'elderly' ? 'border-sage-500' : hasElderRole ? 'border-sage-300' : 'border-sage-100 hover:border-sage-200'
+                            } ${loading && selectedRole !== 'elderly' ? 'opacity-50' : ''}`}
                     >
                         <div className="flex items-start gap-4">
                             <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md flex-shrink-0">
@@ -153,9 +152,8 @@ export default function RoleSelect() {
                         whileTap={{ scale: 0.99 }}
                         onClick={() => handleSelectRole('caregiver')}
                         disabled={loading}
-                        className={`bg-white rounded-3xl p-6 text-left border-2 shadow-soft hover:shadow-card-hover transition-all min-h-[120px] ${
-                            selectedRole === 'caregiver' ? 'border-cream-500' : hasCaregiverRole ? 'border-cream-300' : 'border-sage-100 hover:border-cream-200'
-                        } ${loading && selectedRole !== 'caregiver' ? 'opacity-50' : ''}`}
+                        className={`bg-white rounded-3xl p-6 text-left border-2 shadow-soft hover:shadow-card-hover transition-all min-h-[120px] ${selectedRole === 'caregiver' ? 'border-cream-500' : hasCaregiverRole ? 'border-cream-300' : 'border-sage-100 hover:border-cream-200'
+                            } ${loading && selectedRole !== 'caregiver' ? 'opacity-50' : ''}`}
                     >
                         <div className="flex items-start gap-4">
                             <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md flex-shrink-0">
