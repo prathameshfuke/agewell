@@ -1,15 +1,29 @@
 from flask import Blueprint, request, jsonify
-from database import supabase
+from database import db
+from models import SmartDevice
 
-device_bp = Blueprint("device_bp", __name__)
+bp = Blueprint('devices', __name__, url_prefix='/api/devices')
 
-@device_bp.route("/devices", methods=["GET"])
+# Get all devices
+@bp.route('/', methods=['GET'])
 def get_devices():
-    result = supabase.table("dispenser_devices").select("*").execute()
-    return jsonify(result.data)
+    devices = SmartDevice.query.all()
+    return jsonify([d.to_dict() for d in devices])
 
-@device_bp.route("/devices", methods=["POST"])
+
+# Add device
+@bp.route('/', methods=['POST'])
 def add_device():
     data = request.json
-    result = supabase.table("dispenser_devices").insert(data).execute()
-    return jsonify(result.data)
+
+    device = SmartDevice(
+        user_id=data.get("user_id"),
+        device_type=data.get("device_type"),
+        device_name=data.get("device_name"),
+        room=data.get("room")
+    )
+
+    db.session.add(device)
+    db.session.commit()
+
+    return jsonify({"message": "Device added successfully"})

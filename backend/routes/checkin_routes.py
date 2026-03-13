@@ -1,15 +1,26 @@
 from flask import Blueprint, request, jsonify
-from database import supabase
+from database import db
+from models import DailyCheckIn
 
-checkin_bp = Blueprint("checkin_bp", __name__)
+bp = Blueprint('checkins', __name__, url_prefix='/api/checkins')
 
-@checkin_bp.route("/checkins", methods=["GET"])
+@bp.route('/', methods=['GET'])
 def get_checkins():
-    result = supabase.table("wellness_checkins").select("*").execute()
-    return jsonify(result.data)
+    checkins = DailyCheckIn.query.all()
+    return jsonify([c.to_dict() for c in checkins])
 
-@checkin_bp.route("/checkins", methods=["POST"])
+
+@bp.route('/', methods=['POST'])
 def add_checkin():
     data = request.json
-    result = supabase.table("wellness_checkins").insert(data).execute()
-    return jsonify(result.data)
+
+    checkin = DailyCheckIn(
+        user_id=data.get("user_id"),
+        mood=data.get("mood"),
+        status="completed"
+    )
+
+    db.session.add(checkin)
+    db.session.commit()
+
+    return jsonify({"message": "Check-in recorded"})
