@@ -28,7 +28,21 @@ with app.app_context():
     db.create_all()
 
 # Import and register blueprints
-from routes import health_routes, medication_routes, ai_routes, user_routes, prescription_routes, notification_routes, automation_routes
+#from routes import health_routes, medication_routes, ai_routes, user_routes, prescription_routes, notification_routes, automation_routes
+from routes import (
+    health_routes,
+    medication_routes,
+    ai_routes,
+    user_routes,
+    prescription_routes,
+    notification_routes,
+    automation_routes,
+    device_routes,
+    voice_routes,
+    checkin_routes,
+    environmental_routes,
+    adherence_routes
+)
 
 app.register_blueprint(health_routes.bp)
 app.register_blueprint(medication_routes.bp)
@@ -37,6 +51,13 @@ app.register_blueprint(user_routes.bp)
 app.register_blueprint(prescription_routes.bp)
 app.register_blueprint(notification_routes.bp)
 app.register_blueprint(automation_routes.bp)
+
+# New APIs added for additional database tables
+app.register_blueprint(device_routes.bp)          # dispenser_devices
+app.register_blueprint(voice_routes.bp)           # voice_memos
+app.register_blueprint(checkin_routes.bp)         # wellness_checkins
+app.register_blueprint(environmental_routes.bp)   # environmental_readings
+app.register_blueprint(adherence_routes.bp)       # adherence_logs
 
 @app.route('/health', methods=['GET'])
 def health_check():
