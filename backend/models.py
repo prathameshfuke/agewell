@@ -285,3 +285,140 @@ class SmartDevice(db.Model):
             'last_automation_trigger': self.last_automation_trigger,
             'updated_at': self.updated_at.isoformat()
         }
+
+# =========================
+# Emergency Contacts Table
+# =========================
+class EmergencyContact(db.Model):
+    __tablename__ = 'emergency_contacts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    name = db.Column(db.String(100), nullable=False)
+    relationship = db.Column(db.String(50))
+    phone = db.Column(db.String(20), nullable=False)
+    email = db.Column(db.String(100))
+
+    is_primary = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'name': self.name,
+            'relationship': self.relationship,
+            'phone': self.phone,
+            'email': self.email,
+            'is_primary': self.is_primary,
+            'created_at': self.created_at.isoformat()
+        }
+
+
+# =========================
+# Notifications Table
+# =========================
+class Notification(db.Model):
+    __tablename__ = 'notifications'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text)
+    type = db.Column(db.String(50))  # medication, health, alert
+
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'title': self.title,
+            'message': self.message,
+            'type': self.type,
+            'is_read': self.is_read,
+            'created_at': self.created_at.isoformat()
+        }
+
+
+# =========================
+# Messages Table
+# =========================
+class Message(db.Model):
+    __tablename__ = 'messages'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    message_text = db.Column(db.Text, nullable=False)
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    is_read = db.Column(db.Boolean, default=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'sender_id': self.sender_id,
+            'receiver_id': self.receiver_id,
+            'message_text': self.message_text,
+            'sent_at': self.sent_at.isoformat(),
+            'is_read': self.is_read
+        }
+
+
+# =========================
+# Prescription Items Table
+# =========================
+class PrescriptionItem(db.Model):
+    __tablename__ = 'prescription_items'
+
+    id = db.Column(db.Integer, primary_key=True)
+    prescription_id = db.Column(db.Integer, db.ForeignKey('prescriptions.id'), nullable=False)
+
+    medicine_name = db.Column(db.String(200), nullable=False)
+    dosage = db.Column(db.String(100))
+    frequency = db.Column(db.String(100))
+
+    notes = db.Column(db.Text)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'prescription_id': self.prescription_id,
+            'medicine_name': self.medicine_name,
+            'dosage': self.dosage,
+            'frequency': self.frequency,
+            'notes': self.notes
+        }
+
+
+# =========================
+# Daily Activities Table
+# =========================
+class DailyActivity(db.Model):
+    __tablename__ = 'daily_activities'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    activity_type = db.Column(db.String(100))
+    description = db.Column(db.Text)
+
+    activity_time = db.Column(db.DateTime, default=datetime.utcnow)
+
+    status = db.Column(db.String(20), default='completed')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'activity_type': self.activity_type,
+            'description': self.description,
+            'activity_time': self.activity_time.isoformat(),
+            'status': self.status
+        }
