@@ -25,7 +25,7 @@ import { useAuth } from '../contexts/AuthContext'
 
 export default function ElderDashboard() {
   const navigate = useNavigate()
-  const { user, profile, loading: authLoading, logout, roles, setActiveRole } = useAuth()
+  const { user, profile, loading: authLoading, logout, roles } = useAuth()
   const userId = user?.id
   const hasCaregiverRole = roles?.includes('caregiver')
 
@@ -157,7 +157,12 @@ export default function ElderDashboard() {
                 aria-label="View Notifications"
                 onClick={() => setShowNotifications(true)}
               />
-              <ProfileDropdown user={user} profile={profile} role="elderly" />
+              <ProfileDropdown
+                user={user}
+                profile={profile}
+                onLogout={logout}
+                currentRole="elderly"
+              />
             </div>
           }
         />

@@ -28,7 +28,7 @@ with app.app_context():
     db.create_all()
 
 # Import and register blueprints
-from routes import health_routes, medication_routes, ai_routes, user_routes, prescription_routes, notification_routes, automation_routes
+from routes import health_routes, medication_routes, ai_routes, user_routes, prescription_routes, notification_routes, automation_routes, diagnosis_routes
 
 app.register_blueprint(health_routes.bp)
 app.register_blueprint(medication_routes.bp)
@@ -37,6 +37,7 @@ app.register_blueprint(user_routes.bp)
 app.register_blueprint(prescription_routes.bp)
 app.register_blueprint(notification_routes.bp)
 app.register_blueprint(automation_routes.bp)
+app.register_blueprint(diagnosis_routes.bp)
 
 @app.route('/health', methods=['GET'])
 def health_check():

@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Home, Play, Pill, Settings, Users } from 'lucide-react'
+import { Home, Play, Pill, Settings, Users, Stethoscope } from 'lucide-react'
 
 /**
  * FamilyNav - Bottom navigation for caregivers
@@ -52,6 +52,7 @@ export default function FamilyNav() {
         { path: '/family/dashboard', icon: Home, label: 'Home' },
         { path: '/family/day-replay', icon: Play, label: 'Replay' },
         { path: '/family/meds', icon: Pill, label: 'Meds' },
+        { path: '/diagnosis', icon: Stethoscope, label: 'Symptoms' },
         { path: '/family/settings', icon: Settings, label: 'Settings' },
         { path: '/family/members', icon: Users, label: 'Family' },
     ]

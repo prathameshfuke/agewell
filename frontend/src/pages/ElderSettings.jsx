@@ -10,6 +10,7 @@ import {
   Type, 
   Heart,
   Wifi,
+  Key,
   User,
   Shield,
   HelpCircle,
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react'
 import ElderNav from '../components/ElderNav'
 import { useAuth } from '../contexts/AuthContext'
+import { api } from '../api/client'
 
 /**
  * ElderSettings - Settings page optimized for elderly users
@@ -41,6 +43,8 @@ export default function ElderSettings() {
   })
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [apiKeys, setApiKeys] = useState(() => api.getUserApiKeys())
+  const [apiKeyStatus, setApiKeyStatus] = useState('')
 
   const toggleSetting = (key) => {
     setSettings(prev => ({ ...prev, [key]: !prev[key] }))
@@ -90,6 +94,25 @@ export default function ElderSettings() {
   const handleLogout = async () => {
     await logout()
     navigate('/')
+  }
+
+  const handleSaveApiKeys = () => {
+    const result = api.saveUserApiKeys(apiKeys)
+    if (result.success) {
+      setApiKeyStatus('Your API keys were saved on this device.')
+    } else {
+      setApiKeyStatus(result.error || 'Could not save API keys.')
+    }
+  }
+
+  const handleClearApiKeys = () => {
+    const result = api.clearUserApiKeys()
+    if (result.success) {
+      setApiKeys({ groqApiKey: '', geminiApiKey: '' })
+      setApiKeyStatus('API keys were removed from this device.')
+    } else {
+      setApiKeyStatus(result.error || 'Could not clear API keys.')
+    }
   }
 
   return (
@@ -202,6 +225,56 @@ export default function ElderSettings() {
               <HelpCircle className="w-6 h-6" />
               <span>Help & Support</span>
             </motion.button>
+          </div>
+        </SettingCard>
+
+        <SettingCard
+          icon={Key}
+          title="AI API Keys"
+          description="Use your own Groq and Gemini keys for diagnosis features"
+        >
+          <div className="space-y-3 pt-2">
+            <div>
+              <label className="block text-sm font-bold text-primary mb-1">Groq API Key</label>
+              <input
+                type="password"
+                value={apiKeys.groqApiKey}
+                onChange={(e) => setApiKeys((prev) => ({ ...prev, groqApiKey: e.target.value }))}
+                placeholder="gsk_..."
+                className="w-full rounded-xl border-2 border-primary-light/30 px-4 py-3 text-base text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-primary mb-1">Gemini API Key</label>
+              <input
+                type="password"
+                value={apiKeys.geminiApiKey}
+                onChange={(e) => setApiKeys((prev) => ({ ...prev, geminiApiKey: e.target.value }))}
+                placeholder="AIza..."
+                className="w-full rounded-xl border-2 border-primary-light/30 px-4 py-3 text-base text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={handleSaveApiKeys}
+                className="bg-primary text-white font-bold py-3 px-4 rounded-xl"
+              >
+                Save Keys
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={handleClearApiKeys}
+                className="bg-primary-bg text-primary-dark font-bold py-3 px-4 rounded-xl border border-primary-light/40"
+              >
+                Clear Keys
+              </motion.button>
+            </div>
+
+            {apiKeyStatus && (
+              <p className="text-sm text-primary">{apiKeyStatus}</p>
+            )}
           </div>
         </SettingCard>
 

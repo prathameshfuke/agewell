@@ -35,13 +35,26 @@ export default function RoleSelect() {
     const hasElderRole = roles?.includes('elderly')
     const hasCaregiverRole = roles?.includes('caregiver')
 
+    const withTimeout = (promise, ms = 15000, message = 'Request timed out. Please try again.') => {
+        let timeoutId
+        const timeoutPromise = new Promise((_, reject) => {
+            timeoutId = setTimeout(() => reject(new Error(message)), ms)
+        })
+
+        return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId))
+    }
+
     const handleSelectRole = async (role) => {
         setLoading(true)
         setSelectedRole(role)
         setError(null)
 
         try {
-            await addRole(role)
+            await withTimeout(
+                addRole(role),
+                15000,
+                'Role selection is taking too long. Please try again.'
+            )
             setSessionActiveRole(role)
 
             if (!isOnboardingComplete(role)) {
@@ -59,11 +72,14 @@ export default function RoleSelect() {
     }
 
     const handleSignOut = async () => {
+        setLoading(true)
         try {
             await logout()
-            window.location.href = '/'
         } catch (err) {
-            window.location.href = '/'
+            console.error('Sign out warning:', err)
+        } finally {
+            setLoading(false)
+            navigate('/auth', { replace: true })
         }
     }
 
@@ -79,6 +95,7 @@ export default function RoleSelect() {
         <div className="min-h-screen bg-gradient-to-br from-cream-100 via-cream-50 to-sage-100/40 flex flex-col p-6">
             <button
                 onClick={handleSignOut}
+                disabled={loading}
                 className="text-sage-500 hover:text-sage-700 flex items-center gap-2 text-sm font-bold mb-8 min-h-[44px]"
             >
                 <LogOut className="w-5 h-5" /> Sign Out

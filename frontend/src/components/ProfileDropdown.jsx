@@ -6,7 +6,6 @@ import {
   Heart, 
   User, 
   ChevronDown,
-  Shield,
   HelpCircle 
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -27,6 +26,7 @@ export default function ProfileDropdown({
   hasElderRole, 
   hasCaregiverRole,
   onSwitchRole,
+  currentRole,
   triggerImage,
   triggerContent 
 }) {
@@ -35,10 +35,13 @@ export default function ProfileDropdown({
 
   const handleLogout = async () => {
     setIsOpen(false)
+    localStorage.removeItem('activeRole')
     sessionStorage.removeItem('sessionActiveRole')
     sessionStorage.removeItem('intendedRole')
-    await onLogout()
-    navigate('/')
+    if (onLogout) {
+      await onLogout()
+    }
+    navigate('/auth', { replace: true })
   }
 
   const MenuItem = ({ icon: Icon, label, onClick, variant = 'default' }) => {
@@ -130,14 +133,14 @@ export default function ProfileDropdown({
               {/* Menu Items */}
               <div className="py-2">
                 {/* Role Switcher for dual-role users */}
-                {hasElderRole && (
+                {hasElderRole && onSwitchRole && (
                   <>
                     <MenuItem
                       icon={Heart}
                       label="Switch to Elder View"
                       onClick={async () => {
                         await onSwitchRole('elderly')
-                        navigate('/elder/dashboard')
+                        navigate('/elder/dashboard', { replace: true })
                       }}
                       variant="primary"
                     />
@@ -145,14 +148,14 @@ export default function ProfileDropdown({
                   </>
                 )}
 
-                {hasCaregiverRole && (
+                {hasCaregiverRole && onSwitchRole && (
                   <>
                     <MenuItem
                       icon={Heart}
                       label="Switch to Caregiver View"
                       onClick={async () => {
                         await onSwitchRole('caregiver')
-                        navigate('/family/dashboard')
+                        navigate('/family/dashboard', { replace: true })
                       }}
                       variant="primary"
                     />
@@ -165,7 +168,7 @@ export default function ProfileDropdown({
                   icon={Settings}
                   label="Settings"
                   onClick={() => {
-                    const path = hasCaregiverRole && !hasElderRole 
+                    const path = currentRole === 'caregiver'
                       ? '/family/settings' 
                       : '/elder/settings'
                     navigate(path)

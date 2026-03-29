@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Home, Pill, Activity, AlertTriangle, Settings } from 'lucide-react'
+import { Home, Pill, Activity, AlertTriangle, Stethoscope } from 'lucide-react'
 
 /**
  * ElderNav - Bottom navigation for elderly users
@@ -85,6 +85,8 @@ export default function ElderNav({ onImOk }) {
             </motion.button>
 
             <NavItem path="/elder/health" icon={Activity} label="Health" />
+
+            <NavItem path="/diagnosis" icon={Stethoscope} label="Symptoms" />
 
             {/* SOS - Emergency Button with High Visibility */}
             <NavItem 

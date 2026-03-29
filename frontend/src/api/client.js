@@ -4,21 +4,63 @@
 import { supabase, db, isSupabaseConfigured } from '../lib/supabase'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api'
+const USER_GROQ_KEY_STORAGE = 'agewell_user_groq_api_key'
+const USER_GEMINI_KEY_STORAGE = 'agewell_user_gemini_api_key'
 
 // Check if we should use Supabase or mock/local API
 const useSupabase = isSupabaseConfigured()
 
+const getStoredUserApiKeys = () => {
+    if (typeof window === 'undefined') {
+        return { groqApiKey: '', geminiApiKey: '' }
+    }
+
+    return {
+        groqApiKey: (localStorage.getItem(USER_GROQ_KEY_STORAGE) || '').trim(),
+        geminiApiKey: (localStorage.getItem(USER_GEMINI_KEY_STORAGE) || '').trim(),
+    }
+}
+
 // Helper for fetch requests to local backend
 const fetchApi = async (endpoint, options = {}) => {
     try {
+        const providedHeaders = options.headers || {}
+        const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
+        const { groqApiKey, geminiApiKey } = getStoredUserApiKeys()
+
+        const headers = {
+            ...providedHeaders
+        }
+
+        if (!isFormData && !headers['Content-Type']) {
+            headers['Content-Type'] = 'application/json'
+        }
+
+        if (groqApiKey) {
+            headers['X-User-Groq-Key'] = groqApiKey
+        }
+
+        if (geminiApiKey) {
+            headers['X-User-Gemini-Key'] = geminiApiKey
+        }
+
         const response = await fetch(`${API_URL}${endpoint}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            },
+            headers,
             ...options
         })
-        const data = await response.json()
+
+        const contentType = response.headers.get('content-type') || ''
+        const data = contentType.includes('application/json')
+            ? await response.json()
+            : await response.text()
+
+        if (!response.ok) {
+            if (typeof data === 'object' && data !== null) {
+                return { success: false, ...data }
+            }
+            return { success: false, error: data || `Request failed with status ${response.status}` }
+        }
+
         return data
     } catch (error) {
         console.error('API Error:', error)
@@ -36,6 +78,50 @@ const mockData = {
 
 // Unified API interface
 export const api = {
+    // ====== USER AI KEYS (LOCAL) ======
+    getUserApiKeys: () => getStoredUserApiKeys(),
+
+    saveUserApiKeys: ({ groqApiKey = '', geminiApiKey = '' } = {}) => {
+        try {
+            if (typeof window === 'undefined') {
+                return { success: false, error: 'Not available outside browser context.' }
+            }
+
+            const normalizedGroq = (groqApiKey || '').trim()
+            const normalizedGemini = (geminiApiKey || '').trim()
+
+            if (normalizedGroq) {
+                localStorage.setItem(USER_GROQ_KEY_STORAGE, normalizedGroq)
+            } else {
+                localStorage.removeItem(USER_GROQ_KEY_STORAGE)
+            }
+
+            if (normalizedGemini) {
+                localStorage.setItem(USER_GEMINI_KEY_STORAGE, normalizedGemini)
+            } else {
+                localStorage.removeItem(USER_GEMINI_KEY_STORAGE)
+            }
+
+            return { success: true }
+        } catch (error) {
+            return { success: false, error: error.message }
+        }
+    },
+
+    clearUserApiKeys: () => {
+        try {
+            if (typeof window === 'undefined') {
+                return { success: false, error: 'Not available outside browser context.' }
+            }
+
+            localStorage.removeItem(USER_GROQ_KEY_STORAGE)
+            localStorage.removeItem(USER_GEMINI_KEY_STORAGE)
+            return { success: true }
+        } catch (error) {
+            return { success: false, error: error.message }
+        }
+    },
+
     // ====== MEDICATIONS ======
     getMedications: async (userId) => {
         if (useSupabase) {
@@ -81,15 +167,29 @@ export const api = {
     },
 
     // ====== SCHEDULE / ADHERENCE ======
-    getTodaySchedule: async (userId) => {
-        if (useSupabase) {
-            try {
-                const logs = await db.adherence.getToday(userId)
-                return { success: true, schedule: logs }
-            } catch (error) {
-                return { success: false, error: error.message }
-            }
+    getSchedule: async (userId, date = null) => {
+        const params = new URLSearchParams()
+        if (date) {
+            const normalizedDate = date instanceof Date
+                ? date.toISOString().split('T')[0]
+                : date
+            params.set('date', normalizedDate)
         }
+
+        const query = params.toString()
+        const endpoint = `/medications/schedule/${userId}${query ? `?${query}` : ''}`
+
+        if (useSupabase) {
+            // Schedule generation and adherence-log linkage is handled by Flask.
+            return fetchApi(endpoint, { method: 'GET' })
+        }
+
+        // Prefer real backend in local mode as well.
+        const backendResult = await fetchApi(endpoint, { method: 'GET' })
+        if (backendResult?.success) {
+            return backendResult
+        }
+
         // Mock schedule based on current time
         const now = new Date()
         const schedule = mockData.medications.flatMap(med =>
@@ -101,6 +201,10 @@ export const api = {
             }))
         )
         return { success: true, schedule }
+    },
+
+    getTodaySchedule: async (userId) => {
+        return api.getSchedule(userId)
     },
 
     markTaken: async (logId, status = 'taken') => {
@@ -278,10 +382,23 @@ export const api = {
     },
 
     // ====== OCR (uses local backend) ======
-    uploadPrescription: async (imageData) => {
+    uploadPrescription: async (imageData, userId) => {
+        if (typeof FormData !== 'undefined' && (imageData instanceof File || imageData instanceof Blob)) {
+            const formData = new FormData()
+            formData.append('file', imageData)
+            if (userId) {
+                formData.append('user_id', userId)
+            }
+
+            return fetchApi('/prescriptions/upload', {
+                method: 'POST',
+                body: formData
+            })
+        }
+
         return fetchApi('/prescriptions/upload', {
             method: 'POST',
-            body: JSON.stringify({ image: imageData })
+            body: JSON.stringify({ image: imageData, user_id: userId })
         })
     },
 
@@ -289,6 +406,77 @@ export const api = {
         return fetchApi('/prescriptions/process', {
             method: 'POST',
             body: JSON.stringify({ image_url: imageUrl })
+        })
+    },
+
+    // ====== ASSISTIVE DIAGNOSIS (Flask backend) ======
+    startDiagnosisSession: async (patientId, rawComplaint) => {
+        return fetchApi('/diagnosis/start', {
+            method: 'POST',
+            body: JSON.stringify({
+                patient_id: patientId,
+                raw_complaint: rawComplaint
+            })
+        })
+    },
+
+    submitDiagnosisAnswer: async (sessionId, currentQuestion, answer) => {
+        return fetchApi('/diagnosis/answer', {
+            method: 'POST',
+            body: JSON.stringify({
+                session_id: sessionId,
+                current_question: currentQuestion,
+                answer
+            })
+        })
+    },
+
+    uploadDiagnosisImage: async (sessionId, imageFile) => {
+        const formData = new FormData()
+        formData.append('session_id', sessionId)
+        formData.append('image', imageFile)
+
+        return fetchApi('/diagnosis/upload-image', {
+            method: 'POST',
+            body: formData
+        })
+    },
+
+    generateDiagnosisReport: async (sessionId, medications = [], patientName = 'Patient') => {
+        return fetchApi('/diagnosis/generate-report', {
+            method: 'POST',
+            body: JSON.stringify({
+                session_id: sessionId,
+                medications,
+                patient_name: patientName
+            })
+        })
+    },
+
+    getDiagnosisHistory: async (patientId) => {
+        return fetchApi(`/diagnosis/history/${patientId}`, {
+            method: 'GET'
+        })
+    },
+
+    getDiagnosisAuditLog: async (sessionId) => {
+        return fetchApi(`/diagnosis/audit/${sessionId}`, {
+            method: 'GET'
+        })
+    },
+
+    getDiagnosisPdfUrl: (sessionId, patientName = 'Patient') => {
+        const params = new URLSearchParams({ patient_name: patientName })
+        return `${API_URL}/diagnosis/export-pdf/${sessionId}?${params.toString()}`
+    },
+
+    shareDiagnosisReport: async (sessionId, patientName = 'Patient') => {
+        return fetchApi('/diagnosis/share', {
+            method: 'POST',
+            body: JSON.stringify({
+                session_id: sessionId,
+                patient_name: patientName
+            })
         })
     },
 

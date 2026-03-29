@@ -37,6 +37,13 @@ const PrescriptionReview = lazy(() => import('./pages/PrescriptionReview'))
 const HealthMonitor = lazy(() => import('./pages/HealthMonitor'))
 const DispenserSetup = lazy(() => import('./pages/DispenserSetup'))
 
+// Diagnosis Pages
+const DiagnosisHome = lazy(() => import('./pages/Diagnosis/DiagnosisHome'))
+const SymptomInput = lazy(() => import('./pages/Diagnosis/SymptomInput'))
+const QAFlow = lazy(() => import('./pages/Diagnosis/QAFlow'))
+const DiagnosisReport = lazy(() => import('./pages/Diagnosis/DiagnosisReport'))
+const DiagnosisHistory = lazy(() => import('./pages/Diagnosis/DiagnosisHistory'))
+
 // Voice Memos (Shared or specific? Looks shared based on imports previously, but path was 'pages/VoiceMemos')
 const VoiceMemos = lazy(() => import('./pages/VoiceMemos'))
 
@@ -158,6 +165,23 @@ function App() {
                         {/* SHARED */}
                         <Route path="/dispenser/setup" element={
                             <AuthGuard><DispenserSetup /></AuthGuard>
+                        } />
+
+                        {/* ASSISTIVE DIAGNOSIS - Protected */}
+                        <Route path="/diagnosis" element={
+                            <ProtectedRoute><DiagnosisHome /></ProtectedRoute>
+                        } />
+                        <Route path="/diagnosis/input" element={
+                            <ProtectedRoute><SymptomInput /></ProtectedRoute>
+                        } />
+                        <Route path="/diagnosis/qa" element={
+                            <ProtectedRoute><QAFlow /></ProtectedRoute>
+                        } />
+                        <Route path="/diagnosis/report" element={
+                            <ProtectedRoute><DiagnosisReport /></ProtectedRoute>
+                        } />
+                        <Route path="/diagnosis/history" element={
+                            <ProtectedRoute><DiagnosisHistory /></ProtectedRoute>
                         } />
 
                         {/* CATCH-ALL */}

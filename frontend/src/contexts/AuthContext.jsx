@@ -16,10 +16,23 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
     const [profile, setProfile] = useState(null)
     const [sessionActiveRole, setSessionActiveRoleState] = useState(() => {
-        return localStorage.getItem('activeRole')
+        return localStorage.getItem('activeRole') || sessionStorage.getItem('sessionActiveRole')
     })
     const [loading, setLoading] = useState(true)
     const [initialized, setInitialized] = useState(false)
+
+    const withTimeout = useCallback(async (promise, ms = 15000, message = 'Request timed out. Please try again.') => {
+        let timeoutId
+        const timeoutPromise = new Promise((_, reject) => {
+            timeoutId = setTimeout(() => reject(new Error(message)), ms)
+        })
+
+        try {
+            return await Promise.race([promise, timeoutPromise])
+        } finally {
+            clearTimeout(timeoutId)
+        }
+    }, [])
 
     // Fetch profile from database
     const fetchProfile = useCallback(async (userId) => {
@@ -55,11 +68,29 @@ export function AuthProvider({ children }) {
     const setSessionActiveRole = useCallback((role) => {
         if (role) {
             localStorage.setItem('activeRole', role)
+            sessionStorage.setItem('sessionActiveRole', role)
         } else {
             localStorage.removeItem('activeRole')
+            sessionStorage.removeItem('sessionActiveRole')
         }
         setSessionActiveRoleState(role)
     }, [])
+
+    // Backward-compatible role setter used by existing pages/components.
+    const setActiveRole = useCallback(async (role) => {
+        if (!role) {
+            setSessionActiveRole(null)
+            return null
+        }
+
+        const availableRoles = Array.isArray(profile?.roles) ? profile.roles : []
+        if (availableRoles.length > 0 && !availableRoles.includes(role)) {
+            throw new Error('This role is not available for your account.')
+        }
+
+        setSessionActiveRole(role)
+        return role
+    }, [profile, setSessionActiveRole])
 
     // Initialize auth — single source of truth via onAuthStateChange
     useEffect(() => {
@@ -92,6 +123,18 @@ export function AuthProvider({ children }) {
                 const profileData = await fetchProfile(session.user.id)
                 if (mounted) {
                     setProfile(profileData)
+
+                    const storedRole = localStorage.getItem('activeRole') || sessionStorage.getItem('sessionActiveRole')
+                    const rolesFromProfile = Array.isArray(profileData?.roles) ? profileData.roles : []
+
+                    if (storedRole && rolesFromProfile.length > 0 && !rolesFromProfile.includes(storedRole)) {
+                        setSessionActiveRole(null)
+                    } else if (!storedRole && rolesFromProfile.length === 1) {
+                        setSessionActiveRole(rolesFromProfile[0])
+                    } else if (storedRole && sessionActiveRole !== storedRole) {
+                        setSessionActiveRole(storedRole)
+                    }
+
                     setLoading(false)
                     setInitialized(true)
                 }
@@ -114,7 +157,7 @@ export function AuthProvider({ children }) {
             clearTimeout(timeout)
             subscription.unsubscribe()
         }
-    }, [fetchProfile, setSessionActiveRole])
+    }, [fetchProfile, sessionActiveRole, setSessionActiveRole])
 
     // Login with Google
     const login = async () => {
@@ -164,12 +207,21 @@ export function AuthProvider({ children }) {
 
     // Logout
     const logout = async () => {
-        await signOut()
-        setSessionActiveRole(null)
-        setUser(null)
-        setProfile(null)
-        // Explicitly clear storage just in case
-        localStorage.removeItem('activeRole')
+        try {
+            if (supabase) {
+                await supabase.auth.signOut({ scope: 'local' })
+            } else {
+                await signOut()
+            }
+        } catch (err) {
+            console.error('Logout warning:', err)
+        } finally {
+            setSessionActiveRole(null)
+            setUser(null)
+            setProfile(null)
+            localStorage.removeItem('activeRole')
+            sessionStorage.removeItem('sessionActiveRole')
+        }
     }
 
     // Add role to user (Persistent)
@@ -180,30 +232,38 @@ export function AuthProvider({ children }) {
         const newRoles = currentRoles.includes(role) ? currentRoles : [...currentRoles, role]
 
         // Try Update first
-        let { data, error } = await supabase
-            .from('profiles')
-            .update({
-                roles: newRoles,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', user.id)
-            .select()
-            .single()
+        let { data, error } = await withTimeout(
+            supabase
+                .from('profiles')
+                .update({
+                    roles: newRoles,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', user.id)
+                .select()
+                .single(),
+            15000,
+            'Saving role is taking too long. Please check your connection and try again.'
+        )
 
         // Handle missing row (PGRST116) by inserting
         if (error && (error.code === 'PGRST116' || error.message.includes('JSON object requested'))) {
             console.warn('Profile missing, creating new one...')
-            const { data: insertData, error: insertError } = await supabase
-                .from('profiles')
-                .upsert({
-                    id: user.id,
-                    roles: newRoles,
-                    updated_at: new Date().toISOString(),
-                    full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
-                    avatar_url: user.user_metadata?.avatar_url
-                })
-                .select()
-                .single()
+            const { data: insertData, error: insertError } = await withTimeout(
+                supabase
+                    .from('profiles')
+                    .upsert({
+                        id: user.id,
+                        roles: newRoles,
+                        updated_at: new Date().toISOString(),
+                        full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+                        avatar_url: user.user_metadata?.avatar_url
+                    })
+                    .select()
+                    .single(),
+                15000,
+                'Creating your profile is taking too long. Please try again.'
+            )
 
             if (insertError) throw insertError
             data = insertData
@@ -227,32 +287,40 @@ export function AuthProvider({ children }) {
             : 'onboarding_caregiver_completed'
 
         // Try Update first
-        let { data, error } = await supabase
-            .from('profiles')
-            .update({
-                ...profileData,
-                [onboardingField]: true,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', user.id)
-            .select()
-            .single()
+        let { data, error } = await withTimeout(
+            supabase
+                .from('profiles')
+                .update({
+                    ...profileData,
+                    [onboardingField]: true,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', user.id)
+                .select()
+                .single(),
+            15000,
+            'Saving onboarding data is taking too long. Please try again.'
+        )
 
         // Handle missing row (PGRST116) by inserting
         if (error && (error.code === 'PGRST116' || error.message.includes('JSON object requested'))) {
             console.warn('Profile missing during onboarding, creating new one...')
-            const { data: insertData, error: insertError } = await supabase
-                .from('profiles')
-                .upsert({
-                    id: user.id,
-                    ...profileData,
-                    [onboardingField]: true,
-                    updated_at: new Date().toISOString(),
-                    full_name: profileData.full_name || user.user_metadata?.full_name || user.email?.split('@')[0],
-                    avatar_url: user.user_metadata?.avatar_url
-                })
-                .select()
-                .single()
+            const { data: insertData, error: insertError } = await withTimeout(
+                supabase
+                    .from('profiles')
+                    .upsert({
+                        id: user.id,
+                        ...profileData,
+                        [onboardingField]: true,
+                        updated_at: new Date().toISOString(),
+                        full_name: profileData.full_name || user.user_metadata?.full_name || user.email?.split('@')[0],
+                        avatar_url: user.user_metadata?.avatar_url
+                    })
+                    .select()
+                    .single(),
+                15000,
+                'Creating onboarding profile is taking too long. Please try again.'
+            )
 
             if (insertError) throw insertError
             data = insertData
@@ -310,6 +378,7 @@ export function AuthProvider({ children }) {
         signupWithEmail,
         logout,
         addRole,
+        setActiveRole,
         setSessionActiveRole, // Expose this explicit setter
         completeOnboarding,
         refreshProfile,

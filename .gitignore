@@ -20,6 +20,9 @@ build/
 .env
 .env.local
 .env.production
+backend/.env
+backend/.env.*
+!backend/.env.example
 
 # Node
 node_modules/
