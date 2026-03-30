@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { AlertTriangle, CheckCircle, Download, Share2 } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, CheckCircle, Download, Share2 } from 'lucide-react'
 
 import { api } from '../../api/client'
 import { useAuth } from '../../contexts/AuthContext'
@@ -40,6 +40,10 @@ export default function DiagnosisReport() {
         return location.state?.patient_name || profile?.full_name || user?.user_metadata?.full_name || 'Patient'
     }, [location.state, profile, user])
 
+    const goBack = () => {
+        navigate('/diagnosis/history')
+    }
+
     const handleDownloadPdf = () => {
         if (!sessionId) return
         const url = api.getDiagnosisPdfUrl(sessionId, patientName)
@@ -66,7 +70,17 @@ export default function DiagnosisReport() {
             <PageLayout
                 header={
                     <PageHeader>
-                        <h1 className="text-2xl font-serif font-bold text-sage-900">Diagnosis Report</h1>
+                        <div className="flex items-center gap-3">
+                            <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                onClick={goBack}
+                                className="p-3 rounded-xl text-sage-600 hover:bg-sage-100"
+                                aria-label="Back to history"
+                            >
+                                <ArrowLeft className="w-6 h-6" />
+                            </motion.button>
+                            <h1 className="text-2xl font-serif font-bold text-sage-900">Diagnosis Report</h1>
+                        </div>
                     </PageHeader>
                 }
                 nav={activeRole === 'caregiver' ? <FamilyNav /> : <ElderNav onImOk={() => { }} />}
@@ -85,9 +99,21 @@ export default function DiagnosisReport() {
         <PageLayout
             header={
                 <PageHeader>
-                    <div className="text-sage-500 text-sm font-bold uppercase tracking-wider mb-1">Assistive Diagnosis</div>
-                    <h1 className="text-3xl font-serif font-bold text-sage-900">Symptom Summary Report</h1>
-                    <p className="text-sage-500 text-lg mt-1">Prepared for doctor discussion.</p>
+                    <div className="flex items-start gap-3">
+                        <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={goBack}
+                            className="p-3 rounded-xl text-sage-600 hover:bg-sage-100"
+                            aria-label="Back to history"
+                        >
+                            <ArrowLeft className="w-6 h-6" />
+                        </motion.button>
+                        <div>
+                            <div className="text-sage-500 text-sm font-bold uppercase tracking-wider mb-1">Assistive Diagnosis</div>
+                            <h1 className="text-3xl font-serif font-bold text-sage-900">Symptom Summary Report</h1>
+                            <p className="text-sage-500 text-lg mt-1">Prepared for doctor discussion.</p>
+                        </div>
+                    </div>
                 </PageHeader>
             }
             nav={activeRole === 'caregiver' ? <FamilyNav /> : <ElderNav onImOk={() => { }} />}

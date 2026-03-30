@@ -1,7 +1,6 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Pill, CheckCircle, Clock, HelpCircle } from 'lucide-react'
+import { ArrowLeft, Pill, CheckCircle, Clock, HelpCircle } from 'lucide-react'
 import { useMedications } from '../hooks/useMedications'
 import ElderNav from '../components/ElderNav'
 import { Card } from '../components/ui'
@@ -63,11 +62,23 @@ export default function ElderMeds() {
         <PageLayout
             header={
                 <PageHeader>
-                    <div className="text-sage-500 text-sm font-bold uppercase tracking-wider mb-1">AgeWell+</div>
-                    <h1 className="text-3xl font-serif font-bold text-sage-900">Today's Medicines</h1>
-                    <p className="text-sage-500 text-lg mt-1">
-                        {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                    </p>
+                    <div className="flex items-start gap-3">
+                        <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => navigate('/elder/dashboard')}
+                            className="p-3 rounded-xl text-sage-600 hover:bg-sage-100"
+                            aria-label="Back to dashboard"
+                        >
+                            <ArrowLeft className="w-6 h-6" />
+                        </motion.button>
+                        <div>
+                            <div className="text-sage-500 text-sm font-bold uppercase tracking-wider mb-1">AgeWell+</div>
+                            <h1 className="text-3xl font-serif font-bold text-sage-900">Today's Medicines</h1>
+                            <p className="text-sage-500 text-lg mt-1">
+                                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                            </p>
+                        </div>
+                    </div>
                 </PageHeader>
             }
             nav={<ElderNav onImOk={handleImOk} />}

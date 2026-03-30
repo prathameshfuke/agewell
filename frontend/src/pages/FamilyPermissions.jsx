@@ -17,7 +17,7 @@ export default function FamilyPermissions() {
     }
 
     return (
-        <div className="min-h-screen bg-[#F0F4FF] font-sans pb-24">
+        <div className="min-h-screen bg-[#F0F4FF] font-sans pb-24 md:pb-0">
             <header className="px-6 py-6 sticky top-0 bg-[#F0F4FF]/90 backdrop-blur-sm z-10">
                 <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Privacy</div>
                 <h1 className="font-romelio text-2xl text-slate-900">Permissions</h1>

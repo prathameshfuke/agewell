@@ -56,7 +56,7 @@ export function PageHeader({ children, className = '' }) {
  */
 export function PageMain({ children, className = '' }) {
   return (
-    <main className={`flex-1 px-3 sm:px-4 py-3 sm:py-4 md:px-6 pb-24 sm:pb-28 md:pb-32 space-y-4 sm:space-y-5 md:space-y-6 ${className}`}>
+    <main className={`flex-1 px-3 sm:px-4 py-3 sm:py-4 md:px-6 pb-24 md:pb-0 space-y-4 sm:space-y-5 md:space-y-6 ${className}`}>
       {children}
     </main>
   )

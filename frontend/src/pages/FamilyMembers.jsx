@@ -14,7 +14,7 @@ export default function FamilyMembers() {
     const navigate = useNavigate()
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-cream-50 via-sage-50 to-cream-100 font-sans pb-24 relative overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-cream-50 via-sage-50 to-cream-100 font-sans pb-24 md:pb-0 relative overflow-hidden">
             {/* Background elements */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-sage-100/40 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 

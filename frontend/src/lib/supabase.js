@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 
 // Check if environment variables are properly set
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''
 
 // Validate configuration
 export const isSupabaseConfigured = () => {
@@ -25,7 +25,7 @@ export const supabase = isSupabaseConfigured()
     : null
 
 if (!isSupabaseConfigured()) {
-    console.warn('Supabase not configured. Running in demo mode.')
+    console.warn('Supabase not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (or VITE_SUPABASE_PUBLISHABLE_KEY). Running in demo mode.')
 }
 
 // Auth helpers

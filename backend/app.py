@@ -15,6 +15,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///agewell.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['UPLOAD_FOLDER'] = 'uploads/prescriptions'
+app.config['DEBUG_TB_ENABLED'] = False
+app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
 # Initialize database
 db.init_app(app)
@@ -28,7 +30,18 @@ with app.app_context():
     db.create_all()
 
 # Import and register blueprints
-from routes import health_routes, medication_routes, ai_routes, user_routes, prescription_routes, notification_routes, automation_routes, diagnosis_routes
+from routes import (
+    health_routes,
+    medication_routes,
+    ai_routes,
+    user_routes,
+    prescription_routes,
+    notification_routes,
+    automation_routes,
+    diagnosis_routes,
+    linking_routes,
+    settings_routes,
+)
 
 app.register_blueprint(health_routes.bp)
 app.register_blueprint(medication_routes.bp)
@@ -38,6 +51,8 @@ app.register_blueprint(prescription_routes.bp)
 app.register_blueprint(notification_routes.bp)
 app.register_blueprint(automation_routes.bp)
 app.register_blueprint(diagnosis_routes.bp)
+app.register_blueprint(linking_routes.bp)
+app.register_blueprint(settings_routes.bp)
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -58,4 +73,4 @@ def index():
     })
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=os.getenv('FLASK_DEBUG', '0') == '1', host='0.0.0.0', port=5001)

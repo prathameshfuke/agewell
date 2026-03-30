@@ -32,6 +32,26 @@ export default function WeeklyHealthSummary({
     return 'Stable'
   }
 
+  const summaryTiles = [
+    {
+      key: 'avg-hr',
+      title: 'Avg HR',
+      value: averageHeartRate,
+      suffix: 'bpm',
+    },
+    {
+      key: 'avg-steps',
+      title: 'Avg Steps',
+      value: averageSteps,
+      suffix: 'daily',
+    },
+    {
+      key: 'trend',
+      title: 'Trend',
+      custom: true,
+    },
+  ]
+
   return (
     <Card className={className}>
       <CardHeader
@@ -55,29 +75,33 @@ export default function WeeklyHealthSummary({
 
       {/* Stats Row - Mobile-first: stack on tiny screens, 3 cols from xs up */}
       <div className="grid grid-cols-1 xs:grid-cols-3 gap-2 xs:gap-3">
-        <div className="bg-sage-50 rounded-xl p-3 text-center">
-          <div className="text-sage-500 text-xs font-bold uppercase tracking-wide mb-1 break-words">Avg HR</div>
-          <div className="text-xl sm:text-2xl font-bold text-sage-800">
-            {averageHeartRate ? <AnimatedCounter value={averageHeartRate} /> : <span className="text-sage-400">--</span>}
-          </div>
-          <div className="text-sage-400 text-xs break-words">bpm</div>
-        </div>
+        {summaryTiles.map((tile, index) => (
+          <motion.div
+            key={tile.key}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 + index * 0.06 }}
+            className="bg-sage-50 rounded-2xl p-3 text-center border border-sage-100"
+          >
+            <div className="text-sage-500 text-[11px] font-semibold uppercase tracking-wide mb-1 break-words">
+              {tile.title}
+            </div>
 
-        <div className="bg-sage-50 rounded-xl p-3 text-center">
-          <div className="text-sage-500 text-xs font-bold uppercase tracking-wide mb-1 break-words">Avg Steps</div>
-          <div className="text-xl sm:text-2xl font-bold text-sage-800">
-            {averageSteps ? <AnimatedCounter value={averageSteps} /> : <span className="text-sage-400">--</span>}
-          </div>
-          <div className="text-sage-400 text-xs break-words">daily</div>
-        </div>
-
-        <div className="bg-sage-50 rounded-xl p-3 text-center">
-          <div className="text-sage-500 text-xs font-bold uppercase tracking-wide mb-1 break-words">Trend</div>
-          <div className="flex items-center justify-center gap-1">
-            {getTrendIcon()}
-            <span className="text-sm font-bold text-sage-700 break-words">{getTrendText()}</span>
-          </div>
-        </div>
+            {tile.custom ? (
+              <div className="flex items-center justify-center gap-1">
+                {getTrendIcon()}
+                <span className="text-sm font-bold text-sage-700 break-words">{getTrendText()}</span>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl sm:text-3xl font-bold text-sage-800 leading-none">
+                  {tile.value ? <AnimatedCounter value={tile.value} /> : <span className="text-sage-400">--</span>}
+                </div>
+                <div className="text-sage-500 text-xs break-words mt-1">{tile.suffix}</div>
+              </>
+            )}
+          </motion.div>
+        ))}
       </div>
     </Card>
   )

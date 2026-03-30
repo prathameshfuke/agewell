@@ -168,7 +168,7 @@ export default function VoiceMemos() {
     }
 
     return (
-        <div className="min-h-screen bg-cream-50 font-sans pb-8">
+        <div className="min-h-screen bg-cream-50 font-sans pb-24 md:pb-0">
             {/* Hidden audio element for playback */}
             <audio
                 ref={audioRef}

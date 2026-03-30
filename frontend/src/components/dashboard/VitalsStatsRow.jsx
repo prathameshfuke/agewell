@@ -73,32 +73,34 @@ export default function VitalsStatsRow({
           key={stat.label}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
+          transition={{ delay: index * 0.08 }}
           className={`
-            ${stat.bgColor} ${stat.borderColor}
-            p-4 rounded-2xl border-2
+            bg-white border border-sage-200
+            p-4 sm:p-5 rounded-2xl shadow-soft
           `}
         >
-          <div className="flex items-center justify-between mb-2">
-            <div className={`w-8 h-8 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
+          <div className="flex items-center justify-between mb-3">
+            <div className={`w-9 h-9 rounded-xl ${stat.bgColor} flex items-center justify-center`}>
               <stat.icon className={`w-4 h-4 ${stat.iconColor}`} />
             </div>
             {getTrendIcon(stat.trend)}
           </div>
-          <div className="text-sage-500 text-xs font-bold uppercase tracking-wide mb-1">
+
+          <div className="text-sage-600 text-xs font-semibold uppercase tracking-wide mb-1">
             {stat.label}
           </div>
-          <div className="flex items-baseline gap-1">
+
+          <div className="flex items-baseline gap-1.5">
             {stat.isString ? (
-              <span className="text-xl font-bold text-sage-900">{stat.value}</span>
+              <span className="text-2xl sm:text-3xl font-bold text-sage-900 leading-none">{stat.value}</span>
             ) : stat.value != null ? (
-              <span className="text-xl font-bold text-sage-900">
+              <span className="text-2xl sm:text-3xl font-bold text-sage-900 leading-none">
                 <AnimatedCounter value={stat.value} suffix={stat.suffix || ''} />
               </span>
             ) : (
-              <span className="text-xl font-bold text-sage-400">--</span>
+              <span className="text-2xl sm:text-3xl font-bold text-sage-400 leading-none">--</span>
             )}
-            <span className="text-sage-400 text-xs">{stat.unit}</span>
+            <span className="text-sage-500 text-xs">{stat.unit}</span>
           </div>
         </motion.div>
       ))}

@@ -95,7 +95,7 @@ export default function HealthMonitor() {
     const tempStatus = getVitalStatus('temperature', healthData?.body_temperature)
 
     return (
-        <div className="min-h-screen bg-cream-50 font-sans pb-8">
+        <div className="min-h-screen bg-cream-50 font-sans pb-24 md:pb-0">
             {/* Header */}
             <header className="px-6 py-5 flex items-center gap-4 bg-cream-50 sticky top-0 z-10">
                 <motion.button

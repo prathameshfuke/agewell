@@ -1,43 +1,135 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { supabase, signInWithGoogle, signOut, isSupabaseConfigured } from '../lib/supabase'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
 
 const AuthContext = createContext({})
 
-/**
- * HEALTHCARE-GRADE Authentication Context
- * 
- * - User Identity: Persistent (Database)
- * - User Profile: Persistent (Database)
- * - Active Role: SESSION ONLY (sessionStorage) - NEVER persistent
- * 
- * This ensures no role leakage between shared devices/sessions.
- */
+const ROLE_ALIASES = {
+    elder: 'elderly',
+    elderly: 'elderly',
+    caregiver: 'caregiver'
+}
+
+function normalizeRole(role) {
+    if (!role || typeof role !== 'string') return null
+    return ROLE_ALIASES[role.trim().toLowerCase()] || null
+}
+
+function getStoredRole() {
+    const raw = localStorage.getItem('activeRole') || sessionStorage.getItem('sessionActiveRole')
+    return normalizeRole(raw)
+}
+
+function buildRoleList(profileData) {
+    const fromArray = Array.isArray(profileData?.roles) ? profileData.roles : []
+    const fromLegacyField = profileData?.role ? [profileData.role] : []
+
+    const normalized = []
+    for (const rawRole of [...fromArray, ...fromLegacyField]) {
+        const roleText = String(rawRole || '').trim().toLowerCase()
+        if (!roleText) continue
+
+        if (roleText === 'both') {
+            normalized.push('elderly', 'caregiver')
+            continue
+        }
+
+        const normalizedRole = normalizeRole(roleText)
+        if (normalizedRole) {
+            normalized.push(normalizedRole)
+        }
+    }
+
+    return [...new Set(normalized)]
+}
+
+function hasCompletedOnboarding(profileData, role) {
+    if (!profileData || !role) return false
+
+    const hasName = Boolean(profileData.full_name && profileData.full_name.trim().length > 0)
+    if (!hasName) return false
+
+    if (profileData.onboarding_completed === true) {
+        return true
+    }
+
+    if (role === 'elderly') {
+        return profileData.onboarding_elder_completed === true
+    }
+
+    if (role === 'caregiver') {
+        return profileData.onboarding_caregiver_completed === true
+    }
+
+    return false
+}
+
+function resolveSelectedRole(profileData, preferredRole = null) {
+    const roles = buildRoleList(profileData)
+    const candidates = [
+        normalizeRole(preferredRole),
+        normalizeRole(profileData?.active_role),
+        getStoredRole()
+    ]
+
+    for (const candidate of candidates) {
+        if (!candidate) continue
+        if (roles.length === 0 || roles.includes(candidate)) {
+            return candidate
+        }
+    }
+
+    if (roles.length === 1) {
+        return roles[0]
+    }
+
+    return null
+}
+
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
     const [profile, setProfile] = useState(null)
-    const [sessionActiveRole, setSessionActiveRoleState] = useState(() => {
-        return localStorage.getItem('activeRole') || sessionStorage.getItem('sessionActiveRole')
-    })
+    const [activeRole, setActiveRoleState] = useState(() => getStoredRole())
+    const [onboardingComplete, setOnboardingComplete] = useState(false)
     const [loading, setLoading] = useState(true)
     const [initialized, setInitialized] = useState(false)
 
-    const withTimeout = useCallback(async (promise, ms = 15000, message = 'Request timed out. Please try again.') => {
-        let timeoutId
-        const timeoutPromise = new Promise((_, reject) => {
-            timeoutId = setTimeout(() => reject(new Error(message)), ms)
-        })
+    const setSessionActiveRole = useCallback((role) => {
+        const normalizedRole = normalizeRole(role)
 
-        try {
-            return await Promise.race([promise, timeoutPromise])
-        } finally {
-            clearTimeout(timeoutId)
+        if (normalizedRole) {
+            localStorage.setItem('activeRole', normalizedRole)
+            sessionStorage.setItem('sessionActiveRole', normalizedRole)
+        } else {
+            localStorage.removeItem('activeRole')
+            sessionStorage.removeItem('sessionActiveRole')
         }
+
+        setActiveRoleState(normalizedRole)
     }, [])
 
-    // Fetch profile from database
-    const fetchProfile = useCallback(async (userId) => {
+    const clearAuthState = useCallback(() => {
+        setUser(null)
+        setProfile(null)
+        setSessionActiveRole(null)
+        setOnboardingComplete(false)
+    }, [setSessionActiveRole])
+
+    const applyProfileState = useCallback((profileData, preferredRole = null) => {
+        setProfile(profileData)
+
+        const selectedRole = resolveSelectedRole(profileData, preferredRole)
+        setSessionActiveRole(selectedRole)
+        setOnboardingComplete(hasCompletedOnboarding(profileData, selectedRole))
+
+        return selectedRole
+    }, [setSessionActiveRole])
+
+    const fetchProfile = useCallback(async (userId, preferredRole = null) => {
+        if (!supabase || !userId) {
+            return null
+        }
+
         try {
-            // Fetching profile
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
@@ -45,56 +137,42 @@ export function AuthProvider({ children }) {
                 .single()
 
             if (error) {
+                if (error.code === 'PGRST116') {
+                    setProfile(null)
+                    setSessionActiveRole(null)
+                    setOnboardingComplete(false)
+                    return null
+                }
+
                 console.error('Profile fetch error:', error)
                 return null
             }
-            // Profile fetched successfully
+
+            applyProfileState(data, preferredRole)
             return data
         } catch (err) {
             console.error('Profile fetch exception:', err)
             return null
         }
-    }, [])
+    }, [applyProfileState, setSessionActiveRole])
 
-    // Refresh profile from database
     const refreshProfile = useCallback(async () => {
         if (!user) return null
-        const data = await fetchProfile(user.id)
-        if (data) setProfile(data)
-        return data
-    }, [user, fetchProfile])
+        return fetchProfile(user.id, activeRole)
+    }, [user, fetchProfile, activeRole])
 
-    // Update Session Active Role (State + Storage)
-    const setSessionActiveRole = useCallback((role) => {
-        if (role) {
-            localStorage.setItem('activeRole', role)
-            sessionStorage.setItem('sessionActiveRole', role)
-        } else {
-            localStorage.removeItem('activeRole')
-            sessionStorage.removeItem('sessionActiveRole')
-        }
-        setSessionActiveRoleState(role)
-    }, [])
-
-    // Backward-compatible role setter used by existing pages/components.
-    const setActiveRole = useCallback(async (role) => {
-        if (!role) {
-            setSessionActiveRole(null)
-            return null
+    const syncSession = useCallback(async (session, preferredRole = null) => {
+        if (!session?.user) {
+            clearAuthState()
+            return
         }
 
-        const availableRoles = Array.isArray(profile?.roles) ? profile.roles : []
-        if (availableRoles.length > 0 && !availableRoles.includes(role)) {
-            throw new Error('This role is not available for your account.')
-        }
+        setUser(session.user)
+        await fetchProfile(session.user.id, preferredRole)
+    }, [clearAuthState, fetchProfile])
 
-        setSessionActiveRole(role)
-        return role
-    }, [profile, setSessionActiveRole])
-
-    // Initialize auth — single source of truth via onAuthStateChange
     useEffect(() => {
-        if (!isSupabaseConfigured()) {
+        if (!isSupabaseConfigured() || !supabase) {
             setLoading(false)
             setInitialized(true)
             return
@@ -102,65 +180,57 @@ export function AuthProvider({ children }) {
 
         let mounted = true
 
-        // Safety timeout: if auth takes more than 5 seconds, stop loading
-        const timeout = setTimeout(() => {
-            if (mounted && loading) {
-                console.warn('Auth initialization timed out after 5s')
-                setLoading(false)
-                setInitialized(true)
-            }
-        }, 5000)
+        const initializeAuth = async () => {
+            setLoading(true)
+            try {
+                const { data, error } = await supabase.auth.getSession()
+                if (error) {
+                    console.error('Session restore error:', error)
+                }
 
-        // Single listener handles ALL auth events including page reload
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+                if (!mounted) return
+                await syncSession(data?.session || null)
+            } catch (err) {
+                console.error('Session initialization failed:', err)
+            } finally {
+                if (mounted) {
+                    setLoading(false)
+                    setInitialized(true)
+                }
+            }
+        }
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (!mounted) return
 
-            console.log('Auth event:', event, !!session)
-
-            if (session?.user) {
-                setUser(session.user)
-                // Fetch profile on any session event
-                const profileData = await fetchProfile(session.user.id)
-                if (mounted) {
-                    setProfile(profileData)
-
-                    const storedRole = localStorage.getItem('activeRole') || sessionStorage.getItem('sessionActiveRole')
-                    const rolesFromProfile = Array.isArray(profileData?.roles) ? profileData.roles : []
-
-                    if (storedRole && rolesFromProfile.length > 0 && !rolesFromProfile.includes(storedRole)) {
-                        setSessionActiveRole(null)
-                    } else if (!storedRole && rolesFromProfile.length === 1) {
-                        setSessionActiveRole(rolesFromProfile[0])
-                    } else if (storedRole && sessionActiveRole !== storedRole) {
-                        setSessionActiveRole(storedRole)
+            void (async () => {
+                setLoading(true)
+                try {
+                    if (event === 'SIGNED_OUT') {
+                        clearAuthState()
+                    } else {
+                        await syncSession(session || null)
                     }
-
-                    setLoading(false)
-                    setInitialized(true)
+                } finally {
+                    if (mounted) {
+                        setLoading(false)
+                        setInitialized(true)
+                    }
                 }
-            } else {
-                // No session (signed out or no user)
-                setUser(null)
-                setProfile(null)
-                if (event === 'SIGNED_OUT') {
-                    setSessionActiveRole(null)
-                }
-                if (mounted) {
-                    setLoading(false)
-                    setInitialized(true)
-                }
-            }
+            })()
         })
+
+        void initializeAuth()
 
         return () => {
             mounted = false
-            clearTimeout(timeout)
             subscription.unsubscribe()
         }
-    }, [fetchProfile, sessionActiveRole, setSessionActiveRole])
+    }, [clearAuthState, syncSession])
 
-    // Login with Google
     const login = async () => {
+        if (!supabase) throw new Error('Supabase not configured')
+
         await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
@@ -170,24 +240,25 @@ export function AuthProvider({ children }) {
         })
     }
 
-    // Login with Email
     const loginWithEmail = async (email, password) => {
-        // Attempting email login
+        if (!supabase) throw new Error('Supabase not configured')
+
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password
         })
+
         if (error) {
             console.error('Supabase Email Login Error:', error)
             throw error
         }
-        // Login success
+
         return data
     }
 
-    // Signup with Email
     const signupWithEmail = async (email, password) => {
-        // Attempting email signup
+        if (!supabase) throw new Error('Supabase not configured')
+
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -197,194 +268,219 @@ export function AuthProvider({ children }) {
                 }
             }
         })
+
         if (error) {
             console.error('Supabase Email Signup Error:', error)
             throw error
         }
-        // Signup success
+
         return data
     }
 
-    // Logout
-    const logout = async () => {
-        try {
-            if (supabase) {
-                await supabase.auth.signOut({ scope: 'local' })
-            } else {
-                await signOut()
-            }
-        } catch (err) {
-            console.error('Logout warning:', err)
-        } finally {
+    const signOutUser = useCallback(async () => {
+        if (!supabase) {
+            clearAuthState()
+            return
+        }
+
+        const { error } = await supabase.auth.signOut({ scope: 'local' })
+        if (error) {
+            console.error('Logout warning:', error)
+            throw error
+        }
+    }, [clearAuthState])
+
+    const addRole = useCallback(async (role) => {
+        if (!user) throw new Error('Not authenticated')
+        if (!supabase) throw new Error('Supabase not configured')
+
+        const normalizedRole = normalizeRole(role)
+        if (!normalizedRole) throw new Error('Invalid role selected.')
+
+        const currentRoles = buildRoleList(profile)
+        const updatedRoles = currentRoles.includes(normalizedRole)
+            ? currentRoles
+            : [...currentRoles, normalizedRole]
+
+        const { data, error } = await supabase
+            .from('profiles')
+            .upsert({
+                id: user.id,
+                roles: updatedRoles,
+                active_role: normalizedRole,
+                full_name: profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || null,
+                avatar_url: profile?.avatar_url || user.user_metadata?.avatar_url || null,
+                updated_at: new Date().toISOString()
+            })
+            .select('*')
+            .single()
+
+        if (error) {
+            throw error
+        }
+
+        applyProfileState(data, normalizedRole)
+        return data
+    }, [user, profile, applyProfileState])
+
+    const updateRole = useCallback(async (role) => {
+        const normalizedRole = normalizeRole(role)
+
+        if (!normalizedRole) {
             setSessionActiveRole(null)
-            setUser(null)
-            setProfile(null)
-            localStorage.removeItem('activeRole')
-            sessionStorage.removeItem('sessionActiveRole')
+            setOnboardingComplete(false)
+            return null
         }
-    }
 
-    // Add role to user (Persistent)
-    const addRole = async (role) => {
-        if (!user) throw new Error('Not authenticated')
+        const availableRoles = buildRoleList(profile)
+        if (availableRoles.length > 0 && !availableRoles.includes(normalizedRole)) {
+            throw new Error('This role is not available for your account.')
+        }
 
-        const currentRoles = profile?.roles || []
-        const newRoles = currentRoles.includes(role) ? currentRoles : [...currentRoles, role]
+        setSessionActiveRole(normalizedRole)
+        setOnboardingComplete(hasCompletedOnboarding(profile, normalizedRole))
 
-        // Try Update first
-        let { data, error } = await withTimeout(
-            supabase
+        if (!user || !supabase) {
+            return normalizedRole
+        }
+
+        let { data, error } = await supabase
+            .from('profiles')
+            .update({
+                active_role: normalizedRole,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id)
+            .select('*')
+            .single()
+
+        if (error && error.code === 'PGRST116') {
+            const { data: upserted, error: upsertError } = await supabase
                 .from('profiles')
-                .update({
-                    roles: newRoles,
+                .upsert({
+                    id: user.id,
+                    active_role: normalizedRole,
+                    roles: availableRoles.length > 0 ? availableRoles : [normalizedRole],
+                    full_name: profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || null,
+                    avatar_url: profile?.avatar_url || user.user_metadata?.avatar_url || null,
                     updated_at: new Date().toISOString()
                 })
-                .eq('id', user.id)
-                .select()
-                .single(),
-            15000,
-            'Saving role is taking too long. Please check your connection and try again.'
-        )
+                .select('*')
+                .single()
 
-        // Handle missing row (PGRST116) by inserting
-        if (error && (error.code === 'PGRST116' || error.message.includes('JSON object requested'))) {
-            console.warn('Profile missing, creating new one...')
-            const { data: insertData, error: insertError } = await withTimeout(
-                supabase
-                    .from('profiles')
-                    .upsert({
-                        id: user.id,
-                        roles: newRoles,
-                        updated_at: new Date().toISOString(),
-                        full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
-                        avatar_url: user.user_metadata?.avatar_url
-                    })
-                    .select()
-                    .single(),
-                15000,
-                'Creating your profile is taking too long. Please try again.'
-            )
-
-            if (insertError) throw insertError
-            data = insertData
-            error = null
+            data = upserted
+            error = upsertError
         }
 
-        if (error) throw error
-        setProfile(data)
+        if (error) {
+            throw error
+        }
 
-        // Also set as active for this session
-        setSessionActiveRole(role)
-        return data
-    }
+        applyProfileState(data, normalizedRole)
+        return normalizedRole
+    }, [profile, user, setSessionActiveRole, applyProfileState])
 
-    // Complete onboarding for a role
-    const completeOnboarding = async (role, profileData = {}) => {
+    const completeOnboarding = useCallback(async (roleOrProfileData, maybeProfileData = {}) => {
         if (!user) throw new Error('Not authenticated')
+        if (!supabase) throw new Error('Supabase not configured')
 
-        const onboardingField = role === 'elderly'
-            ? 'onboarding_elder_completed'
-            : 'onboarding_caregiver_completed'
+        const explicitRole = typeof roleOrProfileData === 'string'
+            ? normalizeRole(roleOrProfileData)
+            : normalizeRole(activeRole)
 
-        // Try Update first
-        let { data, error } = await withTimeout(
-            supabase
-                .from('profiles')
-                .update({
-                    ...profileData,
-                    [onboardingField]: true,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', user.id)
-                .select()
-                .single(),
-            15000,
-            'Saving onboarding data is taking too long. Please try again.'
-        )
+        const targetRole = explicitRole || activeRole
+        const profileData = typeof roleOrProfileData === 'string'
+            ? maybeProfileData
+            : roleOrProfileData || {}
 
-        // Handle missing row (PGRST116) by inserting
-        if (error && (error.code === 'PGRST116' || error.message.includes('JSON object requested'))) {
-            console.warn('Profile missing during onboarding, creating new one...')
-            const { data: insertData, error: insertError } = await withTimeout(
-                supabase
-                    .from('profiles')
-                    .upsert({
-                        id: user.id,
-                        ...profileData,
-                        [onboardingField]: true,
-                        updated_at: new Date().toISOString(),
-                        full_name: profileData.full_name || user.user_metadata?.full_name || user.email?.split('@')[0],
-                        avatar_url: user.user_metadata?.avatar_url
-                    })
-                    .select()
-                    .single(),
-                15000,
-                'Creating onboarding profile is taking too long. Please try again.'
-            )
+        const roleList = buildRoleList(profile)
+        const nextRoles = targetRole && !roleList.includes(targetRole)
+            ? [...roleList, targetRole]
+            : roleList
 
-            if (insertError) throw insertError
-            data = insertData
-            error = null
+        const updatePayload = {
+            ...profileData,
+            onboarding_completed: true,
+            updated_at: new Date().toISOString()
         }
+
+        if (targetRole === 'elderly') {
+            updatePayload.onboarding_elder_completed = true
+        }
+
+        if (targetRole === 'caregiver') {
+            updatePayload.onboarding_caregiver_completed = true
+        }
+
+        if (targetRole) {
+            updatePayload.active_role = targetRole
+        }
+
+        if (nextRoles.length > 0) {
+            updatePayload.roles = nextRoles
+        }
+
+        const { data, error } = await supabase
+            .from('profiles')
+            .upsert({
+                id: user.id,
+                full_name: updatePayload.full_name || profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || null,
+                avatar_url: updatePayload.avatar_url || profile?.avatar_url || user.user_metadata?.avatar_url || null,
+                ...updatePayload
+            })
+            .select('*')
+            .single()
 
         if (error) {
             console.error('Complete Onboarding Error:', error)
             throw error
         }
-        setProfile(data)
 
-        // Ensure session role is set
-        setSessionActiveRole(role)
+        applyProfileState(data, targetRole)
         return data
-    }
+    }, [user, profile, activeRole, applyProfileState])
 
-    // Check if onboarding is complete for a role
-    const isOnboardingComplete = (role) => {
-        if (!profile) return false
+    const isOnboardingComplete = useCallback((role) => {
+        const roleToCheck = normalizeRole(role || activeRole)
+        if (!roleToCheck) return false
 
-        // Strict check against boolean true
-        if (role === 'elderly') {
-            return profile.onboarding_elder_completed === true
+        if (roleToCheck === activeRole) {
+            return onboardingComplete
         }
-        if (role === 'caregiver') {
-            return profile.onboarding_caregiver_completed === true
-        }
-        return false
-    }
 
-    // Computed values
-    const isAuthenticated = !!user
-    const roles = profile?.roles || []
-    // activeRole is NOW purely session-based
-    const activeRole = sessionActiveRole
+        return hasCompletedOnboarding(profile, roleToCheck)
+    }, [activeRole, onboardingComplete, profile])
+
+    const isAuthenticated = Boolean(user)
+    const roles = buildRoleList(profile)
     const hasAnyRole = roles.length > 0
 
     const value = {
-        // State
         user,
         profile,
+        role: activeRole,
+        activeRole,
+        roles,
         loading,
         initialized,
-
-        // Computed
+        onboardingComplete,
         isAuthenticated,
-        roles,
-        activeRole, // This is now sessionActiveRole
         hasAnyRole,
 
-        // Actions
         login,
         loginWithEmail,
         signupWithEmail,
-        logout,
+        signOut: signOutUser,
+        logout: signOutUser,
         addRole,
-        setActiveRole,
-        setSessionActiveRole, // Expose this explicit setter
+        updateRole,
+        setActiveRole: updateRole,
+        setSessionActiveRole,
         completeOnboarding,
         refreshProfile,
+        fetchProfile,
         isOnboardingComplete,
 
-        // Legacy compat (if any)
         hasRole: hasAnyRole,
         isConfigured: isSupabaseConfigured()
     }

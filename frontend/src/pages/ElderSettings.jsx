@@ -116,7 +116,7 @@ export default function ElderSettings() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary via-primary-bg to-secondary pb-32">
+    <div className="min-h-screen bg-gradient-to-br from-secondary via-primary-bg to-secondary pb-24 md:pb-0">
       {/* Header */}
       <header className="sticky top-0 bg-white/95 backdrop-blur-lg border-b-2 border-primary-light/30 px-6 py-5 z-40">
         <div className="flex items-center gap-4">

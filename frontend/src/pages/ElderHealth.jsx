@@ -59,7 +59,7 @@ export default function ElderHealth() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-cream-50 via-white to-sage-50 font-sans pb-28">
+        <div className="min-h-screen bg-gradient-to-br from-cream-50 via-white to-sage-50 font-sans pb-24 md:pb-0">
             {/* Header */}
             <header className="px-5 py-5 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-sage-100">
                 <div className="flex items-center gap-3">

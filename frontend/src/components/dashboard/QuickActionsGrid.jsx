@@ -1,16 +1,27 @@
 import { motion } from 'framer-motion'
-import { Heart, History, AlertTriangle, Mic } from 'lucide-react'
+import { Heart, History, AlertTriangle, Stethoscope } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 /**
- * QuickActionsGrid - 4-card navigation grid for elderly dashboard
+ * QuickActionsGrid - focused 4-card actions for elderly dashboard
  * 
- * Provides quick access to Health, History, Emergency, and Voice Memos
+ * Keeps primary tasks obvious and simple for elder users.
  */
 export default function QuickActionsGrid({ className = '' }) {
   const navigate = useNavigate()
 
   const actions = [
+    {
+      icon: Stethoscope,
+      label: 'Symptoms',
+      description: 'Check now',
+      path: '/diagnosis/input',
+      color: 'sage',
+      bgColor: 'bg-sage-50',
+      iconColor: 'text-sage-600',
+      borderColor: 'border-sage-100',
+      hoverBg: 'hover:bg-sage-100',
+    },
     {
       icon: Heart,
       label: 'Health',
@@ -21,17 +32,6 @@ export default function QuickActionsGrid({ className = '' }) {
       iconColor: 'text-sage-600',
       borderColor: 'border-sage-100',
       hoverBg: 'hover:bg-sage-100',
-    },
-    {
-      icon: History,
-      label: 'History',
-      description: 'Med logs',
-      path: '/elder/meds/history',
-      color: 'cream',
-      bgColor: 'bg-cream-50',
-      iconColor: 'text-cream-700',
-      borderColor: 'border-cream-200',
-      hoverBg: 'hover:bg-cream-100',
     },
     {
       icon: AlertTriangle,
@@ -45,15 +45,15 @@ export default function QuickActionsGrid({ className = '' }) {
       hoverBg: 'hover:bg-rose-100',
     },
     {
-      icon: Mic,
-      label: 'Voice',
-      description: 'Record memo',
-      path: '/elder/voice-memos',
-      color: 'amber',
-      bgColor: 'bg-amber-50',
-      iconColor: 'text-amber-600',
-      borderColor: 'border-amber-100',
-      hoverBg: 'hover:bg-amber-100',
+      icon: History,
+      label: 'History',
+      description: 'Med logs',
+      path: '/elder/meds/history',
+      color: 'cream',
+      bgColor: 'bg-cream-50',
+      iconColor: 'text-cream-700',
+      borderColor: 'border-cream-200',
+      hoverBg: 'hover:bg-cream-100',
     },
   ]
 

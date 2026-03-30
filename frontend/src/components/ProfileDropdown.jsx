@@ -3,12 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Settings, 
   LogOut, 
-  Heart, 
+  Link2,
   User, 
   ChevronDown,
   HelpCircle 
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import RoleSwitcher from './RoleSwitcher'
 
 /**
  * ProfileDropdown - Accessible profile menu for elderly users
@@ -33,10 +34,20 @@ export default function ProfileDropdown({
   const navigate = useNavigate()
   const [isOpen, setIsOpen] = useState(false)
 
+  const availableRoles = [
+    hasElderRole ? 'elderly' : null,
+    hasCaregiverRole ? 'caregiver' : null,
+  ].filter(Boolean)
+
+  const handleRoleSwitch = async (targetRole) => {
+    if (!onSwitchRole) return
+    await onSwitchRole(targetRole)
+    const nextPath = targetRole === 'caregiver' ? '/family/dashboard' : '/elder/dashboard'
+    navigate(nextPath, { replace: true })
+  }
+
   const handleLogout = async () => {
     setIsOpen(false)
-    localStorage.removeItem('activeRole')
-    sessionStorage.removeItem('sessionActiveRole')
     sessionStorage.removeItem('intendedRole')
     if (onLogout) {
       await onLogout()
@@ -132,47 +143,29 @@ export default function ProfileDropdown({
 
               {/* Menu Items */}
               <div className="py-2">
-                {/* Role Switcher for dual-role users */}
-                {hasElderRole && onSwitchRole && (
-                  <>
-                    <MenuItem
-                      icon={Heart}
-                      label="Switch to Elder View"
-                      onClick={async () => {
-                        await onSwitchRole('elderly')
-                        navigate('/elder/dashboard', { replace: true })
-                      }}
-                      variant="primary"
+                {onSwitchRole && availableRoles.length > 1 && (
+                  <div className="px-5 pb-2">
+                    <RoleSwitcher
+                      currentRole={currentRole}
+                      availableRoles={availableRoles}
+                      onSwitch={handleRoleSwitch}
                     />
-                    <Divider />
-                  </>
+                  </div>
                 )}
 
-                {hasCaregiverRole && onSwitchRole && (
-                  <>
-                    <MenuItem
-                      icon={Heart}
-                      label="Switch to Caregiver View"
-                      onClick={async () => {
-                        await onSwitchRole('caregiver')
-                        navigate('/family/dashboard', { replace: true })
-                      }}
-                      variant="primary"
-                    />
-                    <Divider />
-                  </>
-                )}
+                {(onSwitchRole && availableRoles.length > 1) && <Divider />}
 
                 {/* Settings */}
                 <MenuItem
                   icon={Settings}
                   label="Settings"
-                  onClick={() => {
-                    const path = currentRole === 'caregiver'
-                      ? '/family/settings' 
-                      : '/elder/settings'
-                    navigate(path)
-                  }}
+                  onClick={() => navigate('/settings')}
+                />
+
+                <MenuItem
+                  icon={Link2}
+                  label="Caregiver Link"
+                  onClick={() => navigate('/link')}
                 />
 
                 {/* Help */}

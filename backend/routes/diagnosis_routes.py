@@ -14,6 +14,7 @@ from services.groq_service import (
 from services.gemini_service import analyze_medical_image
 from services.notification_service import NotificationService
 from services.pdf_service import generate_diagnosis_pdf
+from services.settings_service import get_user_setting
 
 bp = Blueprint('diagnosis', __name__, url_prefix='/api/diagnosis')
 
@@ -21,10 +22,30 @@ notification_service = NotificationService()
 MAX_SESSIONS_PER_DAY = 5
 
 
-def _get_user_ai_keys():
+def _get_header_ai_keys():
     return {
         'groq_api_key': (request.headers.get('X-User-Groq-Key') or '').strip(),
         'gemini_api_key': (request.headers.get('X-User-Gemini-Key') or '').strip(),
+    }
+
+
+def _safe_user_setting_lookup(user_id: str, key_name: str) -> str:
+    try:
+        return (get_user_setting(user_id, key_name) or '').strip()
+    except Exception as exc:
+        print(f'Warning: unable to read app setting {key_name} for {user_id}: {exc}')
+        return ''
+
+
+def _resolve_user_ai_keys(patient_id: str):
+    header_keys = _get_header_ai_keys()
+
+    if not patient_id:
+        return header_keys
+
+    return {
+        'groq_api_key': header_keys['groq_api_key'] or _safe_user_setting_lookup(patient_id, 'GROQ_API_KEY'),
+        'gemini_api_key': header_keys['gemini_api_key'] or _safe_user_setting_lookup(patient_id, 'GEMINI_API_KEY'),
     }
 
 
@@ -45,7 +66,7 @@ def start_session():
         if not raw_complaint:
             return jsonify({'error': 'Complaint cannot be empty'}), 400
 
-        ai_keys = _get_user_ai_keys()
+        ai_keys = _resolve_user_ai_keys(patient_id)
 
         daily_count = session_store.get_daily_count(patient_id)
         if daily_count >= MAX_SESSIONS_PER_DAY:
@@ -106,7 +127,7 @@ def submit_answer():
         if not current_question:
             return jsonify({'error': 'current_question is required'}), 400
 
-        ai_keys = _get_user_ai_keys()
+        ai_keys = _resolve_user_ai_keys(session['patient_id'])
 
         updated_session = session_store.append_qa(session_id, current_question, answer)
         if not updated_session:
@@ -159,7 +180,7 @@ def upload_image():
         if 'image' not in request.files:
             return jsonify({'error': 'No image provided'}), 400
 
-        ai_keys = _get_user_ai_keys()
+        ai_keys = _resolve_user_ai_keys(session['patient_id'])
 
         image_bytes = request.files['image'].read()
         result = analyze_medical_image(image_bytes, api_key=ai_keys['gemini_api_key'])
@@ -199,11 +220,11 @@ def generate_report():
         if not session_id:
             return jsonify({'error': 'session_id is required'}), 400
 
-        ai_keys = _get_user_ai_keys()
-
         session = session_store.get_session(session_id)
         if not session:
             return jsonify({'error': 'Session not found'}), 404
+
+        ai_keys = _resolve_user_ai_keys(session['patient_id'])
 
         report = generate_diagnosis_report(
             session['raw_complaint'],

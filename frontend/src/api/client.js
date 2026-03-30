@@ -122,6 +122,77 @@ export const api = {
         }
     },
 
+    // ====== USER AI KEYS (BACKEND / SUPABASE) ======
+    getRuntimeApiKeys: async (userId) => {
+        if (!userId) {
+            return { success: false, error: 'userId is required' }
+        }
+
+        return fetchApi(`/settings/keys/${userId}`, {
+            method: 'GET'
+        })
+    },
+
+    saveRuntimeApiKeys: async (userId, keys = {}) => {
+        if (!userId) {
+            return { success: false, error: 'userId is required' }
+        }
+
+        return fetchApi('/settings/keys', {
+            method: 'POST',
+            body: JSON.stringify({
+                user_id: userId,
+                keys
+            })
+        })
+    },
+
+    // ====== CAREGIVER LINKING ======
+    generateLinkCode: async (elderId) => {
+        if (!elderId) {
+            return { success: false, error: 'elderId is required' }
+        }
+
+        return fetchApi('/link/generate-code', {
+            method: 'POST',
+            body: JSON.stringify({ elder_id: elderId })
+        })
+    },
+
+    joinLinkCode: async (caregiverId, linkCode) => {
+        if (!caregiverId || !linkCode) {
+            return { success: false, error: 'caregiverId and linkCode are required' }
+        }
+
+        return fetchApi('/link/join', {
+            method: 'POST',
+            body: JSON.stringify({
+                caregiver_id: caregiverId,
+                link_code: String(linkCode).trim().toUpperCase()
+            })
+        })
+    },
+
+    getLinkedElders: async (caregiverId) => {
+        if (!caregiverId) {
+            return { success: false, error: 'caregiverId is required' }
+        }
+
+        return fetchApi(`/link/my-elders/${caregiverId}`, {
+            method: 'GET'
+        })
+    },
+
+    getLinkedCaregivers: async (elderId) => {
+        if (!elderId) {
+            return { success: false, error: 'elderId is required' }
+        }
+
+        return fetchApi(`/link/my-caregivers/${elderId}`, {
+            method: 'GET'
+        })
+    },
+
     // ====== MEDICATIONS ======
     getMedications: async (userId) => {
         if (useSupabase) {

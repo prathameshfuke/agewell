@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, Heart, Check, ChevronDown, ChevronUp, Pill, X, Clock, HelpCircle, Activity, Droplets } from 'lucide-react'
+import { Bell, Heart, Check, ChevronDown, ChevronUp, Pill, X, Clock, HelpCircle, Activity, Droplets, LogOut } from 'lucide-react'
 import { api } from '../api/client'
 import { useMedications } from '../hooks/useMedications'
 import { useNotifications } from '../hooks/useNotifications'
@@ -19,13 +19,12 @@ import goodmoodSticker from '../assets/images/stickers/goodmood.jpeg'
 import fineSticker from '../assets/images/stickers/fine.jpeg'
 import notwellSticker from '../assets/images/stickers/notwell.jpeg'
 import doneSticker from '../assets/images/stickers/done.jpeg'
-import oneSticker from '../assets/images/stickers/one.jpeg'
 
 import { useAuth } from '../contexts/AuthContext'
 
 export default function ElderDashboard() {
   const navigate = useNavigate()
-  const { user, profile, loading: authLoading, logout, roles } = useAuth()
+  const { user, profile, logout, roles } = useAuth()
   const userId = user?.id
   const hasCaregiverRole = roles?.includes('caregiver')
 
@@ -49,7 +48,6 @@ export default function ElderDashboard() {
     notifications,
     unreadCount,
     acknowledgeNotification,
-    markAllRead
   } = useNotifications(userId)
 
   useEffect(() => {
@@ -138,18 +136,28 @@ export default function ElderDashboard() {
   return (
     <PageLayout
       header={
-        <PageHeader
-          title={`Hello, ${profile?.full_name?.split(' ')[0] || 'User'}`}
-          subtitle="Here's your health summary for today"
-          status={hasCaregiverRole ? 'caregiver' : 'connected'}
-          rightContent={
-            <div className="flex items-center gap-2">
-              <IconButton
-                icon={Pill}
+        <PageHeader>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-serif font-bold text-sage-900">
+                Hello, {profile?.full_name?.split(' ')[0] || 'User'}
+              </h1>
+              <p className="text-sage-500 text-base sm:text-lg mt-1">Here's your health summary for today</p>
+              <span className="inline-flex mt-2 px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide bg-sage-100 text-sage-700">
+                {hasCaregiverRole ? 'Caregiver Connected' : 'Connected'}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
                 variant="secondary"
-                aria-label="Setup Dispenser"
-                onClick={() => navigate('/dispenser/setup')}
-              />
+                size="sm"
+                icon={LogOut}
+                onClick={logout}
+                className="!px-3"
+              >
+                Sign Out
+              </Button>
               <IconButton
                 icon={Bell}
                 variant="primary"
@@ -164,8 +172,8 @@ export default function ElderDashboard() {
                 currentRole="elderly"
               />
             </div>
-          }
-        />
+          </div>
+        </PageHeader>
       }
       nav={<ElderNav onImOk={() => setShowOkModal(true)} />}
     >
@@ -203,11 +211,6 @@ export default function ElderDashboard() {
               />
             </div>
           </div>
-        </PageSection>
-
-        {/* QUICK ACTIONS */}
-        <PageSection delay={0.05}>
-          <QuickActionsGrid />
         </PageSection>
 
         {/* TODAY STATUS & ENVIRONMENT */}

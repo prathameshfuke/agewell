@@ -15,8 +15,8 @@ export default {
         },
         extend: {
             fontFamily: {
-                serif: ['Butler', 'serif'],
-                sans: ['Poppins', 'sans-serif'],
+                serif: ['"DM Serif Display"', 'Butler', 'serif'],
+                sans: ['"DM Sans"', 'Poppins', 'sans-serif'],
                 romelio: ['Romelio', 'sans-serif'],
             },
             // Simplified color palette - only 2-3 colors optimized for elderly users

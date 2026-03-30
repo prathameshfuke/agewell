@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { AlertTriangle, ArrowRight, History, Stethoscope } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowRight, History, Stethoscope } from 'lucide-react'
 
 import { api } from '../../api/client'
 import { useAuth } from '../../contexts/AuthContext'
@@ -19,6 +19,8 @@ const urgencyStyles = {
 export default function DiagnosisHome() {
     const navigate = useNavigate()
     const { user, profile, activeRole } = useAuth()
+
+    const dashboardPath = activeRole === 'caregiver' ? '/family/dashboard' : '/elder/dashboard'
 
     const [history, setHistory] = useState([])
     const [loading, setLoading] = useState(true)
@@ -52,9 +54,21 @@ export default function DiagnosisHome() {
         <PageLayout
             header={
                 <PageHeader>
-                    <div className="text-sage-500 text-sm font-bold uppercase tracking-wider mb-1">Assistive Diagnosis</div>
-                    <h1 className="text-3xl font-serif font-bold text-sage-900">Check My Symptoms</h1>
-                    <p className="text-sage-500 text-lg mt-1">Answer a few simple questions for a doctor-ready summary.</p>
+                    <div className="flex items-start gap-3">
+                        <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => navigate(dashboardPath)}
+                            className="p-3 rounded-xl text-sage-600 hover:bg-sage-100"
+                            aria-label="Back to dashboard"
+                        >
+                            <ArrowLeft className="w-6 h-6" />
+                        </motion.button>
+                        <div>
+                            <div className="text-sage-500 text-sm font-bold uppercase tracking-wider mb-1">Assistive Diagnosis</div>
+                            <h1 className="text-3xl font-serif font-bold text-sage-900">Check My Symptoms</h1>
+                            <p className="text-sage-500 text-lg mt-1">Answer a few simple questions for a doctor-ready summary.</p>
+                        </div>
+                    </div>
                 </PageHeader>
             }
             nav={activeRole === 'caregiver' ? <FamilyNav /> : <ElderNav onImOk={() => { }} />}

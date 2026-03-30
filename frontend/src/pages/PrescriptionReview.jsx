@@ -86,7 +86,7 @@ export default function PrescriptionReview() {
     }
 
     return (
-        <div className="min-h-screen bg-cream-50 font-sans pb-44">
+        <div className="min-h-screen bg-cream-50 font-sans pb-24 md:pb-0">
             {/* Header */}
             <header className="px-6 py-5 flex items-center gap-4 sticky top-0 bg-cream-50 z-10 border-b border-sage-100">
                 <motion.button

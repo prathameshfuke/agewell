@@ -60,26 +60,29 @@ export default function StatsCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
       onClick={onClick}
-      className={`bg-white p-4 sm:p-5 rounded-xl sm:rounded-2xl shadow-soft border-2 border-sage-100 transition-all w-full break-words min-h-[120px] flex flex-col ${
+      className={`bg-white p-4 sm:p-5 rounded-2xl shadow-soft border border-sage-200 transition-all w-full break-words flex flex-col ${
         onClick ? 'cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5 active:scale-[0.98]' : ''
       }`}
     >
-      <div className="flex items-center justify-between mb-3">
-        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${classes.bg}`}>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${classes.bg}`}>
           {Icon && <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${classes.icon}`} />}
         </div>
-        {trend && trendValue && (
-          <div className={`flex items-center gap-1 text-xs sm:text-sm font-bold flex-shrink-0 ${getTrendColor()}`}>
+        {trend && (
+          <div className={`flex items-center gap-1 text-xs sm:text-sm font-semibold flex-shrink-0 ${getTrendColor()}`}>
             {getTrendIcon()}
-            <span>{trendValue}</span>
+            {trendValue && <span>{trendValue}</span>}
           </div>
         )}
       </div>
-      <div className="text-sage-500 text-sm sm:text-base font-medium mb-1 break-words">{label}</div>
-      <div className="flex items-baseline gap-1 flex-wrap mt-auto">
-        <div className="text-2xl sm:text-3xl font-bold text-sage-900 break-all">{value}</div>
-        {unit && <div className="text-xs sm:text-sm text-sage-400 break-words">{unit}</div>}
+
+      <div className="text-sage-600 text-sm font-semibold mb-1 break-words">{label}</div>
+      <div className="flex items-end gap-1.5 flex-wrap mt-1">
+        <div className="text-3xl sm:text-4xl font-bold text-sage-900 leading-none break-all">{value ?? '--'}</div>
+        {unit && <div className="text-sm text-sage-500 break-words">{unit}</div>}
       </div>
+
+      {trendValue && <div className="text-xs text-sage-500 mt-2">Compared with previous period</div>}
     </motion.div>
   )
 }
