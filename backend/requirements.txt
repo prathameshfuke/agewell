@@ -11,4 +11,5 @@ google-generativeai
 reportlab
 supabase
 twilio
+setuptools
 gunicorn==20.1.0
