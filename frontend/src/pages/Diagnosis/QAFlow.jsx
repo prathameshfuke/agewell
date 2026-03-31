@@ -23,14 +23,31 @@ export default function QAFlow() {
     const location = useLocation()
     const { user, profile, activeRole } = useAuth()
 
-    const sessionId = location.state?.session_id
-    const initialQuestion = location.state?.next_question
-    const extractedSymptoms = location.state?.extracted_symptoms || []
+    const querySessionId = useMemo(() => {
+        const params = new URLSearchParams(location.search)
+        return params.get('session_id') || ''
+    }, [location.search])
+
+    const sessionId = location.state?.session_id || querySessionId
+    const flowStorageKey = sessionId ? `agewell_diag_qa_${sessionId}` : null
+
+    const persistedFlow = useMemo(() => {
+        if (!flowStorageKey) return null
+        try {
+            const raw = sessionStorage.getItem(flowStorageKey)
+            return raw ? JSON.parse(raw) : null
+        } catch {
+            return null
+        }
+    }, [flowStorageKey])
+
+    const initialQuestion = location.state?.next_question || persistedFlow?.currentQuestion || ''
+    const extractedSymptoms = location.state?.extracted_symptoms || persistedFlow?.extractedSymptoms || []
 
     const [currentQuestion, setCurrentQuestion] = useState(initialQuestion || '')
-    const [qaPairs, setQaPairs] = useState([])
-    const [progress, setProgress] = useState('1/8')
-    const [done, setDone] = useState(false)
+    const [qaPairs, setQaPairs] = useState(persistedFlow?.qaPairs || [])
+    const [progress, setProgress] = useState(persistedFlow?.progress || '1/8')
+    const [done, setDone] = useState(Boolean(persistedFlow?.done))
     const [submitting, setSubmitting] = useState(false)
     const [generating, setGenerating] = useState(false)
     const [error, setError] = useState('')
@@ -41,10 +58,30 @@ export default function QAFlow() {
     }, [activeRole, profile, user])
 
     useEffect(() => {
-        if (!sessionId || !initialQuestion) {
+        if (!sessionId || (!initialQuestion && !done)) {
             navigate('/diagnosis/input', { replace: true })
         }
-    }, [initialQuestion, navigate, sessionId])
+    }, [done, initialQuestion, navigate, sessionId])
+
+    useEffect(() => {
+        if (!flowStorageKey || !sessionId) return
+
+        try {
+            sessionStorage.setItem(
+                flowStorageKey,
+                JSON.stringify({
+                    session_id: sessionId,
+                    currentQuestion,
+                    extractedSymptoms,
+                    qaPairs,
+                    progress,
+                    done,
+                })
+            )
+        } catch {
+            // Ignore storage failures and keep in-memory flow active.
+        }
+    }, [currentQuestion, done, extractedSymptoms, flowStorageKey, progress, qaPairs, sessionId])
 
     const submitAnswer = async (answer) => {
         if (!currentQuestion || !sessionId) return
@@ -101,7 +138,24 @@ export default function QAFlow() {
             return
         }
 
-        navigate('/diagnosis/report', {
+        try {
+            sessionStorage.removeItem(flowStorageKey)
+            sessionStorage.setItem(
+                `agewell_diag_report_${sessionId}`,
+                JSON.stringify({
+                    report: reportRes.report,
+                    session_id: sessionId,
+                    urgency_level: reportRes.urgency_level,
+                    alert_sent: reportRes.alert_sent,
+                    alert_channels: reportRes.alert_channels || [],
+                    patient_name: profile?.full_name || user?.user_metadata?.full_name || 'Patient',
+                })
+            )
+        } catch {
+            // Ignore storage failures and continue navigation.
+        }
+
+        navigate(`/diagnosis/report?session_id=${encodeURIComponent(sessionId)}`, {
             state: {
                 report: reportRes.report,
                 session_id: sessionId,

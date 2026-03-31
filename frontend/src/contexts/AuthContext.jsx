@@ -204,6 +204,12 @@ export function AuthProvider({ children }) {
             if (!mounted) return
 
             void (async () => {
+                // Don't reload on TOKEN_REFRESHED if user hasn't changed
+                if (event === 'TOKEN_REFRESHED') {
+                    // Token refresh doesn't change user identity, skip full reload
+                    return
+                }
+
                 setLoading(true)
                 try {
                     if (event === 'SIGNED_OUT') {

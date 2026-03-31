@@ -6,6 +6,9 @@ import { api } from '../api/client'
 import FamilyNav from '../components/FamilyNav'
 import { useAuth } from '../contexts/AuthContext'
 
+const PRESCRIPTION_REVIEW_STORAGE_KEY = 'agewell_prescription_review_data'
+const PRESCRIPTION_MEDS_DRAFT_KEY = 'agewell_prescription_review_meds_draft'
+
 export default function PrescriptionReview() {
     const navigate = useNavigate()
     const location = useLocation()
@@ -15,12 +18,39 @@ export default function PrescriptionReview() {
     const [medications, setMedications] = useState([])
     const [editingId, setEditingId] = useState(null)
 
-    // Get prescription data from navigation state
-    const prescriptionData = location.state?.prescription
+    // Get prescription data from navigation state, or restore after refresh.
+    const prescriptionData = useState(() => {
+        if (location.state?.prescription) return location.state.prescription
+
+        try {
+            const raw = sessionStorage.getItem(PRESCRIPTION_REVIEW_STORAGE_KEY)
+            return raw ? JSON.parse(raw) : null
+        } catch {
+            return null
+        }
+    })[0]
     const parsedMeds = prescriptionData?.parsed_data?.medications || []
 
     // Initialize medications from parsed data
     useEffect(() => {
+        if (!prescriptionData) {
+            navigate('/family/prescription/upload', { replace: true })
+            return
+        }
+
+        let draftMeds = null
+        try {
+            const rawDraft = sessionStorage.getItem(PRESCRIPTION_MEDS_DRAFT_KEY)
+            draftMeds = rawDraft ? JSON.parse(rawDraft) : null
+        } catch {
+            draftMeds = null
+        }
+
+        if (Array.isArray(draftMeds) && draftMeds.length > 0) {
+            setMedications(draftMeds)
+            return
+        }
+
         const meds = parsedMeds.map((med, i) => ({
             id: i,
             name: med.name || '',
@@ -33,7 +63,16 @@ export default function PrescriptionReview() {
             uncertain: !med.dosage || !med.name || med.name.toLowerCase().includes('unknown')
         }))
         setMedications(meds)
-    }, [])
+    }, [navigate, parsedMeds, prescriptionData])
+
+    useEffect(() => {
+        if (!Array.isArray(medications) || medications.length === 0) return
+        try {
+            sessionStorage.setItem(PRESCRIPTION_MEDS_DRAFT_KEY, JSON.stringify(medications))
+        } catch {
+            // Ignore storage failures.
+        }
+    }, [medications])
 
     const uncertainCount = medications.filter(m => m.uncertain && !m.confirmed).length
 
@@ -74,6 +113,8 @@ export default function PrescriptionReview() {
             }
 
             setSaved(true)
+            sessionStorage.removeItem(PRESCRIPTION_REVIEW_STORAGE_KEY)
+            sessionStorage.removeItem(PRESCRIPTION_MEDS_DRAFT_KEY)
             setTimeout(() => {
                 navigate('/family/dashboard')
             }, 1500)
@@ -244,7 +285,7 @@ export default function PrescriptionReview() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
-                    onClick={() => navigate('/family/prescription-upload')}
+                    onClick={() => navigate('/family/prescription/upload')}
                     className="w-full text-sage-400 font-medium py-4 text-center"
                 >
                     Not right? Go back and re-upload →

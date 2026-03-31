@@ -19,7 +19,7 @@ from services.settings_service import get_user_setting
 bp = Blueprint('diagnosis', __name__, url_prefix='/api/diagnosis')
 
 notification_service = NotificationService()
-MAX_SESSIONS_PER_DAY = 5
+MAX_SESSIONS_PER_DAY = 9999
 
 
 def _get_header_ai_keys():

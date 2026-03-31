@@ -10,11 +10,19 @@ import FamilyNav from '../../components/FamilyNav'
 import { Card, Button } from '../../components/ui'
 import { PageLayout, PageHeader, PageMain, PageSection } from '../../components/layout'
 
+const DIAGNOSIS_COMPLAINT_DRAFT_KEY = 'agewell_diagnosis_complaint_draft'
+
 export default function SymptomInput() {
     const navigate = useNavigate()
     const { user, profile, activeRole } = useAuth()
 
-    const [complaint, setComplaint] = useState('')
+    const [complaint, setComplaint] = useState(() => {
+        try {
+            return sessionStorage.getItem(DIAGNOSIS_COMPLAINT_DRAFT_KEY) || ''
+        } catch {
+            return ''
+        }
+    })
     const [listening, setListening] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState('')
@@ -87,7 +95,25 @@ export default function SymptomInput() {
             return
         }
 
-        navigate('/diagnosis/qa', {
+        try {
+            sessionStorage.removeItem(DIAGNOSIS_COMPLAINT_DRAFT_KEY)
+            sessionStorage.setItem(
+                `agewell_diag_qa_${result.session_id}`,
+                JSON.stringify({
+                    session_id: result.session_id,
+                    currentQuestion: result.next_question,
+                    extractedSymptoms: result.extracted_symptoms || [],
+                    qaPairs: [],
+                    progress: '1/8',
+                    done: false,
+                })
+            )
+        } catch {
+            // Ignore storage errors and continue with flow.
+        }
+
+        navigate(`/diagnosis/qa?session_id=${encodeURIComponent(result.session_id)}`, {
+            replace: true,
             state: {
                 session_id: result.session_id,
                 next_question: result.next_question,
@@ -130,7 +156,15 @@ export default function SymptomInput() {
 
                         <textarea
                             value={complaint}
-                            onChange={(e) => setComplaint(e.target.value)}
+                            onChange={(e) => {
+                                const nextValue = e.target.value
+                                setComplaint(nextValue)
+                                try {
+                                    sessionStorage.setItem(DIAGNOSIS_COMPLAINT_DRAFT_KEY, nextValue)
+                                } catch {
+                                    // Ignore storage errors and continue typing.
+                                }
+                            }}
                             placeholder="Example: I feel dizzy since morning and my chest feels heavy."
                             className="w-full min-h-32 p-4 text-lg rounded-2xl border-2 border-sage-200 focus:outline-none focus:ring-2 focus:ring-sage-300 resize-y"
                         />

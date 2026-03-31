@@ -3,6 +3,7 @@
 
 import { supabase, db, isSupabaseConfigured } from '../lib/supabase'
 
+// Use environment variable for production, fallback to localhost for development
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api'
 const USER_GROQ_KEY_STORAGE = 'agewell_user_groq_api_key'
 const USER_GEMINI_KEY_STORAGE = 'agewell_user_gemini_api_key'

@@ -12,7 +12,11 @@ MODEL = "llama-3.3-70b-versatile"
 
 def _get_client(api_key: str = ""):
     resolved_key = (api_key or "").strip() or os.getenv("GROQ_API_KEY", "").strip()
-    if not resolved_key or Groq is None:
+    if not resolved_key:
+        print("WARNING: Groq api_key is empty after resolution.")
+        return None
+    if Groq is None:
+        print("WARNING: 'groq' module is not installed or import failed.")
         return None
     return Groq(api_key=resolved_key)
 
@@ -22,10 +26,59 @@ def _parse_json_response(text: str, fallback: Dict) -> Dict:
         return fallback
 
     cleaned = text.strip().replace("```json", "").replace("```", "").strip()
+    
+    start_idx = cleaned.find('{')
+    end_idx = cleaned.rfind('}')
+    if start_idx != -1 and end_idx != -1 and end_idx >= start_idx:
+        cleaned = cleaned[start_idx:end_idx + 1]
+
     try:
         return json.loads(cleaned)
-    except Exception:
+    except Exception as e:
+        print(f"Groq JSON Parse Error: {e} - Raw text: {cleaned}")
         return fallback
+
+
+def _normalize_question(text: str) -> str:
+    return " ".join((text or "").strip().lower().split())
+
+
+def _complaint_focus_phrase(raw_complaint: str) -> str:
+    symptoms = _simple_symptom_extract(raw_complaint)
+    if symptoms:
+        return symptoms[0]
+
+    words = [w.strip(".,!?") for w in (raw_complaint or "").split() if w.strip(".,!?")]
+    return " ".join(words[:5]).lower() or "your symptoms"
+
+
+def _next_dynamic_question(complaint: str, qa_pairs: List[Dict]) -> Dict:
+    """Non-hardcoded fallback that still adapts to complaint text."""
+    if len(qa_pairs) >= 8:
+        return {"next_question": None, "done": True}
+
+    asked = {
+        _normalize_question(pair.get("question", ""))
+        for pair in (qa_pairs or [])
+        if _normalize_question(pair.get("question", ""))
+    }
+
+    focus = _complaint_focus_phrase(complaint)
+    probes = [
+        f"Is your {focus} more severe than earlier today?",
+        f"Did your {focus} begin suddenly?",
+        f"Has your {focus} lasted most of the day?",
+        f"Is your {focus} getting worse over time?",
+        f"Is your {focus} affecting your normal daily activities?",
+        f"Do you feel unsafe staying at home with {focus}?",
+        f"Would you like urgent medical help for {focus}?",
+    ]
+
+    for question in probes:
+        if _normalize_question(question) not in asked:
+            return {"next_question": question, "done": False}
+
+    return {"next_question": None, "done": True}
 
 
 def _simple_symptom_extract(raw_complaint: str) -> List[str]:
@@ -56,6 +109,11 @@ def _fallback_first_question(symptoms: List[str]) -> str:
     return "Did this symptom start suddenly?"
 
 
+def _first_problem_specific_question(raw_complaint: str) -> str:
+    next_item = _next_dynamic_question(raw_complaint, [])
+    return next_item.get("next_question") or _fallback_first_question(_simple_symptom_extract(raw_complaint))
+
+
 def extract_symptoms_and_first_question(raw_complaint: str, api_key: str = "") -> Dict:
     """
     Takes raw complaint text, returns extracted symptoms + first yes/no question.
@@ -64,21 +122,26 @@ def extract_symptoms_and_first_question(raw_complaint: str, api_key: str = "") -
     symptoms = _simple_symptom_extract(raw_complaint)
     fallback = {
         "extracted_symptoms": symptoms,
-        "next_question": _fallback_first_question(symptoms)
+        "next_question": "Error: AI Diagnosis Service is currently unreachable. Please check your API keys or try again later."
     }
 
     client = _get_client(api_key)
     if client is None:
+        print("DEBUG REASON: _get_client returned None in start.")
         return fallback
 
     prompt = f"""
-You are a medical intake assistant helping elderly patients.
+You are a medical triage assistant helping elderly patients.
 Patient complaint: \"{raw_complaint}\"
 
 Your tasks:
-1. Extract the main symptom keywords (max 5, plain English, no jargon)
-2. Generate ONE simple yes/no follow-up question to better understand the primary symptom
-3. Keep language extremely simple — the patient is elderly
+1. Extract the main symptom keywords (max 5, plain English, no jargon).
+2. Generate the bot's response message (`next_question`), which MUST include:
+   - A short, highly empathetic calming phrase to settle their nerves.
+   - A preliminary safe first-aid instruction based on their symptoms (e.g., \"Please sit down and rest\", \"Take a few slow, deep breaths\", \"Sip some water\").
+   - ONE simple yes/no follow-up question to better understand the primary symptom.
+   Combine these smoothly into one string, perhaps using emojis to separate the advice from the question.
+3. Keep language extremely simple — the patient is elderly.
 
 Return ONLY valid JSON, no explanation, no markdown:
 {{"extracted_symptoms": ["..."], "next_question": "..."}}
@@ -97,11 +160,15 @@ Return ONLY valid JSON, no explanation, no markdown:
         extracted = parsed.get("extracted_symptoms", symptoms)
         question = parsed.get("next_question", fallback["next_question"])
 
+        if "next_question" not in parsed:
+            print(f"DEBUG REASON: AI missing next_question in start. Parsed: {parsed}")
+
         return {
             "extracted_symptoms": extracted[:5] if isinstance(extracted, list) else symptoms,
             "next_question": question or fallback["next_question"]
         }
-    except Exception:
+    except Exception as e:
+        print(f"Groq API Error in extract_symptoms_and_first_question: {e}")
         return fallback
 
 
@@ -113,23 +180,15 @@ def get_next_question(complaint: str, qa_pairs: List[Dict], api_key: str = "") -
     if len(qa_pairs) >= 8:
         return {"next_question": None, "done": True}
 
+    fallback = {
+        "next_question": "Error: AI Diagnosis Service is unreachable. Please end the session or consult a doctor.",
+        "done": True
+    }
+
     client = _get_client(api_key)
     if client is None:
-        # Deterministic fallback question tree to keep flow working without API key
-        fallback_questions = [
-            "Do you feel this symptom right now?",
-            "Did it start suddenly?",
-            "Has it lasted more than two days?",
-            "Is it worse than yesterday?",
-            "Do you feel weak or very tired?",
-            "Do you have trouble breathing?",
-            "Do you feel chest discomfort?",
-            "Do you want to speak to a doctor soon?"
-        ]
-        idx = min(len(qa_pairs), len(fallback_questions) - 1)
-        if len(qa_pairs) >= 6:
-            return {"next_question": None, "done": True}
-        return {"next_question": fallback_questions[idx], "done": False}
+        print("DEBUG REASON: _get_client returned None in get_next_question.")
+        return fallback
 
     history = "\n".join([f"Q: {p.get('question', '')} A: {p.get('answer', '')}" for p in qa_pairs])
     prompt = f"""
@@ -138,6 +197,8 @@ Q&A so far:
 {history}
 
 Generate the next most useful yes/no follow-up question to clarify their condition.
+The question must be directly tied to the patient's complaint and previous answers.
+Do not repeat or paraphrase a previously asked question.
 If you have enough information after {len(qa_pairs)} questions, return done.
 Keep language very simple. One question only.
 
@@ -146,8 +207,6 @@ Return ONLY valid JSON:
 OR if enough info:
 {{"next_question": null, "done": true}}
 """
-
-    fallback = {"next_question": "Do you feel worse right now?", "done": False}
 
     try:
         response = client.chat.completions.create(
@@ -164,11 +223,26 @@ OR if enough info:
         if done:
             return {"next_question": None, "done": True}
 
+        asked = {
+            _normalize_question(pair.get("question", ""))
+            for pair in (qa_pairs or [])
+            if _normalize_question(pair.get("question", ""))
+        }
+
+        normalized_next = _normalize_question(next_question or "")
+        if not normalized_next:
+            print(f"DEBUG REASON: Next question is empty. AI output was: {parsed}")
+            return fallback
+        if normalized_next in asked:
+            print(f"DEBUG REASON: AI generated a duplicate question: {next_question}")
+            return fallback
+
         return {
-            "next_question": next_question or fallback["next_question"],
+            "next_question": next_question,
             "done": False
         }
-    except Exception:
+    except Exception as e:
+        print(f"Groq API Error in get_next_question: {e}")
         return fallback
 
 
@@ -240,28 +314,21 @@ def generate_diagnosis_report(
     fallback_flags = _medication_flags_from_text(base_text, medications)
 
     fallback = {
-        "symptom_summary": "The patient reported symptoms that need medical review.",
+        "symptom_summary": "Error: AI Report Generation Failed.",
         "possible_conditions": [
-            "Condition to discuss with your doctor",
-            "Another possible explanation to discuss"
+            "AI Service Offline"
         ],
-        "medication_flags": fallback_flags,
-        "urgency_level": fallback_urgency,
-        "urgency_reason": "Based on reported symptoms and answers, a doctor should guide next steps.",
+        "medication_flags": [],
+        "urgency_level": "CONSULT_SOON",
+        "urgency_reason": "AI Service Offline - Please consult a doctor for a proper evaluation.",
         "doctor_questions": [
-            "What tests should I do now?",
-            "Could this be related to my current medicines?",
-            "What warning signs mean I should seek urgent care?"
+            "What should I do given the AI system is offline?"
         ],
-        "disclaimer": "This summary is for informational purposes only and is not a medical diagnosis. Consult a qualified doctor."
+        "disclaimer": "This summary failed to generate properly. Consult a qualified doctor immediately."
     }
 
     client = _get_client(api_key)
     if client is None:
-        fallback["symptom_summary"] = (
-            "The patient described symptoms through intake questions. "
-            "Please review this summary with a qualified doctor to confirm the cause and treatment plan."
-        )
         return fallback
 
     prompt = f"""
@@ -277,10 +344,13 @@ Generate a structured medical intake summary with:
 1. symptom_summary: 2-3 sentence plain English summary of what the patient described
 2. possible_conditions: list of 2-3 conditions to discuss with doctor (with disclaimer these are not diagnoses)
 3. medication_flags: list any symptoms that could be side effects of listed medications (empty list if none)
-4. urgency_level: one of ROUTINE / CONSULT_SOON / GO_NOW
+4. urgency_level: Must be exactly one of: 
+   - GO_NOW: Level 1 (High Alert) - Serious condition requiring immediately calling an ambulance/emergency treatment.
+   - CONSULT_SOON: Level 2 (Medium Alert) - Patient is unwell or unresponsive; family must be alerted immediately and doctor messaged.
+   - ROUTINE: Level 3 (Normal Level) - Routine symptoms, monitor safely and rest.
 5. urgency_reason: one sentence explaining the urgency level
 6. doctor_questions: 3 questions the patient should ask their doctor
-7. disclaimer: always \"This summary is for informational purposes only and is not a medical diagnosis. Consult a qualified doctor.\"
+7. disclaimer: always "This summary is for informational purposes only and is not a medical diagnosis. Consult a qualified doctor."
 
 Return ONLY valid JSON matching exactly this schema. No markdown, no explanation.
 """
@@ -307,5 +377,6 @@ Return ONLY valid JSON matching exactly this schema. No markdown, no explanation
             parsed["urgency_level"] = fallback_urgency
 
         return parsed
-    except Exception:
+    except Exception as e:
+        print(f"Groq API Error in generate_diagnosis_report: {e}")
         return fallback

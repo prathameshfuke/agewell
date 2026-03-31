@@ -6,6 +6,8 @@ import { api } from '../api/client'
 import FamilyNav from '../components/FamilyNav'
 import { useAuth } from '../contexts/AuthContext'
 
+const PRESCRIPTION_REVIEW_STORAGE_KEY = 'agewell_prescription_review_data'
+
 export default function PrescriptionUpload() {
   const navigate = useNavigate()
   const { profile } = useAuth()
@@ -41,7 +43,13 @@ export default function PrescriptionUpload() {
       if (result.success) {
         setUploadSuccess(true)
         setTimeout(() => {
-          navigate('/family/prescription-review', {
+          try {
+            sessionStorage.setItem(PRESCRIPTION_REVIEW_STORAGE_KEY, JSON.stringify(result.prescription || null))
+          } catch {
+            // Ignore storage failures and continue navigation.
+          }
+
+          navigate('/family/prescription/review', {
             state: { prescription: result.prescription }
           })
         }, 1500)

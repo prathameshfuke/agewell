@@ -13,6 +13,9 @@ const PROVIDER_LINKS = {
   GEMINI_API_KEY: 'https://aistudio.google.com/app/apikey'
 }
 
+const GROQ_INPUT_STORAGE_KEY = 'agewell_groq_input'
+const GEMINI_INPUT_STORAGE_KEY = 'agewell_gemini_input'
+
 const EMPTY_KEYS = {
   GROQ_API_KEY: { masked_value: '', has_value: false },
   GEMINI_API_KEY: { masked_value: '', has_value: false }
@@ -23,13 +26,15 @@ export default function Settings() {
   const navigate = useNavigate()
 
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [notice, setNotice] = useState('')
+  const [savingGroq, setSavingGroq] = useState(false)
+  const [savingGemini, setSavingGemini] = useState(false)
+  const [groqSaved, setGroqSaved] = useState(false)
+  const [geminiSaved, setGeminiSaved] = useState(false)
   const [error, setError] = useState('')
 
   const [savedKeys, setSavedKeys] = useState(EMPTY_KEYS)
-  const [groqApiKey, setGroqApiKey] = useState('')
-  const [geminiApiKey, setGeminiApiKey] = useState('')
+  const [groqApiKey, setGroqApiKey] = useState(() => sessionStorage.getItem(GROQ_INPUT_STORAGE_KEY) || '')
+  const [geminiApiKey, setGeminiApiKey] = useState(() => sessionStorage.getItem(GEMINI_INPUT_STORAGE_KEY) || '')
 
   const roleLabel = useMemo(() => {
     if (role === 'caregiver') return 'Caregiver'
@@ -38,14 +43,43 @@ export default function Settings() {
 
   const dashboardPath = role === 'caregiver' ? '/family/dashboard' : '/elder/dashboard'
 
-  const loadSavedKeys = async () => {
-    if (!user?.id) {
-      setLoading(false)
-      return
+  useEffect(() => {
+    const loadSavedKeys = async () => {
+      if (!user?.id) {
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+      setError('')
+
+      try {
+        const response = await api.getRuntimeApiKeys(user.id)
+        if (!response?.success) {
+          throw new Error(response?.error || 'Unable to load key status')
+        }
+
+        const next = { ...EMPTY_KEYS }
+        for (const row of response.keys || []) {
+          if (!row?.setting_key) continue
+          next[row.setting_key] = {
+            masked_value: row.masked_value || '',
+            has_value: Boolean(row.has_value)
+          }
+        }
+        setSavedKeys(next)
+      } catch (err) {
+        setError(err.message || 'Unable to load key status')
+      } finally {
+        setLoading(false)
+      }
     }
 
-    setLoading(true)
-    setError('')
+    void loadSavedKeys()
+  }, [])
+
+  const refreshSavedKeys = async () => {
+    if (!user?.id) return
 
     try {
       const response = await api.getRuntimeApiKeys(user.id)
@@ -64,46 +98,62 @@ export default function Settings() {
       setSavedKeys(next)
     } catch (err) {
       setError(err.message || 'Unable to load key status')
-    } finally {
-      setLoading(false)
     }
   }
 
-  useEffect(() => {
-    void loadSavedKeys()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id])
-
-  const handleSave = async () => {
+  const handleSaveGroq = async () => {
     if (!user?.id) return
 
-    setNotice('')
+    const value = groqApiKey.trim()
     setError('')
-
-    const payload = {}
-    if (groqApiKey.trim()) payload.GROQ_API_KEY = groqApiKey.trim()
-    if (geminiApiKey.trim()) payload.GEMINI_API_KEY = geminiApiKey.trim()
-
-    if (Object.keys(payload).length === 0) {
-      setError('Enter at least one API key to save.')
+    setGroqSaved(false)
+    if (!value) {
+      setError('Enter a Groq API key to save.')
       return
     }
 
-    setSaving(true)
+    setSavingGroq(true)
     try {
-      const response = await api.saveRuntimeApiKeys(user.id, payload)
+      const response = await api.saveRuntimeApiKeys(user.id, { GROQ_API_KEY: value })
       if (!response?.success) {
-        throw new Error(response?.error || 'Unable to save keys')
+        throw new Error(response?.error || 'Unable to save Groq key')
       }
 
-      setGroqApiKey('')
-      setGeminiApiKey('')
-      setNotice('Keys saved securely. Diagnosis requests will use them without redeploying.')
-      await loadSavedKeys()
+      setGroqSaved(true)
+      sessionStorage.removeItem(GROQ_INPUT_STORAGE_KEY)
+      await refreshSavedKeys()
     } catch (err) {
-      setError(err.message || 'Unable to save keys')
+      setError(err.message || 'Unable to save Groq key')
     } finally {
-      setSaving(false)
+      setSavingGroq(false)
+    }
+  }
+
+  const handleSaveGemini = async () => {
+    if (!user?.id) return
+
+    const value = geminiApiKey.trim()
+    setError('')
+    setGeminiSaved(false)
+    if (!value) {
+      setError('Enter a Gemini API key to save.')
+      return
+    }
+
+    setSavingGemini(true)
+    try {
+      const response = await api.saveRuntimeApiKeys(user.id, { GEMINI_API_KEY: value })
+      if (!response?.success) {
+        throw new Error(response?.error || 'Unable to save Gemini key')
+      }
+
+      setGeminiSaved(true)
+      sessionStorage.removeItem(GEMINI_INPUT_STORAGE_KEY)
+      await refreshSavedKeys()
+    } catch (err) {
+      setError(err.message || 'Unable to save Gemini key')
+    } finally {
+      setSavingGemini(false)
     }
   }
 
@@ -174,17 +224,38 @@ export default function Settings() {
 
             <div className="grid sm:grid-cols-2 gap-4">
               <label className="block">
-                <span className="text-sm font-semibold text-sage-800">Groq API Key</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-sage-800">Groq API Key</span>
+                  {groqSaved && (
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                      Saved
+                    </span>
+                  )}
+                </div>
                 <div className="mt-2 relative">
                   <KeyRound className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-sage-500" />
                   <input
                     type="password"
                     value={groqApiKey}
-                    onChange={(event) => setGroqApiKey(event.target.value)}
+                    onChange={(event) => {
+                      const nextValue = event.target.value
+                      setGroqApiKey(nextValue)
+                      sessionStorage.setItem(GROQ_INPUT_STORAGE_KEY, nextValue)
+                      setGroqSaved(false)
+                    }}
                     placeholder="gsk_..."
                     className="w-full h-11 pl-9 pr-3 rounded-xl border border-sage-300 focus:border-sage-500 focus:outline-none bg-white text-[16px]"
                   />
                 </div>
+                <button
+                  type="button"
+                  onClick={handleSaveGroq}
+                  disabled={savingGroq}
+                  className="mt-2 h-10 px-4 rounded-xl bg-sage-700 hover:bg-sage-800 text-white text-xs font-semibold inline-flex items-center gap-2 disabled:opacity-60"
+                >
+                  {savingGroq ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  Save Groq Key
+                </button>
                 <a
                   href={PROVIDER_LINKS.GROQ_API_KEY}
                   target="_blank"
@@ -197,17 +268,38 @@ export default function Settings() {
               </label>
 
               <label className="block">
-                <span className="text-sm font-semibold text-sage-800">Gemini API Key</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-sage-800">Gemini API Key</span>
+                  {geminiSaved && (
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                      Saved
+                    </span>
+                  )}
+                </div>
                 <div className="mt-2 relative">
                   <KeyRound className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-sage-500" />
                   <input
                     type="password"
                     value={geminiApiKey}
-                    onChange={(event) => setGeminiApiKey(event.target.value)}
+                    onChange={(event) => {
+                      const nextValue = event.target.value
+                      setGeminiApiKey(nextValue)
+                      sessionStorage.setItem(GEMINI_INPUT_STORAGE_KEY, nextValue)
+                      setGeminiSaved(false)
+                    }}
                     placeholder="AIza..."
                     className="w-full h-11 pl-9 pr-3 rounded-xl border border-sage-300 focus:border-sage-500 focus:outline-none bg-white text-[16px]"
                   />
                 </div>
+                <button
+                  type="button"
+                  onClick={handleSaveGemini}
+                  disabled={savingGemini}
+                  className="mt-2 h-10 px-4 rounded-xl bg-sage-700 hover:bg-sage-800 text-white text-xs font-semibold inline-flex items-center gap-2 disabled:opacity-60"
+                >
+                  {savingGemini ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  Save Gemini Key
+                </button>
                 <a
                   href={PROVIDER_LINKS.GEMINI_API_KEY}
                   target="_blank"
@@ -226,21 +318,6 @@ export default function Settings() {
               </div>
             )}
 
-            {notice && (
-              <div className="rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 text-sm">
-                {notice}
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="h-11 px-5 rounded-xl bg-sage-700 hover:bg-sage-800 text-white text-sm font-semibold inline-flex items-center gap-2 disabled:opacity-60"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Save Keys
-            </button>
           </div>
         </PageSection>
       </PageMain>

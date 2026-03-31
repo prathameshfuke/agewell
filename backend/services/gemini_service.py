@@ -11,7 +11,12 @@ except Exception:  # pragma: no cover - optional runtime dependency in dev
 
 
 def _clean_json_text(text: str) -> str:
-    return (text or "").strip().replace("```json", "").replace("```", "").strip()
+    cleaned = (text or "").strip().replace("```json", "").replace("```", "").strip()
+    start_idx = cleaned.find('{')
+    end_idx = cleaned.rfind('}')
+    if start_idx != -1 and end_idx != -1 and end_idx >= start_idx:
+        cleaned = cleaned[start_idx:end_idx + 1]
+    return cleaned
 
 
 def _fallback_observation(image_bytes: bytes):
@@ -36,7 +41,8 @@ def analyze_medical_image(image_bytes: bytes, api_key: str = "") -> dict:
     # Validate image bytes early to match existing image handling reliability
     try:
         image = Image.open(io.BytesIO(image_bytes))
-    except Exception:
+    except Exception as e:
+        print(f"Gemini Image Processing Error: {e}")
         return {
             "observations": "The uploaded file could not be read as an image.",
             "flagged_urgent": False
@@ -65,5 +71,6 @@ Return ONLY valid JSON:
             "observations": parsed.get("observations", "No clear observations generated."),
             "flagged_urgent": bool(parsed.get("flagged_urgent", False))
         }
-    except Exception:
+    except Exception as e:
+        print(f"Gemini API Error in analyze_medical_image: {e}")
         return _fallback_observation(image_bytes)

@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { AlertTriangle, ArrowLeft, CheckCircle, Download, Share2 } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, CheckCircle, Download, Loader2, Share2 } from 'lucide-react'
 
 import { api } from '../../api/client'
 import { useAuth } from '../../contexts/AuthContext'
@@ -27,18 +27,88 @@ export default function DiagnosisReport() {
     const [shareMessage, setShareMessage] = useState('')
     const [dismissed, setDismissed] = useState(false)
 
-    const sessionId = location.state?.session_id
-    const report = location.state?.report
-    const urgencyLevel = location.state?.urgency_level || report?.urgency_level || 'ROUTINE'
+    const querySessionId = useMemo(() => {
+        const params = new URLSearchParams(location.search)
+        return params.get('session_id') || ''
+    }, [location.search])
+
+    const sessionId = location.state?.session_id || querySessionId
+    const reportStorageKey = sessionId ? `agewell_diag_report_${sessionId}` : null
+    const [hydrating, setHydrating] = useState(false)
+
+    const [reportState, setReportState] = useState(() => {
+        if (location.state?.report) {
+            return {
+                report: location.state.report,
+                session_id: sessionId,
+                urgency_level: location.state?.urgency_level,
+                alert_sent: location.state?.alert_sent,
+                alert_channels: location.state?.alert_channels || [],
+                patient_name: location.state?.patient_name,
+            }
+        }
+
+        if (!reportStorageKey) return null
+
+        try {
+            const raw = sessionStorage.getItem(reportStorageKey)
+            return raw ? JSON.parse(raw) : null
+        } catch {
+            return null
+        }
+    })
+
+    const report = reportState?.report || null
+    const urgencyLevel = reportState?.urgency_level || report?.urgency_level || 'ROUTINE'
     const urgencyReason = report?.urgency_reason || 'Please seek medical attention.'
-    const alertSent = Boolean(location.state?.alert_sent)
-    const alertChannels = Array.isArray(location.state?.alert_channels)
-        ? location.state.alert_channels
+    const alertSent = Boolean(reportState?.alert_sent)
+    const alertChannels = Array.isArray(reportState?.alert_channels)
+        ? reportState.alert_channels
         : []
 
     const patientName = useMemo(() => {
-        return location.state?.patient_name || profile?.full_name || user?.user_metadata?.full_name || 'Patient'
-    }, [location.state, profile, user])
+        return reportState?.patient_name || location.state?.patient_name || profile?.full_name || user?.user_metadata?.full_name || 'Patient'
+    }, [location.state, profile, reportState?.patient_name, user])
+
+    const patientId = useMemo(() => {
+        if (activeRole === 'caregiver') return profile?.linked_elderly_id
+        return user?.id
+    }, [activeRole, profile, user])
+
+    useEffect(() => {
+        if (!reportStorageKey || !reportState) return
+        try {
+            sessionStorage.setItem(reportStorageKey, JSON.stringify(reportState))
+        } catch {
+            // Ignore storage failures.
+        }
+    }, [reportState, reportStorageKey])
+
+    useEffect(() => {
+        const hydrateReport = async () => {
+            if (report || !sessionId || !patientId) return
+            setHydrating(true)
+
+            const response = await api.getDiagnosisHistory(patientId)
+            if (response?.success) {
+                const row = (response.history || []).find((item) => item.session_id === sessionId)
+                if (row?.report_json) {
+                    setReportState({
+                        report: row.report_json,
+                        session_id: sessionId,
+                        urgency_level: row.urgency_level,
+                        alert_sent: row.alert_sent,
+                        alert_channels: row.alert_channels || [],
+                        patient_name: patientName,
+                    })
+                }
+            }
+
+            setHydrating(false)
+        }
+
+        void hydrateReport()
+    }, [patientId, patientName, report, sessionId])
 
     const goBack = () => {
         navigate('/diagnosis/history')
@@ -87,7 +157,14 @@ export default function DiagnosisReport() {
             >
                 <PageMain>
                     <Card>
-                        <p className="text-sage-700 text-lg">No report found. Open a session from history or complete a new symptom check.</p>
+                        {hydrating ? (
+                            <div className="flex items-center gap-2 text-sage-600">
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <p className="text-sage-700 text-lg">Restoring report...</p>
+                            </div>
+                        ) : (
+                            <p className="text-sage-700 text-lg">No report found. Open a session from history or complete a new symptom check.</p>
+                        )}
                         <Button className="mt-4" onClick={() => navigate('/diagnosis/history')}>Go to History</Button>
                     </Card>
                 </PageMain>

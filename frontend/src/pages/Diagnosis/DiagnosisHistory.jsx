@@ -69,7 +69,7 @@ export default function DiagnosisHistory() {
             return
         }
 
-        navigate('/diagnosis/report', {
+        navigate(`/diagnosis/report?session_id=${encodeURIComponent(row.session_id)}`, {
             state: {
                 report: row.report_json,
                 session_id: row.session_id,
