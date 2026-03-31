@@ -11,3 +11,4 @@ google-generativeai
 reportlab
 supabase
 twilio
+gunicorn==20.1.0
