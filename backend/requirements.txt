@@ -12,4 +12,4 @@ reportlab
 supabase
 twilio
 setuptools
-gunicorn==20.1.0
+gunicorn==23.0.0
