@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -43,8 +43,20 @@ export default function ElderSettings() {
   })
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
-  const [apiKeys, setApiKeys] = useState(() => api.getUserApiKeys())
+  
+  // Use a ref to store the initial load flag to prevent re-initialization
+  const hasInitialized = useRef(false)
+  const [apiKeys, setApiKeys] = useState({ groqApiKey: '', geminiApiKey: '' })
   const [apiKeyStatus, setApiKeyStatus] = useState('')
+
+  // Load API keys on mount only - never reinitialize from localStorage
+  useEffect(() => {
+    if (!hasInitialized.current) {
+      const savedKeys = api.getUserApiKeys()
+      setApiKeys(savedKeys)
+      hasInitialized.current = true
+    }
+  }, [])
 
   const toggleSetting = (key) => {
     setSettings(prev => ({ ...prev, [key]: !prev[key] }))
@@ -99,9 +111,10 @@ export default function ElderSettings() {
   const handleSaveApiKeys = () => {
     const result = api.saveUserApiKeys(apiKeys)
     if (result.success) {
-      setApiKeyStatus('Your API keys were saved on this device.')
+      setApiKeyStatus('✓ Your API keys were saved on this device.')
     } else {
-      setApiKeyStatus(result.error || 'Could not save API keys.')
+      const errorMsg = result.error || 'Could not save API keys.'
+      setApiKeyStatus(`✗ Error: ${errorMsg}`)
     }
   }
 
@@ -109,9 +122,10 @@ export default function ElderSettings() {
     const result = api.clearUserApiKeys()
     if (result.success) {
       setApiKeys({ groqApiKey: '', geminiApiKey: '' })
-      setApiKeyStatus('API keys were removed from this device.')
+      setApiKeyStatus('✓ API keys were removed from this device.')
     } else {
-      setApiKeyStatus(result.error || 'Could not clear API keys.')
+      const errorMsg = result.error || 'Could not clear API keys.'
+      setApiKeyStatus(`✗ Error: ${errorMsg}`)
     }
   }
 
