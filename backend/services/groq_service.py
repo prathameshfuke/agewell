@@ -1,6 +1,7 @@
 import json
 import os
 from typing import Dict, List
+from .sarvam_tts import generate_question_with_audio
 
 try:
     from groq import Groq
@@ -163,10 +164,16 @@ Return ONLY valid JSON, no explanation, no markdown:
         if "next_question" not in parsed:
             print(f"DEBUG REASON: AI missing next_question in start. Parsed: {parsed}")
 
+        from .sarvam_tts import generate_question_with_audio
+        q_text = question or fallback["next_question"]
+        question_with_audio = generate_question_with_audio(q_text, language='en-IN')
         return {
-            "extracted_symptoms": extracted[:5] if isinstance(extracted, list) else symptoms,
-            "next_question": question or fallback["next_question"]
-        }
+    "extracted_symptoms": extracted[:5] if isinstance(extracted, list) else symptoms,
+    "next_question": question_with_audio['text'],
+    "audio_base64": question_with_audio.get('audio_base64'),
+    "has_audio": question_with_audio['has_audio'],
+    "audio_format": question_with_audio.get('audio_format', 'wav')
+    }
     except Exception as e:
         print(f"Groq API Error in extract_symptoms_and_first_question: {e}")
         return fallback
@@ -220,8 +227,17 @@ OR if enough info:
 
         done = bool(parsed.get("done", False))
         next_question = parsed.get("next_question")
-        if done:
-            return {"next_question": None, "done": True}
+
+        from .sarvam_tts import generate_question_with_audio
+        question_with_audio = generate_question_with_audio(next_question, language='en-IN')
+        return {
+            "next_question": question_with_audio['text'],
+            "audio_base64": question_with_audio.get('audio_base64'),
+            "has_audio": question_with_audio['has_audio'],
+            "audio_format": question_with_audio.get('audio_format', 'wav'),
+            "done": False
+        }
+        
 
         asked = {
             _normalize_question(pair.get("question", ""))

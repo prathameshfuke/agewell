@@ -45,12 +45,27 @@ export default function QAFlow() {
     const extractedSymptoms = location.state?.extracted_symptoms || persistedFlow?.extractedSymptoms || []
 
     const [currentQuestion, setCurrentQuestion] = useState(initialQuestion || '')
+    const [audioBase64, setAudioBase64] = useState(null)
+    const [isPlaying, setIsPlaying] = useState(false)
     const [qaPairs, setQaPairs] = useState(persistedFlow?.qaPairs || [])
     const [progress, setProgress] = useState(persistedFlow?.progress || '1/8')
     const [done, setDone] = useState(Boolean(persistedFlow?.done))
     const [submitting, setSubmitting] = useState(false)
     const [generating, setGenerating] = useState(false)
     const [error, setError] = useState('')
+    const playAudio = (base64Audio) => {
+        if (!base64Audio) return
+        try {
+            const byteCharacters = atob(base64Audio)
+            const byteArray = new Uint8Array([...byteCharacters].map(c => c.charCodeAt(0)))
+            const audioBlob = new Blob([byteArray], { type: 'audio/wav' })
+            const audioUrl = URL.createObjectURL(audioBlob)
+            const audio = new Audio(audioUrl)
+            setIsPlaying(true)
+            audio.play()
+            audio.onended = () => { URL.revokeObjectURL(audioUrl); setIsPlaying(false) }
+        } catch (e) { console.error('Audio error:', e) }
+    }
 
     const patientId = useMemo(() => {
         if (activeRole === 'caregiver') return profile?.linked_elderly_id
@@ -107,6 +122,8 @@ export default function QAFlow() {
         }
 
         setCurrentQuestion(response.next_question || '')
+        setAudioBase64(response.audio_base64 || null)
+        if (response.audio_base64) playAudio(response.audio_base64)
     }
 
     const generateReport = async () => {
@@ -235,6 +252,12 @@ export default function QAFlow() {
                     <PageSection delay={0.05}>
                         <Card>
                             <h2 className="text-2xl font-bold text-sage-900 leading-relaxed mb-4">{currentQuestion}</h2>
+                            {audioBase64 && (
+                                <button onClick={() => playAudio(audioBase64)} disabled={isPlaying}
+                                    className="text-sm text-sage-600 underline mb-4">
+                                    {isPlaying ? '🔊 Playing...' : '🔊 Replay question'}
+                                </button>
+                            )}
 
                             <div className="grid grid-cols-1 gap-3">
                                 <Button
