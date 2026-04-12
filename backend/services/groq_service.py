@@ -161,19 +161,15 @@ Return ONLY valid JSON, no explanation, no markdown:
         extracted = parsed.get("extracted_symptoms", symptoms)
         question = parsed.get("next_question", fallback["next_question"])
 
-        if "next_question" not in parsed:
-            print(f"DEBUG REASON: AI missing next_question in start. Parsed: {parsed}")
-
-        from .sarvam_tts import generate_question_with_audio
         q_text = question or fallback["next_question"]
         question_with_audio = generate_question_with_audio(q_text, language='en-IN')
         return {
-    "extracted_symptoms": extracted[:5] if isinstance(extracted, list) else symptoms,
-    "next_question": question_with_audio['text'],
-    "audio_base64": question_with_audio.get('audio_base64'),
-    "has_audio": question_with_audio['has_audio'],
-    "audio_format": question_with_audio.get('audio_format', 'wav')
-    }
+            "extracted_symptoms": extracted[:5] if isinstance(extracted, list) else symptoms,
+            "next_question": question_with_audio['text'],
+            "audio_base64": question_with_audio.get('audio_base64'),
+            "has_audio": question_with_audio['has_audio'],
+            "audio_format": question_with_audio.get('audio_format', 'wav')
+        }
     except Exception as e:
         print(f"Groq API Error in extract_symptoms_and_first_question: {e}")
         return fallback
@@ -228,33 +224,19 @@ OR if enough info:
         done = bool(parsed.get("done", False))
         next_question = parsed.get("next_question")
 
-        from .sarvam_tts import generate_question_with_audio
+        if done or not next_question:
+            return {
+                "next_question": None,
+                "done": True,
+                "has_audio": False
+            }
+
         question_with_audio = generate_question_with_audio(next_question, language='en-IN')
         return {
             "next_question": question_with_audio['text'],
             "audio_base64": question_with_audio.get('audio_base64'),
             "has_audio": question_with_audio['has_audio'],
             "audio_format": question_with_audio.get('audio_format', 'wav'),
-            "done": False
-        }
-        
-
-        asked = {
-            _normalize_question(pair.get("question", ""))
-            for pair in (qa_pairs or [])
-            if _normalize_question(pair.get("question", ""))
-        }
-
-        normalized_next = _normalize_question(next_question or "")
-        if not normalized_next:
-            print(f"DEBUG REASON: Next question is empty. AI output was: {parsed}")
-            return fallback
-        if normalized_next in asked:
-            print(f"DEBUG REASON: AI generated a duplicate question: {next_question}")
-            return fallback
-
-        return {
-            "next_question": next_question,
             "done": False
         }
     except Exception as e:
