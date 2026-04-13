@@ -41,16 +41,55 @@ export default function QAFlow() {
         }
     }, [flowStorageKey])
 
-    const initialQuestion = location.state?.next_question || persistedFlow?.currentQuestion || ''
-    const extractedSymptoms = location.state?.extracted_symptoms || persistedFlow?.extractedSymptoms || []
+    const initialAudio = location.state?.audio_base64 || persistedFlow?.audioBase64 || null
 
     const [currentQuestion, setCurrentQuestion] = useState(initialQuestion || '')
+    const [audioBase64, setAudioBase64] = useState(initialAudio)
+    const [isPlaying, setIsPlaying] = useState(false)
     const [qaPairs, setQaPairs] = useState(persistedFlow?.qaPairs || [])
     const [progress, setProgress] = useState(persistedFlow?.progress || '1/8')
     const [done, setDone] = useState(Boolean(persistedFlow?.done))
     const [submitting, setSubmitting] = useState(false)
     const [generating, setGenerating] = useState(false)
     const [error, setError] = useState('')
+    const playAudio = async (base64Audio) => {
+        if (!base64Audio || isPlaying) return
+        let audioUrl = null
+        try {
+            const byteCharacters = atob(base64Audio)
+            const byteArray = new Uint8Array([...byteCharacters].map(c => c.charCodeAt(0)))
+            const audioBlob = new Blob([byteArray], { type: 'audio/wav' })
+            audioUrl = URL.createObjectURL(audioBlob)
+            const audio = new Audio(audioUrl)
+            
+            setIsPlaying(true)
+            
+            const cleanup = () => {
+                if (audioUrl) {
+                    URL.revokeObjectURL(audioUrl)
+                    audioUrl = null
+                }
+                setIsPlaying(false)
+            }
+
+            audio.onended = cleanup
+            audio.onerror = (err) => {
+                console.error('Audio object error:', err)
+                cleanup()
+            }
+
+            try {
+                await audio.play()
+            } catch (playErr) {
+                console.error('Playback failed or interrupted:', playErr)
+                cleanup()
+            }
+        } catch (e) { 
+            console.error('Audio preparation error:', e)
+            setIsPlaying(false)
+            if (audioUrl) URL.revokeObjectURL(audioUrl)
+        }
+    }
 
     const patientId = useMemo(() => {
         if (activeRole === 'caregiver') return profile?.linked_elderly_id
@@ -76,12 +115,22 @@ export default function QAFlow() {
                     qaPairs,
                     progress,
                     done,
+                    audioBase64, // Persist audio too
                 })
             )
         } catch {
             // Ignore storage failures and keep in-memory flow active.
         }
-    }, [currentQuestion, done, extractedSymptoms, flowStorageKey, progress, qaPairs, sessionId])
+    }, [currentQuestion, done, extractedSymptoms, flowStorageKey, progress, qaPairs, sessionId, audioBase64])
+
+    // Autoplay on initial load if audio available
+    useEffect(() => {
+        if (audioBase64 && !isPlaying && !submitting && !generating) {
+            playAudio(audioBase64)
+        }
+        // Only run once on mount or when session starts
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     const submitAnswer = async (answer) => {
         if (!currentQuestion || !sessionId) return
@@ -107,6 +156,8 @@ export default function QAFlow() {
         }
 
         setCurrentQuestion(response.next_question || '')
+        setAudioBase64(response.audio_base64 || null)
+        if (response.audio_base64) playAudio(response.audio_base64)
     }
 
     const generateReport = async () => {
@@ -235,6 +286,12 @@ export default function QAFlow() {
                     <PageSection delay={0.05}>
                         <Card>
                             <h2 className="text-2xl font-bold text-sage-900 leading-relaxed mb-4">{currentQuestion}</h2>
+                            {audioBase64 && (
+                                <button onClick={() => playAudio(audioBase64)} disabled={isPlaying}
+                                    className="text-sm text-sage-600 underline mb-4">
+                                    {isPlaying ? '🔊 Playing...' : '🔊 Replay question'}
+                                </button>
+                            )}
 
                             <div className="grid grid-cols-1 gap-3">
                                 <Button
