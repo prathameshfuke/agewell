@@ -162,6 +162,15 @@ Return ONLY valid JSON, no explanation, no markdown:
         question = parsed.get("next_question", fallback["next_question"])
 
         q_text = question or fallback["next_question"]
+        
+        # Guard: Skip TTS if text is an error fallback
+        if q_text.startswith("Error:") or q_text == fallback["next_question"]:
+            return {
+                "extracted_symptoms": extracted[:5] if isinstance(extracted, list) else symptoms,
+                "next_question": q_text,
+                "has_audio": False
+            }
+
         question_with_audio = generate_question_with_audio(q_text, language='en-IN')
         return {
             "extracted_symptoms": extracted[:5] if isinstance(extracted, list) else symptoms,
@@ -222,9 +231,19 @@ OR if enough info:
         parsed = _parse_json_response(content, fallback)
 
         done = bool(parsed.get("done", False))
-        next_question = parsed.get("next_question")
+        next_question = (parsed.get("next_question") or "").strip()
 
-        if done or not next_question:
+        # Guard: If blank, treat as done
+        if not next_question:
+            return {"next_question": None, "done": True, "has_audio": False}
+
+        # Guard: Deduplicate against history
+        norm_next = _normalize_question(next_question)
+        for pair in qa_pairs:
+            if _normalize_question(pair.get("question", "")) == norm_next:
+                return {"next_question": None, "done": True, "has_audio": False}
+
+        if done:
             return {
                 "next_question": None,
                 "done": True,

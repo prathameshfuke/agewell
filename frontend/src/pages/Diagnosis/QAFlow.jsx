@@ -41,11 +41,10 @@ export default function QAFlow() {
         }
     }, [flowStorageKey])
 
-    const initialQuestion = location.state?.next_question || persistedFlow?.currentQuestion || ''
-    const extractedSymptoms = location.state?.extracted_symptoms || persistedFlow?.extractedSymptoms || []
+    const initialAudio = location.state?.audio_base64 || persistedFlow?.audioBase64 || null
 
     const [currentQuestion, setCurrentQuestion] = useState(initialQuestion || '')
-    const [audioBase64, setAudioBase64] = useState(null)
+    const [audioBase64, setAudioBase64] = useState(initialAudio)
     const [isPlaying, setIsPlaying] = useState(false)
     const [qaPairs, setQaPairs] = useState(persistedFlow?.qaPairs || [])
     const [progress, setProgress] = useState(persistedFlow?.progress || '1/8')
@@ -53,18 +52,43 @@ export default function QAFlow() {
     const [submitting, setSubmitting] = useState(false)
     const [generating, setGenerating] = useState(false)
     const [error, setError] = useState('')
-    const playAudio = (base64Audio) => {
-        if (!base64Audio) return
+    const playAudio = async (base64Audio) => {
+        if (!base64Audio || isPlaying) return
+        let audioUrl = null
         try {
             const byteCharacters = atob(base64Audio)
             const byteArray = new Uint8Array([...byteCharacters].map(c => c.charCodeAt(0)))
             const audioBlob = new Blob([byteArray], { type: 'audio/wav' })
-            const audioUrl = URL.createObjectURL(audioBlob)
+            audioUrl = URL.createObjectURL(audioBlob)
             const audio = new Audio(audioUrl)
+            
             setIsPlaying(true)
-            audio.play()
-            audio.onended = () => { URL.revokeObjectURL(audioUrl); setIsPlaying(false) }
-        } catch (e) { console.error('Audio error:', e) }
+            
+            const cleanup = () => {
+                if (audioUrl) {
+                    URL.revokeObjectURL(audioUrl)
+                    audioUrl = null
+                }
+                setIsPlaying(false)
+            }
+
+            audio.onended = cleanup
+            audio.onerror = (err) => {
+                console.error('Audio object error:', err)
+                cleanup()
+            }
+
+            try {
+                await audio.play()
+            } catch (playErr) {
+                console.error('Playback failed or interrupted:', playErr)
+                cleanup()
+            }
+        } catch (e) { 
+            console.error('Audio preparation error:', e)
+            setIsPlaying(false)
+            if (audioUrl) URL.revokeObjectURL(audioUrl)
+        }
     }
 
     const patientId = useMemo(() => {
@@ -91,12 +115,22 @@ export default function QAFlow() {
                     qaPairs,
                     progress,
                     done,
+                    audioBase64, // Persist audio too
                 })
             )
         } catch {
             // Ignore storage failures and keep in-memory flow active.
         }
-    }, [currentQuestion, done, extractedSymptoms, flowStorageKey, progress, qaPairs, sessionId])
+    }, [currentQuestion, done, extractedSymptoms, flowStorageKey, progress, qaPairs, sessionId, audioBase64])
+
+    // Autoplay on initial load if audio available
+    useEffect(() => {
+        if (audioBase64 && !isPlaying && !submitting && !generating) {
+            playAudio(audioBase64)
+        }
+        // Only run once on mount or when session starts
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     const submitAnswer = async (answer) => {
         if (!currentQuestion || !sessionId) return

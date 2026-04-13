@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 import base64
 from typing import Optional, Dict
@@ -45,7 +46,8 @@ def text_to_speech(text: str, language: str = 'en-IN') -> Optional[Dict]:
             "model": "bulbul:v2"
         }
         
-        logger.info(f"Calling Sarvam TTS API for text: {text[:50]}...")
+        logger.info("Calling Sarvam TTS API (metadata only log)")
+        start_time = time.time()
         
         response = requests.post(
             SARVAM_TTS_URL,
@@ -53,6 +55,7 @@ def text_to_speech(text: str, language: str = 'en-IN') -> Optional[Dict]:
             headers=headers,
             timeout=15  # 15 second timeout
         )
+        elapsed = time.time() - start_time
         
         if response.status_code == 200:
             # Sarvam returns audio as base64 in JSON response
@@ -62,7 +65,7 @@ def text_to_speech(text: str, language: str = 'en-IN') -> Optional[Dict]:
             if 'audios' in response_data and len(response_data['audios']) > 0:
                 audio_base64 = response_data['audios'][0]
                 
-                logger.info("Successfully generated audio from Sarvam TTS")
+                logger.info(f"Successfully generated audio from Sarvam TTS (elapsed: {elapsed:.2f}s, status: {response.status_code})")
                 
                 return {
                     'audio_base64': audio_base64,
@@ -70,10 +73,10 @@ def text_to_speech(text: str, language: str = 'en-IN') -> Optional[Dict]:
                     'language': language
                 }
             else:
-                logger.error("No audio in Sarvam response")
+                logger.error(f"No audio in Sarvam response (status: {response.status_code})")
                 return None
         else:
-            logger.error(f"Sarvam TTS Error: {response.status_code} - {response.text}")
+            logger.error(f"Sarvam TTS Error: {response.status_code} (elapsed: {elapsed:.2f}s)")
             return None
             
     except requests.exceptions.Timeout:
