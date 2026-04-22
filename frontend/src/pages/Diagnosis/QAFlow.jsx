@@ -41,10 +41,14 @@ export default function QAFlow() {
         }
     }, [flowStorageKey])
 
-    const initialQuestion = location.state?.next_question || persistedFlow?.currentQuestion || ''
+    const seedQuestion =
+        location.state?.next_question ||
+        location.state?.initial_question ||
+        persistedFlow?.currentQuestion ||
+        ''
     const extractedSymptoms = location.state?.extracted_symptoms || persistedFlow?.extractedSymptoms || []
 
-    const [currentQuestion, setCurrentQuestion] = useState(initialQuestion || '')
+    const [currentQuestion, setCurrentQuestion] = useState(seedQuestion || '')
     const [qaPairs, setQaPairs] = useState(persistedFlow?.qaPairs || [])
     const [progress, setProgress] = useState(persistedFlow?.progress || '1/8')
     const [done, setDone] = useState(Boolean(persistedFlow?.done))
@@ -58,10 +62,18 @@ export default function QAFlow() {
     }, [activeRole, profile, user])
 
     useEffect(() => {
-        if (!sessionId || (!initialQuestion && !done)) {
+        if (!currentQuestion && seedQuestion) {
+            setCurrentQuestion(seedQuestion)
+        }
+    }, [currentQuestion, seedQuestion])
+
+    const hasQuestion = Boolean(currentQuestion || seedQuestion)
+
+    useEffect(() => {
+        if (!sessionId || (!hasQuestion && !done)) {
             navigate('/diagnosis/input', { replace: true })
         }
-    }, [done, initialQuestion, navigate, sessionId])
+    }, [done, hasQuestion, navigate, sessionId])
 
     useEffect(() => {
         if (!flowStorageKey || !sessionId) return

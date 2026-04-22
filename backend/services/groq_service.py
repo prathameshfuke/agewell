@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from typing import Dict, List
 
 try:
@@ -43,7 +44,94 @@ def _normalize_question(text: str) -> str:
     return " ".join((text or "").strip().lower().split())
 
 
+def _coerce_single_question(text: str, fallback_question: str) -> str:
+    raw = text if isinstance(text, str) else ""
+    cleaned = re.sub(r"\s+", " ", raw).strip(" \t\r\n:-•")
+    fallback = (fallback_question or "Are your symptoms getting worse today?").strip()
+
+    if not cleaned or cleaned.lower().startswith("error"):
+        return fallback
+
+    question_chunks = [chunk.strip(" \t\r\n:-•") for chunk in re.split(r"(?<=\?)\s+", cleaned) if chunk.strip()]
+    for chunk in question_chunks:
+        if "?" in chunk:
+            first_question = chunk[:chunk.find("?") + 1].strip()
+            if first_question and _is_yes_no_question(first_question):
+                return first_question
+            return fallback
+
+    if len(cleaned) < 8:
+        return fallback
+
+    candidate = f"{cleaned}?"
+    return candidate if _is_yes_no_question(candidate) else fallback
+
+
+def _is_yes_no_question(question: str) -> bool:
+    text = _normalize_question(question)
+    if not text:
+        return False
+
+    if not text.endswith("?"):
+        return False
+
+    disallowed_openers = ("what ", "why ", "how ", "where ", "when ", "which ", "who ", "describe ", "tell me ")
+    if text.startswith(disallowed_openers):
+        return False
+
+    allowed_starts = (
+        "is ", "are ", "do ", "does ", "did ", "can ", "could ", "have ", "has ", "had ",
+        "will ", "would ", "should ", "were ", "was ", "am "
+    )
+    if not text.startswith(allowed_starts):
+        return False
+
+    return True
+
+
+def _is_critical_complaint(raw_complaint: str) -> bool:
+    text = (raw_complaint or "").lower()
+    critical_patterns = [
+        r"vom\w*\s+.*blood",
+        r"blood.*vom\w*",
+        r"hematemesis",
+        r"cough\w*\s+.*blood",
+        r"blood.*cough\w*",
+        r"chest pain",
+        r"shortness of breath",
+        r"can(?:not|'t)\s+breathe",
+        r"severe bleeding",
+        r"faint\w*",
+        r"unconscious",
+        r"stroke",
+        r"seizure",
+    ]
+    return any(re.search(pattern, text) for pattern in critical_patterns)
+
+
+def _critical_probes(raw_complaint: str) -> List[str]:
+    text = (raw_complaint or "").lower()
+
+    if re.search(r"vom\w*\s+.*blood|blood.*vom\w*|hematemesis", text):
+        return [
+            "Are you vomiting blood right now?",
+            "Are you feeling faint, weak, or dizzy right now?",
+            "Are you alone right now without someone to help you immediately?",
+            "Can you call emergency services now or have someone take you to the emergency room now?",
+        ]
+
+    return [
+        "Are your severe symptoms happening right now?",
+        "Are you having trouble breathing right now?",
+        "Are you feeling faint or about to pass out?",
+        "Can you call emergency services now or have someone take you to the emergency room now?",
+    ]
+
+
 def _complaint_focus_phrase(raw_complaint: str) -> str:
+    if _is_critical_complaint(raw_complaint):
+        return "severe symptoms"
+
     symptoms = _simple_symptom_extract(raw_complaint)
     if symptoms:
         return symptoms[0]
@@ -62,6 +150,12 @@ def _next_dynamic_question(complaint: str, qa_pairs: List[Dict]) -> Dict:
         for pair in (qa_pairs or [])
         if _normalize_question(pair.get("question", ""))
     }
+
+    if _is_critical_complaint(complaint):
+        for question in _critical_probes(complaint):
+            if _normalize_question(question) not in asked:
+                return {"next_question": question, "done": False}
+        return {"next_question": None, "done": True}
 
     focus = _complaint_focus_phrase(complaint)
     probes = [
@@ -89,6 +183,11 @@ def _simple_symptom_extract(raw_complaint: str) -> List[str]:
     ]
     text = raw_complaint.lower()
     found = [k for k in keywords if k in text]
+
+    if re.search(r"vom\w*\s+.*blood|blood.*vom\w*|hematemesis", text):
+        found.insert(0, "vomiting blood")
+    elif re.search(r"cough\w*\s+.*blood|blood.*cough\w*", text):
+        found.insert(0, "coughing blood")
 
     if not found:
         words = [w.strip(".,!?") for w in text.split() if len(w) > 3]
@@ -120,9 +219,10 @@ def extract_symptoms_and_first_question(raw_complaint: str, api_key: str = "") -
     Returns: { extracted_symptoms: [], next_question: str }
     """
     symptoms = _simple_symptom_extract(raw_complaint)
+    fallback_question = _first_problem_specific_question(raw_complaint)
     fallback = {
         "extracted_symptoms": symptoms,
-        "next_question": "Error: AI Diagnosis Service is currently unreachable. Please check your API keys or try again later."
+        "next_question": fallback_question,
     }
 
     client = _get_client(api_key)
@@ -136,12 +236,14 @@ Patient complaint: \"{raw_complaint}\"
 
 Your tasks:
 1. Extract the main symptom keywords (max 5, plain English, no jargon).
-2. Generate the bot's response message (`next_question`), which MUST include:
-   - A short, highly empathetic calming phrase to settle their nerves.
-   - A preliminary safe first-aid instruction based on their symptoms (e.g., \"Please sit down and rest\", \"Take a few slow, deep breaths\", \"Sip some water\").
-   - ONE simple yes/no follow-up question to better understand the primary symptom.
-   Combine these smoothly into one string, perhaps using emojis to separate the advice from the question.
-3. Keep language extremely simple — the patient is elderly.
+2. Generate ONLY ONE standalone yes/no question in `next_question`.
+3. `next_question` must:
+   - start with an auxiliary verb (Is/Are/Do/Does/Did/Can/Could/Have/Has/Will/Would/Should)
+   - end with a question mark
+   - be answerable only with yes or no
+   - not contain multiple questions
+   - not include advice, explanations, emojis, or statements before/after the question
+4. Keep language extremely simple — the patient is elderly.
 
 Return ONLY valid JSON, no explanation, no markdown:
 {{"extracted_symptoms": ["..."], "next_question": "..."}}
@@ -158,14 +260,15 @@ Return ONLY valid JSON, no explanation, no markdown:
         parsed = _parse_json_response(content, fallback)
 
         extracted = parsed.get("extracted_symptoms", symptoms)
-        question = parsed.get("next_question", fallback["next_question"])
+        raw_question = parsed.get("next_question")
+        question = _coerce_single_question(raw_question, fallback["next_question"])
 
         if "next_question" not in parsed:
             print(f"DEBUG REASON: AI missing next_question in start. Parsed: {parsed}")
 
         return {
             "extracted_symptoms": extracted[:5] if isinstance(extracted, list) else symptoms,
-            "next_question": question or fallback["next_question"]
+            "next_question": question
         }
     except Exception as e:
         print(f"Groq API Error in extract_symptoms_and_first_question: {e}")
@@ -180,10 +283,7 @@ def get_next_question(complaint: str, qa_pairs: List[Dict], api_key: str = "") -
     if len(qa_pairs) >= 8:
         return {"next_question": None, "done": True}
 
-    fallback = {
-        "next_question": "Error: AI Diagnosis Service is unreachable. Please end the session or consult a doctor.",
-        "done": True
-    }
+    fallback = _next_dynamic_question(complaint, qa_pairs)
 
     client = _get_client(api_key)
     if client is None:
@@ -201,6 +301,7 @@ The question must be directly tied to the patient's complaint and previous answe
 Do not repeat or paraphrase a previously asked question.
 If you have enough information after {len(qa_pairs)} questions, return done.
 Keep language very simple. One question only.
+The question must be strictly answerable by yes/no, start with an auxiliary verb, and end with '?'.
 
 Return ONLY valid JSON:
 {{"next_question": "...", "done": false}}
@@ -219,9 +320,23 @@ OR if enough info:
         parsed = _parse_json_response(content, fallback)
 
         done = bool(parsed.get("done", False))
-        next_question = parsed.get("next_question")
+        fallback_question = fallback.get("next_question")
+        raw_next_question = parsed.get("next_question")
         if done:
             return {"next_question": None, "done": True}
+
+        if isinstance(raw_next_question, str) and raw_next_question.strip():
+            next_question = _coerce_single_question(
+                raw_next_question,
+                fallback_question or "Are your symptoms getting worse today?",
+            )
+        elif fallback_question:
+            next_question = fallback_question
+        else:
+            return fallback
+
+        if not _is_yes_no_question(next_question):
+            return fallback
 
         asked = {
             _normalize_question(pair.get("question", ""))
@@ -255,7 +370,8 @@ def _infer_urgency(complaint: str, qa_pairs: List[Dict], image_observations: str
 
     urgent_terms = [
         "chest pain", "shortness of breath", "faint", "unconscious",
-        "severe bleeding", "stroke", "can not breathe", "very high fever"
+        "severe bleeding", "stroke", "can not breathe", "very high fever",
+        "vomiting blood", "blood in vomit", "hematemesis", "coughing blood", "blood in cough"
     ]
 
     consult_terms = [

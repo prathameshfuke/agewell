@@ -58,7 +58,7 @@ export default function RoleSelect() {
             setSessionActiveRole(role)
 
             if (!isOnboardingComplete(role)) {
-                navigate(`/onboarding/${role}`, { replace: true })
+                navigate(`/onboarding/${role}`)
             } else {
                 const dashboard = role === 'caregiver' ? '/family/dashboard' : '/elder/dashboard'
                 navigate(dashboard, { replace: true })

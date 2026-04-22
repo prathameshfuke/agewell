@@ -72,6 +72,15 @@ export default function ElderlyOnboarding() {
         if (step < 3) setStep(step + 1)
     }
 
+    const handleBack = () => {
+        if (step > 1) {
+            setStep(step - 1)
+            return
+        }
+
+        navigate('/onboarding/role-select')
+    }
+
     const handleComplete = async () => {
         if (!validateStep()) return
 
@@ -110,9 +119,8 @@ export default function ElderlyOnboarding() {
             {/* Header with Progress */}
             <div className="flex items-center justify-between mb-8">
                 <button
-                    onClick={() => step > 1 && setStep(step - 1)}
-                    disabled={step === 1}
-                    className="text-sage-500 hover:text-sage-700 flex items-center gap-2 text-sm font-bold disabled:opacity-30 min-h-[44px]"
+                    onClick={handleBack}
+                    className="text-sage-500 hover:text-sage-700 flex items-center gap-2 text-sm font-bold min-h-[44px]"
                 >
                     <ArrowLeft className="w-5 h-5" /> Back
                 </button>

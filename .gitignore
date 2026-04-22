@@ -48,6 +48,13 @@ Thumbs.db
 
 # Uploads
 uploads/
+
+# Generated Documents
+generate_doc.js
+generate_mmrps_proposal.js
+generate_series_tech_pdf.py
+*.docx
+*.pdf
 # *.jpg
 # *.jpeg
 # *.png

@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { CenteredLayout } from '../components/layout'
 import { Button } from '../components/ui'
 
-import oneSticker from '../assets/images/stickers/one.jpeg'
+import logo from '/logo.png'
 
 /**
  * Auth Page - Simple login/signup
@@ -63,9 +63,9 @@ export default function Auth() {
 
       <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
         <motion.img
-          src={oneSticker}
-          alt="Welcome"
-          className="w-24 h-24 rounded-3xl shadow-lg border-4 border-white mb-6"
+          src={logo}
+          alt="AgeWell"
+          className="w-24 h-24 rounded-3xl shadow-lg border-4 border-white mb-6 object-contain"
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
         />

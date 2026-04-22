@@ -43,9 +43,12 @@ def _resolve_user_ai_keys(patient_id: str):
     if not patient_id:
         return header_keys
 
+    user_groq_key = _safe_user_setting_lookup(patient_id, 'GROQ_API_KEY')
+    user_gemini_key = _safe_user_setting_lookup(patient_id, 'GEMINI_API_KEY')
+
     return {
-        'groq_api_key': header_keys['groq_api_key'] or _safe_user_setting_lookup(patient_id, 'GROQ_API_KEY'),
-        'gemini_api_key': header_keys['gemini_api_key'] or _safe_user_setting_lookup(patient_id, 'GEMINI_API_KEY'),
+        'groq_api_key': user_groq_key or header_keys['groq_api_key'],
+        'gemini_api_key': user_gemini_key or header_keys['gemini_api_key'],
     }
 
 

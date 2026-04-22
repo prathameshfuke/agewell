@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, ArrowLeft, ArrowRight, User, Users, Bell, Loader2 } from 'lucide-react'
 import { Card, Button } from '../components/ui'
+import { api } from '../api/client'
 
 import twoSticker from '../assets/images/stickers/two.jpeg'
 
@@ -26,6 +27,8 @@ export default function CaregiverOnboarding() {
         consent_acknowledged: false,
         pairing_code: ''
     })
+
+    const normalizedPairingCode = (formData.pairing_code || '').replace(/[^A-Z0-9]/gi, '').toUpperCase()
 
     useEffect(() => {
         if (profile) {
@@ -53,7 +56,7 @@ export default function CaregiverOnboarding() {
             return false
         }
         if (step === 2) {
-            if (!formData.pairing_code.trim() || formData.pairing_code.length !== 6) {
+            if (normalizedPairingCode.length !== 6) {
                 setError('Please enter a valid 6-character pairing code')
                 return false
             }
@@ -75,45 +78,46 @@ export default function CaregiverOnboarding() {
         if (step < 3) setStep(step + 1)
     }
 
+    const handleBack = () => {
+        if (step > 1) {
+            setStep(step - 1)
+            return
+        }
+
+        navigate('/onboarding/role-select')
+    }
+
     const handleComplete = async () => {
         if (!validateStep()) return
+        if (!user?.id) {
+            setError('Your session is not ready. Please try again.')
+            return
+        }
 
         setLoading(true)
         setError(null)
 
         try {
-            // Find the elder user by pairing code - importing from lib/supabase here would be ideal but using global for now or assuming context doesn't expose raw client
-            // We need to use the auth context's update function but also query via supabase first.
-            // Since we don't have direct access here, we can rely on a helper or just do it if we import supabase. 
-            // Ideally, completeOnboarding in AuthContext should handle this, but let's do it here.
+            const linkResponse = await api.joinLinkCode(user.id, normalizedPairingCode)
+            if (!linkResponse?.success) {
+                throw new Error(linkResponse?.error || 'Invalid pairing code. Please check and try again.')
+            }
 
-            // NOTE: We need to import supabase to query. Let's assume it's available or we can use a server function. 
-            // BUT, since we are "making it real" on frontend, let's import it dynamically or assume standard import.
-            // I'll add the import at the top in a separate change if needed, but for now let's use the valid logic pattern.
-
-            // Actually, best to fetch the elder profile first.
-            const { supabase } = await import('../lib/supabase')
-
-            const { data: elderProfile, error: searchError } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('pairing_code', formData.pairing_code)
-                .single()
-
-            if (searchError || !elderProfile) {
-                throw new Error('Invalid pairing code. Please check and try again.')
+            const linkedElderId = linkResponse?.link?.elder_id || linkResponse?.elder?.id
+            if (!linkedElderId) {
+                throw new Error('Could not resolve linked elder from pairing code.')
             }
 
             await completeOnboarding('caregiver', {
                 full_name: formData.full_name,
                 caregiver_relationship: formData.relationship,
                 notifications_enabled: formData.notifications_enabled,
-                linked_elderly_id: elderProfile.id // Linking here!
+                linked_elderly_id: linkedElderId
             })
             navigate('/family/dashboard', { replace: true })
         } catch (err) {
             console.error('Error:', err)
-            setError(err.message === 'Invalid pairing code. Please check and try again.' ? err.message : 'Failed to save. Please try again.')
+            setError(err.message || 'Failed to save. Please try again.')
             setLoading(false)
         }
     }
@@ -131,9 +135,8 @@ export default function CaregiverOnboarding() {
             {/* Header with Progress */}
             <div className="flex items-center justify-between mb-8">
                 <button
-                    onClick={() => step > 1 && setStep(step - 1)}
-                    disabled={step === 1}
-                    className="text-sage-500 hover:text-sage-700 flex items-center gap-2 text-sm font-bold disabled:opacity-30 min-h-[44px]"
+                    onClick={handleBack}
+                    className="text-sage-500 hover:text-sage-700 flex items-center gap-2 text-sm font-bold min-h-[44px]"
                 >
                     <ArrowLeft className="w-5 h-5" /> Back
                 </button>
@@ -197,7 +200,7 @@ export default function CaregiverOnboarding() {
                                     maxLength={6}
                                     value={formData.pairing_code}
                                     onChange={(e) => {
-                                        const val = e.target.value.toUpperCase()
+                                        const val = e.target.value.replace(/[^A-Z0-9]/gi, '').toUpperCase()
                                         handleChange('pairing_code', val)
                                     }}
                                     placeholder="e.g. A7B2C9"

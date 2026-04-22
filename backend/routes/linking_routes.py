@@ -52,6 +52,22 @@ def _generate_link_code() -> str:
     return ''.join(secrets.choice(CODE_ALPHABET) for _ in range(CODE_LENGTH))
 
 
+def _generate_unique_link_code(client, max_attempts: int = 12) -> str:
+    for _ in range(max_attempts):
+        candidate = _generate_link_code()
+        collision_check = (
+            client.table(TABLE)
+            .select('id')
+            .eq('link_code', candidate)
+            .limit(1)
+            .execute()
+        )
+        if not (collision_check.data or []):
+            return candidate
+
+    return ''
+
+
 def _build_profiles_map(profile_rows):
     profile_map = {}
     for row in profile_rows or []:
@@ -99,20 +115,7 @@ def generate_code():
 
             client.table(TABLE).update({'status': 'revoked'}).eq('id', pending_row['id']).execute()
 
-        link_code = ''
-        for _ in range(12):
-            candidate = _generate_link_code()
-            collision_check = (
-                client.table(TABLE)
-                .select('id')
-                .eq('link_code', candidate)
-                .in_('status', ['pending', 'active'])
-                .limit(1)
-                .execute()
-            )
-            if not (collision_check.data or []):
-                link_code = candidate
-                break
+        link_code = _generate_unique_link_code(client)
 
         if not link_code:
             return jsonify({'error': 'Unable to generate a unique code. Please retry.'}), 500
@@ -164,16 +167,38 @@ def join_with_code():
             .execute()
         )
         rows = lookup_response.data or []
+        used_legacy_pairing_code = False
+        legacy_elder_profile = None
 
         if not rows:
-            return jsonify({'error': 'Invalid or already used link code'}), 404
+            legacy_response = (
+                client.table(PROFILES_TABLE)
+                .select('id, full_name, avatar_url, role')
+                .eq('pairing_code', link_code)
+                .limit(1)
+                .execute()
+            )
+            legacy_rows = legacy_response.data or []
+            if not legacy_rows:
+                return jsonify({'error': 'Invalid or already used link code'}), 404
 
-        pending_link = rows[0]
+            used_legacy_pairing_code = True
+            legacy_elder_profile = legacy_rows[0]
+            pending_link = {
+                'id': None,
+                'elder_id': legacy_elder_profile.get('id'),
+                'caregiver_id': None,
+                'link_code': link_code,
+                'status': 'pending',
+                'created_at': _iso_now()
+            }
+        else:
+            pending_link = rows[0]
 
         if pending_link['elder_id'] == caregiver_id:
             return jsonify({'error': 'You cannot link to yourself'}), 400
 
-        if _pending_expired(pending_link):
+        if not used_legacy_pairing_code and _pending_expired(pending_link):
             client.table(TABLE).update({'status': 'revoked'}).eq('id', pending_link['id']).execute()
             return jsonify({'error': 'This code has expired. Ask the elder to generate a new code.'}), 410
 
@@ -205,33 +230,53 @@ def join_with_code():
                 'elder': elder_profile
             })
 
-        update_payload = {
-            'caregiver_id': caregiver_id,
-            'status': 'active',
-            'linked_at': _iso_now()
-        }
+        if used_legacy_pairing_code:
+            generated_link_code = _generate_unique_link_code(client)
+            if not generated_link_code:
+                return jsonify({'error': 'Unable to activate link at this time. Please retry.'}), 500
 
-        update_response = (
-            client.table(TABLE)
-            .update(update_payload)
-            .eq('id', pending_link['id'])
-            .eq('status', 'pending')
-            .execute()
-        )
-        updated_rows = update_response.data or []
-        updated_link = updated_rows[0] if updated_rows else {
-            **pending_link,
-            **update_payload
-        }
+            insert_payload = {
+                'elder_id': pending_link['elder_id'],
+                'caregiver_id': caregiver_id,
+                'link_code': generated_link_code,
+                'status': 'active',
+                'linked_at': _iso_now(),
+                'created_at': _iso_now()
+            }
+            insert_response = client.table(TABLE).insert(insert_payload).execute()
+            inserted_rows = insert_response.data or []
+            updated_link = inserted_rows[0] if inserted_rows else insert_payload
+        else:
+            update_payload = {
+                'caregiver_id': caregiver_id,
+                'status': 'active',
+                'linked_at': _iso_now()
+            }
 
-        elder_profile_response = (
-            client.table(PROFILES_TABLE)
-            .select('id, full_name, avatar_url, role')
-            .eq('id', updated_link['elder_id'])
-            .limit(1)
-            .execute()
-        )
-        elder_profile_rows = elder_profile_response.data or []
+            update_response = (
+                client.table(TABLE)
+                .update(update_payload)
+                .eq('id', pending_link['id'])
+                .eq('status', 'pending')
+                .execute()
+            )
+            updated_rows = update_response.data or []
+            updated_link = updated_rows[0] if updated_rows else {
+                **pending_link,
+                **update_payload
+            }
+
+        if used_legacy_pairing_code and legacy_elder_profile:
+            elder_profile_rows = [legacy_elder_profile]
+        else:
+            elder_profile_response = (
+                client.table(PROFILES_TABLE)
+                .select('id, full_name, avatar_url, role')
+                .eq('id', updated_link['elder_id'])
+                .limit(1)
+                .execute()
+            )
+            elder_profile_rows = elder_profile_response.data or []
 
         client.table(PROFILES_TABLE).update({
             'linked_elderly_id': updated_link['elder_id'],
@@ -240,6 +285,7 @@ def join_with_code():
 
         return jsonify({
             'success': True,
+            'linked_via': 'pairing_code' if used_legacy_pairing_code else 'link_code',
             'link': {
                 'id': updated_link.get('id'),
                 'elder_id': updated_link.get('elder_id'),

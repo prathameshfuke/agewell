@@ -66,16 +66,11 @@ export default function Home() {
             className="flex items-center gap-2 sm:gap-3 cursor-pointer"
             onClick={() => navigate('/')}
           >
-            <div className="relative">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-sage-500 to-sage-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-white fill-current" />
-              </div>
-              <motion.div
-                animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="absolute inset-0 bg-sage-500/30 rounded-xl blur-md"
-              />
-            </div>
+            <img
+              src="/logo.png"
+              alt="AgeWell"
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl shadow-lg object-contain"
+            />
             <span className="font-serif text-xl sm:text-2xl font-bold text-sage-800 tracking-tight">AgeWell</span>
           </motion.div>
 

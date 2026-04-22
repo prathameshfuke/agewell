@@ -95,13 +95,29 @@ export default function SymptomInput() {
             return
         }
 
+        const firstQuestion =
+            result.next_question ||
+            result.initial_question ||
+            result.initialQuestion ||
+            result.question ||
+            ''
+        const normalizedFirstQuestion = (firstQuestion || '').trim()
+        const safeFirstQuestion = /^error[:\s]/i.test(normalizedFirstQuestion)
+            ? 'Are your symptoms getting worse compared to earlier today?'
+            : normalizedFirstQuestion
+
+        if (!safeFirstQuestion) {
+            setError('Diagnosis service did not return the first question. Please retry.')
+            return
+        }
+
         try {
             sessionStorage.removeItem(DIAGNOSIS_COMPLAINT_DRAFT_KEY)
             sessionStorage.setItem(
                 `agewell_diag_qa_${result.session_id}`,
                 JSON.stringify({
                     session_id: result.session_id,
-                    currentQuestion: result.next_question,
+                    currentQuestion: safeFirstQuestion,
                     extractedSymptoms: result.extracted_symptoms || [],
                     qaPairs: [],
                     progress: '1/8',
@@ -116,7 +132,8 @@ export default function SymptomInput() {
             replace: true,
             state: {
                 session_id: result.session_id,
-                next_question: result.next_question,
+                next_question: safeFirstQuestion,
+                initial_question: safeFirstQuestion,
                 extracted_symptoms: result.extracted_symptoms || [],
                 raw_complaint: complaint.trim(),
                 patient_id: patientId,
