@@ -42,8 +42,10 @@ export default function QAFlow() {
     }, [flowStorageKey])
 
     const initialAudio = location.state?.audio_base64 || persistedFlow?.audioBase64 || null
+    const initialQuestion = location.state?.next_question || persistedFlow?.currentQuestion || ''
+    const initialSymptoms = location.state?.extracted_symptoms || persistedFlow?.extractedSymptoms || []
 
-    const [currentQuestion, setCurrentQuestion] = useState(initialQuestion || '')
+    const [currentQuestion, setCurrentQuestion] = useState(initialQuestion)
     const [audioBase64, setAudioBase64] = useState(initialAudio)
     const [isPlaying, setIsPlaying] = useState(false)
     const [qaPairs, setQaPairs] = useState(persistedFlow?.qaPairs || [])
@@ -52,6 +54,7 @@ export default function QAFlow() {
     const [submitting, setSubmitting] = useState(false)
     const [generating, setGenerating] = useState(false)
     const [error, setError] = useState('')
+    const [extractedSymptoms, setExtractedSymptoms] = useState(initialSymptoms)
     const playAudio = async (base64Audio) => {
         if (!base64Audio || isPlaying) return
         let audioUrl = null
