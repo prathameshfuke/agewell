@@ -8,14 +8,14 @@ export function useMedications(userId) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const fetchSchedule = useCallback(async (date = null) => {
+    const fetchSchedule = useCallback(async (date = null, options = {}) => {
         if (!userId) {
             setLoading(false);
             return;
         }
 
         try {
-            setLoading(true);
+            if (!options.silent) setLoading(true);
             const result = await api.getSchedule(userId, date);
             if (result.success) {
                 setSchedule(result.schedule || []);
@@ -64,9 +64,8 @@ export function useMedications(userId) {
                     filter: `user_id=eq.${userId}`
                 },
                 () => {
-                    console.log('Medications changed, reloading...');
                     fetchMedications();
-                    fetchSchedule();
+                    fetchSchedule(null, { silent: true });
                 }
             )
             .on(
@@ -74,17 +73,13 @@ export function useMedications(userId) {
                 {
                     event: '*',
                     schema: 'public',
-                    table: 'adherence_logs',
-                    filter: `user_id=eq.${userId}`
+                    table: 'adherence_logs'
                 },
                 () => {
-                    console.log('Adherence logs changed, reloading...');
-                    fetchSchedule();
+                    fetchSchedule(null, { silent: true });
                 }
             )
-            .subscribe((status) => {
-                console.log(`Subscription status for ${userId}:`, status);
-            });
+            .subscribe();
 
         return () => {
             supabase.removeChannel(channel);

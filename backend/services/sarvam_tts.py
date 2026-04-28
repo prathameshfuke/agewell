@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 # Get API key from environment
 SARVAM_API_KEY = os.getenv('SARVAM_API_KEY')
 SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech'
+SARVAM_TTS_TIMEOUT_SECONDS = float(os.getenv('SARVAM_TTS_TIMEOUT_SECONDS', '5'))
 
 
 def text_to_speech(text: str, language: str = 'en-IN') -> Optional[Dict]:
@@ -53,7 +54,7 @@ def text_to_speech(text: str, language: str = 'en-IN') -> Optional[Dict]:
             SARVAM_TTS_URL,
             json=payload,
             headers=headers,
-            timeout=15  # 15 second timeout
+            timeout=SARVAM_TTS_TIMEOUT_SECONDS
         )
         elapsed = time.time() - start_time
         

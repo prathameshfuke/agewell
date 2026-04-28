@@ -56,7 +56,7 @@ export default function FamilyMeds() {
                         // Note: logs might have taken_time or created_at
                         const dayLogs = logs.filter(l =>
                             (l.medication_id === med.id || l.medication?.id === med.id) &&
-                            (l.taken_at || l.created_at)?.startsWith(dateStr)
+                            (l.taken_at || l.actual_time || l.scheduled_time || l.created_at)?.startsWith(dateStr)
                         )
 
                         return dayLogs.some(l => l.status === 'taken') ? 1 : 0

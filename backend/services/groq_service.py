@@ -84,12 +84,20 @@ def _next_dynamic_question(complaint: str, qa_pairs: List[Dict]) -> Dict:
 
 def _simple_symptom_extract(raw_complaint: str) -> List[str]:
     keywords = [
-        "fever", "cough", "chest pain", "headache", "dizziness", "nausea",
-        "vomiting", "diarrhea", "fatigue", "weakness", "shortness of breath",
-        "rash", "swelling", "pain", "sore throat", "runny nose"
+        "coughing up blood", "coughing blood", "blood in cough", "blood in sputum",
+        "shortness of breath", "chest pain", "sore throat", "runny nose",
+        "severe bleeding", "fever", "cough", "headache", "dizziness", "nausea",
+        "vomiting", "diarrhea", "fatigue", "weakness", "rash", "swelling", "pain"
     ]
     text = raw_complaint.lower()
-    found = [k for k in keywords if k in text]
+    found = []
+
+    for keyword in keywords:
+        if keyword not in text:
+            continue
+        if any(keyword in existing for existing in found):
+            continue
+        found.append(keyword)
 
     if not found:
         words = [w.strip(".,!?") for w in text.split() if len(w) > 3]
@@ -103,6 +111,8 @@ def _fallback_first_question(symptoms: List[str]) -> str:
         return "Are your symptoms getting worse today?"
 
     primary = symptoms[0]
+    if primary in ["coughing up blood", "coughing blood", "blood in cough", "blood in sputum", "severe bleeding"]:
+        return "Are you coughing up blood right now?"
     if primary in ["chest pain", "shortness of breath", "dizziness"]:
         return "Are you feeling this symptom right now?"
     if primary in ["fever", "cough", "sore throat"]:
@@ -111,8 +121,12 @@ def _fallback_first_question(symptoms: List[str]) -> str:
 
 
 def _first_problem_specific_question(raw_complaint: str) -> str:
+    symptoms = _simple_symptom_extract(raw_complaint)
+    if symptoms and symptoms[0] in ["coughing up blood", "coughing blood", "blood in cough", "blood in sputum", "severe bleeding"]:
+        return _fallback_first_question(symptoms)
+
     next_item = _next_dynamic_question(raw_complaint, [])
-    return next_item.get("next_question") or _fallback_first_question(_simple_symptom_extract(raw_complaint))
+    return next_item.get("next_question") or _fallback_first_question(symptoms)
 
 
 def extract_symptoms_and_first_question(raw_complaint: str, api_key: str = "") -> Dict:
@@ -123,7 +137,8 @@ def extract_symptoms_and_first_question(raw_complaint: str, api_key: str = "") -
     symptoms = _simple_symptom_extract(raw_complaint)
     fallback = {
         "extracted_symptoms": symptoms,
-        "next_question": "Error: AI Diagnosis Service is currently unreachable. Please check your API keys or try again later."
+        "next_question": _first_problem_specific_question(raw_complaint),
+        "has_audio": False
     }
 
     client = _get_client(api_key)
@@ -163,8 +178,8 @@ Return ONLY valid JSON, no explanation, no markdown:
 
         q_text = question or fallback["next_question"]
         
-        # Guard: Skip TTS if text is an error fallback
-        if q_text.startswith("Error:") or q_text == fallback["next_question"]:
+        # Guard: Skip TTS for local fallback text.
+        if q_text == fallback["next_question"]:
             return {
                 "extracted_symptoms": extracted[:5] if isinstance(extracted, list) else symptoms,
                 "next_question": q_text,
@@ -193,8 +208,8 @@ def get_next_question(complaint: str, qa_pairs: List[Dict], api_key: str = "") -
         return {"next_question": None, "done": True}
 
     fallback = {
-        "next_question": "Error: AI Diagnosis Service is unreachable. Please end the session or consult a doctor.",
-        "done": True
+        **_next_dynamic_question(complaint, qa_pairs),
+        "has_audio": False
     }
 
     client = _get_client(api_key)
@@ -272,7 +287,8 @@ def _infer_urgency(complaint: str, qa_pairs: List[Dict], image_observations: str
 
     urgent_terms = [
         "chest pain", "shortness of breath", "faint", "unconscious",
-        "severe bleeding", "stroke", "can not breathe", "very high fever"
+        "severe bleeding", "coughing blood", "coughing up blood", "blood in cough",
+        "blood in sputum", "stroke", "can not breathe", "very high fever"
     ]
 
     consult_terms = [
@@ -331,17 +347,20 @@ def generate_diagnosis_report(
     fallback_flags = _medication_flags_from_text(base_text, medications)
 
     fallback = {
-        "symptom_summary": "Error: AI Report Generation Failed.",
+        "symptom_summary": f"Patient reported: {complaint}. Follow-up answers and any uploaded images should be reviewed by a qualified clinician.",
         "possible_conditions": [
-            "AI Service Offline"
+            "Requires clinician review",
+            "Symptom cause not determined by this app"
         ],
-        "medication_flags": [],
-        "urgency_level": "CONSULT_SOON",
-        "urgency_reason": "AI Service Offline - Please consult a doctor for a proper evaluation.",
+        "medication_flags": fallback_flags,
+        "urgency_level": fallback_urgency,
+        "urgency_reason": "Urgency estimated from reported warning symptoms because the AI service was unavailable.",
         "doctor_questions": [
-            "What should I do given the AI system is offline?"
+            "What could be causing these symptoms?",
+            "Do I need urgent tests or treatment today?",
+            "Could any current medicines be related to these symptoms?"
         ],
-        "disclaimer": "This summary failed to generate properly. Consult a qualified doctor immediately."
+        "disclaimer": "This summary is for informational purposes only and is not a medical diagnosis. Consult a qualified doctor."
     }
 
     client = _get_client(api_key)

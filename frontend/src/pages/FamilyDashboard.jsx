@@ -102,8 +102,7 @@ export default function FamilyDashboard() {
                 {
                     event: '*',
                     schema: 'public',
-                    table: 'adherence_logs',
-                    filter: `user_id=eq.${linkedElderlyId}`
+                    table: 'adherence_logs'
                 },
                 () => {
                     console.log('Adherence changed, refreshing dashboard...')

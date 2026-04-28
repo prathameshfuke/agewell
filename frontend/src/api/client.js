@@ -77,6 +77,114 @@ const mockData = {
     device: { slots: [] }
 }
 
+const dateFromInput = (date = null) => {
+    if (date instanceof Date) return new Date(date)
+    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        const [year, month, day] = date.split('-').map(Number)
+        return new Date(year, month - 1, day)
+    }
+    if (date) return new Date(date)
+    return new Date()
+}
+
+const dateKey = (date) => {
+    const value = dateFromInput(date)
+    const year = value.getFullYear()
+    const month = String(value.getMonth() + 1).padStart(2, '0')
+    const day = String(value.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
+const dayBounds = (date = null) => {
+    const start = dateFromInput(date)
+    start.setHours(0, 0, 0, 0)
+    const end = new Date(start)
+    end.setHours(23, 59, 59, 999)
+    return { start, end }
+}
+
+const scheduledAt = (date = null, time = '08:00') => {
+    const [hour = 8, minute = 0] = String(time).split(':').map(Number)
+    const value = dateFromInput(date)
+    value.setHours(hour, minute, 0, 0)
+    return value
+}
+
+const sameScheduledMinute = (left, right) => {
+    if (!left || !right) return false
+    return Math.abs(new Date(left).getTime() - new Date(right).getTime()) < 60 * 1000
+}
+
+const normalizeHealthReading = (reading = {}) => ({
+    ...reading,
+    body_temperature: reading.body_temperature ?? reading.temperature ?? null,
+    temperature: reading.temperature ?? reading.body_temperature ?? null,
+})
+
+const summarizeHealthStats = (history = []) => {
+    const readings = [...history]
+        .map(normalizeHealthReading)
+        .sort((a, b) => new Date(b.recorded_at || b.timestamp || 0) - new Date(a.recorded_at || a.timestamp || 0))
+
+    const latest = readings[0] || {}
+    const heartRates = readings.map((row) => Number(row.heart_rate)).filter(Number.isFinite)
+    const avgHeartRate = heartRates.length
+        ? Math.round(heartRates.reduce((sum, value) => sum + value, 0) / heartRates.length)
+        : null
+
+    const daily = new Map()
+    for (const row of readings) {
+        const value = Number(row.heart_rate)
+        if (!Number.isFinite(value)) continue
+
+        const key = dateKey(row.recorded_at || row.timestamp)
+        const existing = daily.get(key) || { total: 0, count: 0 }
+        daily.set(key, { total: existing.total + value, count: existing.count + 1 })
+    }
+
+    const weekly = [...daily.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .slice(-7)
+        .map(([label, item]) => ({
+            label: label.slice(5),
+            value: Math.round(item.total / item.count),
+        }))
+
+    const first = weekly[0]?.value
+    const last = weekly[weekly.length - 1]?.value
+    const trend = first && last
+        ? (last > first + 3 ? 'up' : last < first - 3 ? 'down' : 'stable')
+        : 'stable'
+
+    return {
+        latest,
+        history: readings,
+        weekly,
+        avgHeartRate,
+        avgSteps: null,
+        trend,
+        trends: {
+            heartRate: trend,
+            steps: 'stable',
+            sleep: 'stable',
+        },
+    }
+}
+
+const groupActivities = (activities = []) => {
+    const grouped = { morning: [], afternoon: [], evening: [] }
+
+    for (const activity of activities) {
+        if (!activity.timestamp) continue
+        const hour = new Date(activity.timestamp).getHours()
+        if (hour < 12) grouped.morning.push(activity)
+        else if (hour < 17) grouped.afternoon.push(activity)
+        else grouped.evening.push(activity)
+    }
+
+    return grouped
+}
+
 // Unified API interface
 export const api = {
     // ====== USER AI KEYS (LOCAL) ======
@@ -121,6 +229,22 @@ export const api = {
         } catch (error) {
             return { success: false, error: error.message }
         }
+    },
+
+    getProfile: async (userId) => {
+        if (!userId) return null
+
+        if (useSupabase) {
+            try {
+                return await db.profiles.get(userId)
+            } catch (error) {
+                console.error('Profile load failed:', error)
+                return null
+            }
+        }
+
+        const result = await fetchApi(`/users/${userId}`, { method: 'GET' })
+        return result?.user || null
     },
 
     // ====== USER AI KEYS (BACKEND / SUPABASE) ======
@@ -252,8 +376,54 @@ export const api = {
         const endpoint = `/medications/schedule/${userId}${query ? `?${query}` : ''}`
 
         if (useSupabase) {
-            // Schedule generation and adherence-log linkage is handled by Flask.
-            return fetchApi(endpoint, { method: 'GET' })
+            try {
+                const { start, end } = dayBounds(date)
+                const medications = (await db.medications.list(userId))
+                    .filter((med) => med.active !== false && med.is_active !== false)
+                const logs = await db.adherenceLogs.list(userId, start.toISOString(), end.toISOString())
+
+                const schedule = []
+                for (const medication of medications) {
+                    for (const time of medication.schedule_times || []) {
+                        const scheduled = scheduledAt(date, time)
+                        let log = logs.find((item) =>
+                            item.medication_id === medication.id &&
+                            sameScheduledMinute(item.scheduled_time, scheduled)
+                        )
+
+                        if (!log) {
+                            try {
+                                log = await db.adherenceLogs.create({
+                                    medication_id: medication.id,
+                                    scheduled_time: scheduled.toISOString(),
+                                    status: 'pending',
+                                })
+                            } catch (error) {
+                                console.warn('Could not create adherence log:', error)
+                            }
+                        }
+
+                        schedule.push({
+                            id: log?.id || `${medication.id}-${time}`,
+                            medication,
+                            scheduled_time: scheduled.toISOString(),
+                            log: log || null,
+                            status: log?.status || 'pending',
+                        })
+                    }
+                }
+
+                schedule.sort((a, b) => new Date(a.scheduled_time) - new Date(b.scheduled_time))
+
+                return {
+                    success: true,
+                    date: dateKey(date),
+                    count: schedule.length,
+                    schedule,
+                }
+            } catch (error) {
+                return { success: false, error: error.message }
+            }
         }
 
         // Prefer real backend in local mode as well.
@@ -282,7 +452,7 @@ export const api = {
     markTaken: async (logId, status = 'taken') => {
         if (useSupabase) {
             try {
-                const log = await db.adherence.updateStatus(logId, status)
+                const log = await db.adherenceLogs.updateStatus(logId, status)
                 return { success: true, log }
             } catch (error) {
                 return { success: false, error: error.message }
@@ -291,13 +461,33 @@ export const api = {
         return { success: true }
     },
 
+    getAdherenceLogs: async (userId, days = 7) => {
+        if (!userId) return { success: false, error: 'userId is required' }
+
+        if (useSupabase) {
+            try {
+                const end = new Date()
+                const start = new Date()
+                start.setDate(start.getDate() - days)
+
+                const logs = await db.adherenceLogs.list(userId, start.toISOString(), end.toISOString())
+                return { success: true, logs }
+            } catch (error) {
+                return { success: false, error: error.message }
+            }
+        }
+
+        return fetchApi(`/medications/adherence/${userId}?days=${encodeURIComponent(days)}`, {
+            method: 'GET'
+        })
+    },
+
     // ====== HEALTH READINGS ======
     getHealthStats: async (userId) => {
         if (useSupabase) {
             try {
-                const latest = await db.health.getLatest(userId)
                 const history = await db.health.getHistory(userId, 7)
-                return { success: true, stats: { latest, history } }
+                return { success: true, stats: summarizeHealthStats(history) }
             } catch (error) {
                 return { success: false, error: error.message }
             }
@@ -394,13 +584,56 @@ export const api = {
     acknowledgeAlert: async (alertId) => {
         if (useSupabase) {
             try {
-                await db.alerts.acknowledge(alertId)
-                return { success: true }
+                const alert = await db.alerts.markRead(alertId)
+                return { success: true, alert }
             } catch (error) {
                 return { success: false, error: error.message }
             }
         }
         return { success: true }
+    },
+
+    getNotifications: async (userId) => {
+        if (!userId) return { success: false, error: 'userId is required' }
+
+        if (useSupabase) {
+            try {
+                const notifications = await db.alerts.list(userId)
+                const unreadCount = notifications.filter((item) => item.status === 'active' && !item.acknowledged).length
+                return { success: true, notifications, unread_count: unreadCount }
+            } catch (error) {
+                return { success: false, error: error.message }
+            }
+        }
+
+        return fetchApi(`/notifications/${userId}`, { method: 'GET' })
+    },
+
+    acknowledgeNotification: async (alertId) => {
+        if (useSupabase) {
+            return api.acknowledgeAlert(alertId)
+        }
+
+        return fetchApi(`/notifications/${alertId}/acknowledge`, {
+            method: 'POST'
+        })
+    },
+
+    markAllNotificationsRead: async (userId) => {
+        if (!userId) return { success: false, error: 'userId is required' }
+
+        if (useSupabase) {
+            try {
+                await db.alerts.markAllRead(userId)
+                return { success: true }
+            } catch (error) {
+                return { success: false, error: error.message }
+            }
+        }
+
+        return fetchApi(`/notifications/mark-all-read/${userId}`, {
+            method: 'POST'
+        })
     },
 
     // ====== VOICE MEMOS ======
@@ -549,6 +782,105 @@ export const api = {
                 session_id: sessionId,
                 patient_name: patientName
             })
+        })
+    },
+
+    getActivityTimeline: async (userId, date = null) => {
+        if (!userId) return { success: false, error: 'userId is required' }
+
+        if (useSupabase) {
+            try {
+                const { start, end } = dayBounds(date)
+                const [logsResult, checkinsResult, alertsResult] = await Promise.all([
+                    db.adherenceLogs.list(userId, start.toISOString(), end.toISOString()),
+                    supabase
+                        .from('wellness_checkins')
+                        .select('*')
+                        .eq('user_id', userId)
+                        .gte('created_at', start.toISOString())
+                        .lte('created_at', end.toISOString())
+                        .order('created_at', { ascending: true }),
+                    db.alerts.list(userId),
+                ])
+
+                const activities = []
+
+                for (const log of logsResult || []) {
+                    const medication = log.medication || {}
+                    if (log.status === 'taken') {
+                        activities.push({
+                            id: log.id,
+                            type: 'medication',
+                            title: `${medication.name || 'Medication'} taken`,
+                            detail: medication.dosage || 'Dose completed',
+                            time: new Date(log.taken_time || log.scheduled_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            timestamp: log.taken_time || log.scheduled_time,
+                            status: 'success',
+                            icon: 'med',
+                        })
+                    } else if (log.status === 'missed' || log.status === 'skipped') {
+                        activities.push({
+                            id: log.id,
+                            type: 'medication',
+                            title: `${medication.name || 'Medication'} ${log.status}`,
+                            detail: `Scheduled at ${new Date(log.scheduled_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+                            time: new Date(log.scheduled_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            timestamp: log.scheduled_time,
+                            status: 'warning',
+                            icon: 'alert',
+                        })
+                    }
+                }
+
+                if (checkinsResult.error) throw checkinsResult.error
+                for (const checkin of checkinsResult.data || []) {
+                    activities.push({
+                        id: checkin.id,
+                        type: 'check_in',
+                        title: 'Wellness Check',
+                        detail: `Mood: ${checkin.mood || 'checked in'}`,
+                        time: new Date(checkin.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        timestamp: checkin.created_at,
+                        status: 'success',
+                        icon: 'check',
+                    })
+                }
+
+                for (const alert of alertsResult || []) {
+                    const createdAt = new Date(alert.created_at)
+                    if (createdAt < start || createdAt > end) continue
+                    activities.push({
+                        id: alert.id,
+                        type: 'alert',
+                        title: alert.title,
+                        detail: alert.message_caregiver || alert.message_elderly || alert.message || '',
+                        time: createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        timestamp: alert.created_at,
+                        status: ['high', 'critical'].includes(alert.severity) ? 'warning' : 'info',
+                        icon: 'alert',
+                    })
+                }
+
+                activities.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0))
+
+                return {
+                    success: true,
+                    date: dateKey(date),
+                    activities,
+                    grouped: groupActivities(activities),
+                    total_count: activities.length,
+                }
+            } catch (error) {
+                return { success: false, error: error.message }
+            }
+        }
+
+        const params = new URLSearchParams()
+        if (date) params.set('date', dateKey(date))
+        const query = params.toString()
+
+        return fetchApi(`/activity/${userId}${query ? `?${query}` : ''}`, {
+            method: 'GET'
         })
     },
 

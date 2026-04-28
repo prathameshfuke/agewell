@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Mic, MicOff, Send, Stethoscope } from 'lucide-react'
@@ -11,6 +11,115 @@ import { Card, Button } from '../../components/ui'
 import { PageLayout, PageHeader, PageMain, PageSection } from '../../components/layout'
 
 const DIAGNOSIS_COMPLAINT_DRAFT_KEY = 'agewell_diagnosis_complaint_draft'
+const SPEECH_CONNECTORS = new Set(['and', 'or', 'but', 'then', 'because'])
+
+function normalizeSpeechToken(token) {
+    return (token || '').toLowerCase().replace(/^[^a-z0-9']+|[^a-z0-9']+$/g, '')
+}
+
+function compactSpeechPrefixes(tokens) {
+    const output = []
+    let index = 0
+
+    while (index < tokens.length) {
+        let overlap = 0
+        const maxOverlap = Math.min(output.length, tokens.length - index)
+        const previousToken = normalizeSpeechToken(output[output.length - 1])
+        const canTreatAsRestart = !SPEECH_CONNECTORS.has(previousToken)
+
+        if (canTreatAsRestart) {
+            for (let size = maxOverlap; size >= 1; size -= 1) {
+                if (output.length > 1 && size < 2) continue
+
+                let matches = true
+                for (let offset = 0; offset < size; offset += 1) {
+                    if (normalizeSpeechToken(output[offset]) !== normalizeSpeechToken(tokens[index + offset])) {
+                        matches = false
+                        break
+                    }
+                }
+
+                if (matches) {
+                    overlap = size
+                    break
+                }
+            }
+        }
+
+        if (overlap > 0) {
+            index += overlap
+            continue
+        }
+
+        output.push(tokens[index])
+        index += 1
+    }
+
+    return output
+}
+
+function compactIncrementalSpeech(rawText) {
+    const normalized = (rawText || '')
+        .replace(/[|]+/g, ' ')
+        .replace(/\s+([,.!?;:])/g, '$1')
+        .replace(/\s+/g, ' ')
+        .trim()
+
+    if (!normalized) return ''
+
+    const tokens = normalized.split(/\s+/)
+    let compactedTokens = compactSpeechPrefixes(tokens)
+
+    const prefixLength = Math.min(3, compactedTokens.length)
+    if (prefixLength >= 2) {
+        const prefix = compactedTokens.slice(0, prefixLength).map(normalizeSpeechToken)
+        const restartIndexes = []
+
+        for (let index = 0; index <= tokens.length - prefixLength; index += 1) {
+            const matches = prefix.every((token, offset) => normalizeSpeechToken(tokens[index + offset]) === token)
+            if (matches) restartIndexes.push(index)
+        }
+
+        if (restartIndexes.length >= 3) {
+            const latestRestart = restartIndexes[restartIndexes.length - 1]
+            compactedTokens = compactSpeechPrefixes(tokens.slice(latestRestart))
+        }
+    }
+
+    return compactedTokens
+        .join(' ')
+        .replace(/\s+([,.!?;:])/g, '$1')
+        .replace(/[.:;,\s]+$/g, '')
+        .trim()
+}
+
+function cleanComplaintText(rawText) {
+    return compactIncrementalSpeech(rawText)
+}
+
+function saveComplaintDraft(value) {
+    try {
+        sessionStorage.setItem(DIAGNOSIS_COMPLAINT_DRAFT_KEY, value)
+    } catch {
+        // Ignore storage errors and continue typing.
+    }
+}
+
+function mergeComplaintParts(existing, spoken) {
+    const base = cleanComplaintText(existing)
+    const next = cleanComplaintText(spoken)
+
+    if (!base) return next
+    if (!next) return base
+
+    const normalizedBase = base.toLowerCase()
+    const normalizedNext = next.toLowerCase()
+
+    if (normalizedBase.endsWith(normalizedNext)) return base
+    if (normalizedNext.startsWith(normalizedBase)) return next
+
+    return `${base} ${next}`.trim()
+}
 
 export default function SymptomInput() {
     const navigate = useNavigate()
@@ -28,11 +137,19 @@ export default function SymptomInput() {
     const [error, setError] = useState('')
 
     const recognitionRef = useRef(null)
+    const voiceBaseRef = useRef('')
+    const voiceTranscriptRef = useRef('')
 
     const patientId = useMemo(() => {
         if (activeRole === 'caregiver') return profile?.linked_elderly_id
         return user?.id
     }, [activeRole, profile, user])
+
+    const updateComplaintFromVoice = useCallback((spokenText) => {
+        const mergedComplaint = mergeComplaintParts(voiceBaseRef.current, spokenText)
+        setComplaint(mergedComplaint)
+        saveComplaintDraft(mergedComplaint)
+    }, [])
 
     useEffect(() => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -40,21 +157,46 @@ export default function SymptomInput() {
 
         const recognition = new SpeechRecognition()
         recognition.lang = 'en-US'
-        recognition.interimResults = false
+        recognition.continuous = true
+        recognition.interimResults = true
         recognition.maxAlternatives = 1
 
         recognition.onresult = (event) => {
-            const transcript = event?.results?.[0]?.[0]?.transcript || ''
-            if (transcript) {
-                setComplaint((prev) => [prev, transcript].filter(Boolean).join(' ').trim())
+            const finalParts = []
+            const interimParts = []
+
+            for (let index = 0; index < event.results.length; index += 1) {
+                const result = event.results[index]
+                const transcript = result?.[0]?.transcript || ''
+                if (!transcript) continue
+
+                if (result.isFinal) {
+                    finalParts.push(transcript)
+                } else {
+                    interimParts.push(transcript)
+                }
             }
+
+            const transcript = cleanComplaintText([...finalParts, ...interimParts].join(' '))
+            if (!transcript) return
+
+            voiceTranscriptRef.current = transcript
+            updateComplaintFromVoice(transcript)
         }
 
         recognition.onend = () => setListening(false)
         recognition.onerror = () => setListening(false)
 
         recognitionRef.current = recognition
-    }, [])
+
+        return () => {
+            try {
+                recognition.abort()
+            } catch {
+                // The browser may already have stopped recognition.
+            }
+        }
+    }, [updateComplaintFromVoice])
 
     const toggleVoiceInput = () => {
         if (!recognitionRef.current) {
@@ -69,8 +211,16 @@ export default function SymptomInput() {
             return
         }
 
-        recognitionRef.current.start()
-        setListening(true)
+        voiceBaseRef.current = cleanComplaintText(complaint)
+        voiceTranscriptRef.current = ''
+
+        try {
+            recognitionRef.current.start()
+            setListening(true)
+        } catch {
+            setListening(false)
+            setError('Voice input is already active. Please stop it and try again.')
+        }
     }
 
     const handleSubmit = async () => {
@@ -79,15 +229,22 @@ export default function SymptomInput() {
             return
         }
 
-        if (!complaint.trim()) {
+        const cleanedComplaint = cleanComplaintText(complaint)
+
+        if (!cleanedComplaint) {
             setError('Please describe your symptoms first.')
             return
+        }
+
+        if (cleanedComplaint !== complaint) {
+            setComplaint(cleanedComplaint)
+            saveComplaintDraft(cleanedComplaint)
         }
 
         setSubmitting(true)
         setError('')
 
-        const result = await api.startDiagnosisSession(patientId, complaint.trim())
+        const result = await api.startDiagnosisSession(patientId, cleanedComplaint)
         setSubmitting(false)
 
         if (!result.success) {
@@ -122,6 +279,7 @@ export default function SymptomInput() {
                     qaPairs: [],
                     progress: '1/8',
                     done: false,
+                    audioBase64: result.audio_base64 || null,
                 })
             )
         } catch {
@@ -135,8 +293,10 @@ export default function SymptomInput() {
                 next_question: safeFirstQuestion,
                 initial_question: safeFirstQuestion,
                 extracted_symptoms: result.extracted_symptoms || [],
-                raw_complaint: complaint.trim(),
+                raw_complaint: cleanedComplaint,
                 patient_id: patientId,
+                audio_base64: result.audio_base64 || null,
+                has_audio: Boolean(result.has_audio),
             }
         })
     }
@@ -176,11 +336,7 @@ export default function SymptomInput() {
                             onChange={(e) => {
                                 const nextValue = e.target.value
                                 setComplaint(nextValue)
-                                try {
-                                    sessionStorage.setItem(DIAGNOSIS_COMPLAINT_DRAFT_KEY, nextValue)
-                                } catch {
-                                    // Ignore storage errors and continue typing.
-                                }
+                                saveComplaintDraft(nextValue)
                             }}
                             placeholder="Example: I feel dizzy since morning and my chest feels heavy."
                             className="w-full min-h-32 p-4 text-lg rounded-2xl border-2 border-sage-200 focus:outline-none focus:ring-2 focus:ring-sage-300 resize-y"

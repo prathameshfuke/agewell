@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, Heart, Check, ChevronDown, ChevronUp, Pill, X, Clock, HelpCircle, Activity, Droplets, LogOut } from 'lucide-react'
@@ -9,7 +9,6 @@ import ElderNav from '../components/ElderNav'
 import ProfileDropdown from '../components/ProfileDropdown'
 import { Card, Button, IconButton, ProgressRing } from '../components/ui'
 import { PageLayout, PageHeader, PageMain, PageSection } from '../components/layout'
-import { WeeklyHealthSummary } from '../components/dashboard'
 import QuickActionsGrid from '../components/dashboard/QuickActionsGrid'
 import EnvironmentWidget from '../components/dashboard/EnvironmentWidget'
 import PairingCodeDisplay from '../components/dashboard/PairingCodeDisplay' // New component
@@ -22,6 +21,8 @@ import doneSticker from '../assets/images/stickers/done.jpeg'
 
 import { useAuth } from '../contexts/AuthContext'
 
+const WeeklyHealthSummary = lazy(() => import('../components/dashboard/WeeklyHealthSummary'))
+
 export default function ElderDashboard() {
   const navigate = useNavigate()
   const { user, profile, logout, roles } = useAuth()
@@ -33,6 +34,7 @@ export default function ElderDashboard() {
   const [vitalsExpanded, setVitalsExpanded] = useState(true)
   const [selectedMood, setSelectedMood] = useState(null)
   const [healthStats, setHealthStats] = useState(null)
+  const [healthLoading, setHealthLoading] = useState(true)
   const [countdown, setCountdown] = useState(null)
 
   const {
@@ -52,14 +54,21 @@ export default function ElderDashboard() {
 
   useEffect(() => {
     if (!userId) return
+    let active = true
 
     const loadHealth = async () => {
+      setHealthLoading(true)
       const result = await api.getHealthStats(userId)
-      if (result.success) {
+      if (active && result.success) {
         setHealthStats(result.stats)
       }
+      if (active) setHealthLoading(false)
     }
     loadHealth()
+
+    return () => {
+      active = false
+    }
   }, [userId])
 
   // Countdown timer
@@ -132,6 +141,11 @@ export default function ElderDashboard() {
 
   // Calculate weekly health data for chart
   const weeklyHealthData = healthStats?.weekly || []
+  const adherenceDisplay = Number.isFinite(adherenceRate) ? adherenceRate : 100
+  const nextMedicationTime = nextMedication
+    ? new Date(nextMedication.scheduled_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    : null
+  const heartRateDisplay = vitals.heart_rate ? `${vitals.heart_rate} bpm` : '--'
 
   return (
     <PageLayout
@@ -142,7 +156,7 @@ export default function ElderDashboard() {
               <h1 className="text-2xl sm:text-3xl font-serif font-bold text-sage-900">
                 Hello, {profile?.full_name?.split(' ')[0] || 'User'}
               </h1>
-              <p className="text-sage-500 text-base sm:text-lg mt-1">Here's your health summary for today</p>
+              <p className="text-sage-500 text-base sm:text-lg mt-1">Your most important care tasks are ready.</p>
               <span className="inline-flex mt-2 px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide bg-sage-100 text-sage-700">
                 {hasCaregiverRole ? 'Caregiver Connected' : 'Connected'}
               </span>
@@ -154,7 +168,7 @@ export default function ElderDashboard() {
                 size="sm"
                 icon={LogOut}
                 onClick={logout}
-                className="!px-3"
+                className="!px-3 hidden sm:inline-flex"
               >
                 Sign Out
               </Button>
@@ -183,6 +197,42 @@ export default function ElderDashboard() {
           <PairingCodeDisplay code={profile.pairing_code} />
         )}
 
+        <PageSection>
+          <Card className="bg-gradient-to-br from-sage-600 to-sage-800 text-white border-0 overflow-hidden relative">
+            <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-white/10 blur-2xl" />
+            <div className="relative">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                <div>
+                  <div className="text-white/70 text-sm font-bold uppercase tracking-wider">Today at a Glance</div>
+                  <h2 className="text-3xl sm:text-4xl font-serif font-bold mt-1">
+                    {nextMedication ? 'Next dose is ready' : 'You are caught up'}
+                  </h2>
+                  <p className="text-white/75 mt-2 max-w-2xl">
+                    {nextMedication
+                      ? `${nextMedication.medication?.name || 'Medication'} at ${nextMedicationTime || 'the scheduled time'}`
+                      : 'No pending medication dose is scheduled right now.'}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                  <div className="rounded-2xl bg-white/15 p-3 sm:p-4 text-center backdrop-blur-sm">
+                    <div className="text-2xl sm:text-3xl font-bold">{pendingMeds.length}</div>
+                    <div className="text-white/70 text-xs font-bold uppercase">Pending</div>
+                  </div>
+                  <div className="rounded-2xl bg-white/15 p-3 sm:p-4 text-center backdrop-blur-sm">
+                    <div className="text-2xl sm:text-3xl font-bold">{completedMeds.length}</div>
+                    <div className="text-white/70 text-xs font-bold uppercase">Taken</div>
+                  </div>
+                  <div className="rounded-2xl bg-white/15 p-3 sm:p-4 text-center backdrop-blur-sm">
+                    <div className="text-2xl sm:text-3xl font-bold">{healthLoading ? '...' : heartRateDisplay}</div>
+                    <div className="text-white/70 text-xs font-bold uppercase">Heart</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </PageSection>
+
         {/* Quick Actions Grid */}
         <QuickActionsGrid />
         {/* ADHERENCE + WEEKLY SUMMARY ROW */}
@@ -192,7 +242,7 @@ export default function ElderDashboard() {
             <div className="col-span-1">
               <Card className="h-full flex flex-col items-center justify-center py-4">
                 <ProgressRing
-                  progress={adherenceRate || 85}
+                  progress={adherenceDisplay}
                   size={90}
                   strokeWidth={8}
                   label="Adherence"
@@ -203,12 +253,14 @@ export default function ElderDashboard() {
 
             {/* Weekly Summary */}
             <div className="col-span-2">
-              <WeeklyHealthSummary
-                healthData={weeklyHealthData}
-                averageHeartRate={vitals.heart_rate || 72}
-                averageSteps={healthStats?.avgSteps || 4500}
-                trend={healthStats?.trend || 'stable'}
-              />
+              <Suspense fallback={<Card className="h-full flex items-center justify-center text-sage-500">Loading weekly summary...</Card>}>
+                <WeeklyHealthSummary
+                  healthData={weeklyHealthData}
+                  averageHeartRate={healthStats?.avgHeartRate || vitals.heart_rate || null}
+                  averageSteps={healthStats?.avgSteps || null}
+                  trend={healthStats?.trend || 'stable'}
+                />
+              </Suspense>
             </div>
           </div>
         </PageSection>
@@ -245,7 +297,7 @@ export default function ElderDashboard() {
                       <div className={`flex items-center gap-2 p-3 rounded-xl ${countdown?.overdue ? 'bg-rose-100' : 'bg-sage-100'}`}>
                         <Clock className={`w-5 h-5 ${countdown?.overdue ? 'text-rose-600' : 'text-sage-600'}`} />
                         <span className={`text-lg font-bold ${countdown?.overdue ? 'text-rose-700' : 'text-sage-700'}`}>
-                          {countdown?.overdue ? 'Take now!' : countdown?.text || 'Loading...'}
+                          {countdown?.overdue ? 'Take now!' : countdown?.text || nextMedicationTime || 'Scheduled'}
                         </span>
                       </div>
                     </div>
@@ -387,12 +439,12 @@ export default function ElderDashboard() {
                         <div className="text-sage-500 text-sm font-bold uppercase tracking-wide">Heart Rate</div>
                       </div>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-sage-800">{vitals.heart_rate || 72}</span>
-                        <span className="text-sage-500 text-lg">bpm</span>
+                        <span className="text-3xl font-bold text-sage-800">{vitals.heart_rate || '--'}</span>
+                        {vitals.heart_rate && <span className="text-sage-500 text-lg">bpm</span>}
                       </div>
                       <div className="flex items-center gap-2 mt-2">
                         <div className="w-2 h-2 bg-sage-500 rounded-full" />
-                        <span className="text-sage-600 font-medium">Normal</span>
+                        <span className="text-sage-600 font-medium">{vitals.heart_rate ? 'Normal' : 'No reading yet'}</span>
                       </div>
                     </div>
 
@@ -403,11 +455,15 @@ export default function ElderDashboard() {
                         <div className="text-sage-500 text-sm font-bold uppercase tracking-wide">Blood Pressure</div>
                       </div>
                       <div className="text-3xl font-bold text-sage-800">
-                        {vitals.blood_pressure_systolic || 120}/{vitals.blood_pressure_diastolic || 80}
+                        {vitals.blood_pressure_systolic && vitals.blood_pressure_diastolic
+                          ? `${vitals.blood_pressure_systolic}/${vitals.blood_pressure_diastolic}`
+                          : '--'}
                       </div>
                       <div className="flex items-center gap-2 mt-2">
                         <div className="w-2 h-2 bg-sage-500 rounded-full" />
-                        <span className="text-sage-600 font-medium">Normal</span>
+                        <span className="text-sage-600 font-medium">
+                          {vitals.blood_pressure_systolic && vitals.blood_pressure_diastolic ? 'Normal' : 'No reading yet'}
+                        </span>
                       </div>
                     </div>
                   </div>

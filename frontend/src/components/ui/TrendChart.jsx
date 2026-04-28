@@ -1,51 +1,97 @@
-import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts'
+import { useId, useMemo } from 'react'
 
-export default function TrendChart({ 
-  data = [], 
+export default function TrendChart({
+  data = [],
   color = '#2563EB',
   height = 60,
-  showTooltip = true 
+  showTooltip = true
 }) {
-  // Transform data to recharts format if needed
-  const chartData = data.map((item, index) => ({
-    index,
-    value: typeof item === 'number' ? item : item.value,
-    label: item.label || `Point ${index + 1}`,
-  }))
+  const gradientId = useId().replace(/:/g, '')
 
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white px-3 py-2 rounded-lg shadow-lg border border-slate-100">
-          <p className="text-sm font-bold text-slate-900">{payload[0].value}</p>
-          {payload[0].payload.label && (
-            <p className="text-xs text-slate-500">{payload[0].payload.label}</p>
-          )}
-        </div>
-      )
+  const chart = useMemo(() => {
+    const values = data
+      .map((item, index) => ({
+        index,
+        value: Number(typeof item === 'number' ? item : item.value),
+        label: typeof item === 'number' ? `Point ${index + 1}` : item.label || `Point ${index + 1}`,
+      }))
+      .filter((item) => Number.isFinite(item.value))
+
+    if (values.length === 0) {
+      return { values: [], line: '', area: '', min: 0, max: 0 }
     }
-    return null
+
+    const min = Math.min(...values.map((item) => item.value))
+    const max = Math.max(...values.map((item) => item.value))
+    const range = max - min || 1
+    const width = 100
+    const chartHeight = 100
+
+    const points = values.map((item, index) => {
+      const x = values.length === 1 ? 50 : (index / (values.length - 1)) * width
+      const y = chartHeight - ((item.value - min) / range) * 80 - 10
+      return { ...item, x, y }
+    })
+
+    const line = points.map((point) => `${point.x},${point.y}`).join(' ')
+    const area = `0,100 ${line} 100,100`
+
+    return { values: points, line, area, min, max }
+  }, [data])
+
+  if (chart.values.length === 0) {
+    return (
+      <div
+        className="w-full rounded-xl bg-sage-50 flex items-center justify-center text-sage-400 text-xs"
+        style={{ height }}
+      >
+        No trend data
+      </div>
+    )
   }
 
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <AreaChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
+    <div className="relative w-full" style={{ height }}>
+      <svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        role="img"
+        aria-label="Health trend chart"
+        className="w-full h-full overflow-visible"
+      >
         <defs>
-          <linearGradient id={`gradient-${color}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity={0.3} />
-            <stop offset="100%" stopColor={color} stopOpacity={0} />
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.28" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
-        {showTooltip && <Tooltip content={<CustomTooltip />} />}
-        <Area
-          type="monotone"
-          dataKey="value"
+        <polygon points={chart.area} fill={`url(#${gradientId})`} />
+        <polyline
+          points={chart.line}
+          fill="none"
           stroke={color}
-          strokeWidth={2}
-          fill={`url(#gradient-${color})`}
-          animationDuration={1000}
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
         />
-      </AreaChart>
-    </ResponsiveContainer>
+        {chart.values.map((point) => (
+          <circle
+            key={`${point.label}-${point.index}`}
+            cx={point.x}
+            cy={point.y}
+            r="2.4"
+            fill={color}
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
+      </svg>
+
+      {showTooltip && (
+        <div className="sr-only">
+          {chart.values.map((point) => `${point.label}: ${point.value}`).join(', ')}
+        </div>
+      )}
+    </div>
   )
 }
