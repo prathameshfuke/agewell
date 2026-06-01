@@ -76,3 +76,14 @@ logs/
 htmlcov/
 .pytest_cache/
 
+# AI Assistant configs
+.claude/
+.agent/
+.gemini/
+CLAUDE.md
+
+# Local/generated
+instance/
+agewell_ocr/
+stitch_elder_dashboard/
+

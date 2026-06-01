@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, Settings, Clock, Phone, MessageCircle, AlertTriangle, Loader2, Calendar, Heart, FileText } from 'lucide-react'
+import { Bell, Settings, Clock, Calendar, Heart, FileText } from 'lucide-react'
 import { api } from '../api/client'
 import { supabase } from '../lib/supabase'
 import { useActivity } from '../hooks/useActivity'
 import { useNotifications } from '../hooks/useNotifications'
+import { useFakeSensorData } from '../hooks/useFakeSensorData'
 import FamilyNav from '../components/FamilyNav'
 import ProfileDropdown from '../components/ProfileDropdown'
 import { Card, IconButton } from '../components/ui'
@@ -18,7 +19,9 @@ import {
     EmergencyContactCard,
     WeeklyHealthSummary,
     SmartControlPanel,
-    CareTeamCard
+    CareTeamCard,
+    LiveVitalsPanel,
+    SensorStatusBadge,
 } from '../components/dashboard'
 
 import { useAuth } from '../contexts/AuthContext'
@@ -40,6 +43,13 @@ export default function FamilyDashboard() {
 
     const { activities, loading: activityLoading, stats, refresh: refreshActivity } = useActivity(linkedElderlyId)
     const { unreadCount, notifications } = useNotifications(caregiverId)
+
+    // Live sensor simulation – treat as elder's wearable readings
+    const {
+        readings: sensorReadings,
+        connected: sensorConnected,
+        lastUpdated: sensorLastUpdated,
+    } = useFakeSensorData({ enabled: !!linkedElderlyId })
 
     // Data loading function wrapped in useCallback for reuse
     const loadData = useCallback(async () => {
@@ -189,8 +199,15 @@ export default function FamilyDashboard() {
     const lastCheckIn = activities.find(a => a.type === 'check_in' || a.type === 'medication')
     const lastCheckInTime = lastCheckIn?.time || '—'
 
-    // Extract vitals from health stats (no fake fallbacks)
+    // Extract vitals from health stats (real data fallback)
     const vitals = healthStats?.latest || {}
+
+    // Prefer live sensor data over static API data
+    const displayHeartRate = sensorConnected ? sensorReadings.heartRate : (vitals.heart_rate || null)
+    const displaySystolic = sensorConnected ? sensorReadings.systolic : (vitals.blood_pressure_systolic || null)
+    const displayDiastolic = sensorConnected ? sensorReadings.diastolic : (vitals.blood_pressure_diastolic || null)
+    const displaySteps = sensorConnected ? sensorReadings.steps : (vitals.steps || null)
+    const displaySleep = sensorConnected ? sensorReadings.sleep : (vitals.sleep || null)
 
     // Get current month name
     const currentMonth = new Date().toLocaleString('default', { month: 'long' })
@@ -226,6 +243,9 @@ export default function FamilyDashboard() {
                             <div className="min-w-0 flex-1">
                                 <div className="text-primary text-base">Caring for</div>
                                 <h1 className="text-2xl font-serif font-bold text-primary-dark truncate">{elderlyInfo?.name || 'Loading...'}</h1>
+                                {linkedElderlyId && (
+                                    <SensorStatusBadge connected={sensorConnected} className="mt-1" />
+                                )}
                             </div>
                         </div>
                         <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
@@ -306,13 +326,13 @@ export default function FamilyDashboard() {
                                 <PageSection>
                                     <HealthOverviewCard
                                         elderlyName={elderlyInfo?.name || 'Your Loved One'}
-                                        status={elderlyInfo?.status || 'Active'}
-                                        heartRate={vitals.heart_rate || null}
+                                        status={sensorConnected ? 'Active' : (elderlyInfo?.status || 'Active')}
+                                        heartRate={displayHeartRate}
                                         bloodPressure={{
-                                            systolic: vitals.blood_pressure_systolic || null,
-                                            diastolic: vitals.blood_pressure_diastolic || null
+                                            systolic: displaySystolic,
+                                            diastolic: displayDiastolic
                                         }}
-                                        lastUpdated={elderlyInfo?.detail || 'Just now'}
+                                        lastUpdated={sensorConnected ? `Sensor · ${sensorLastUpdated}` : (elderlyInfo?.detail || 'Just now')}
                                         trendData={healthStats?.weekly || []}
                                         trend={healthStats?.trend || 'stable'}
                                     />
@@ -321,13 +341,13 @@ export default function FamilyDashboard() {
                                 {/* Vitals Stats Row */}
                                 <PageSection delay={0.05}>
                                     <VitalsStatsRow
-                                        heartRate={vitals.heart_rate || null}
+                                        heartRate={displayHeartRate}
                                         bloodPressure={{
-                                            systolic: vitals.blood_pressure_systolic || null,
-                                            diastolic: vitals.blood_pressure_diastolic || null
+                                            systolic: displaySystolic,
+                                            diastolic: displayDiastolic
                                         }}
-                                        steps={vitals.steps || null}
-                                        sleep={vitals.sleep || null}
+                                        steps={displaySteps}
+                                        sleep={displaySleep}
                                         trends={{
                                             heartRate: healthStats?.trends?.heartRate || 'stable',
                                             steps: healthStats?.trends?.steps || 'stable',
@@ -336,12 +356,26 @@ export default function FamilyDashboard() {
                                     />
                                 </PageSection>
 
+                                {/* Live Sensor Vitals Panel */}
+                                <PageSection delay={0.08}>
+                                    <Card>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <h3 className="text-lg font-bold text-sage-800">Live Sensor Readings</h3>
+                                        </div>
+                                        <LiveVitalsPanel
+                                            readings={sensorReadings}
+                                            connected={sensorConnected}
+                                            lastUpdated={sensorLastUpdated}
+                                        />
+                                    </Card>
+                                </PageSection>
+
                                 {/* Weekly Summary */}
                                 <PageSection delay={0.1}>
                                     <WeeklyHealthSummary
                                         healthData={healthStats?.weekly || []}
-                                        averageHeartRate={vitals.heart_rate || null}
-                                        averageSteps={vitals.steps || null}
+                                        averageHeartRate={displayHeartRate}
+                                        averageSteps={displaySteps}
                                         trend={healthStats?.trend || 'stable'}
                                     />
                                 </PageSection>

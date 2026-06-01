@@ -5,6 +5,7 @@ import { Bell, Heart, Check, ChevronDown, ChevronUp, Pill, X, Clock, HelpCircle,
 import { api } from '../api/client'
 import { useMedications } from '../hooks/useMedications'
 import { useNotifications } from '../hooks/useNotifications'
+import { useFakeSensorData } from '../hooks/useFakeSensorData'
 import ElderNav from '../components/ElderNav'
 import ProfileDropdown from '../components/ProfileDropdown'
 import { Card, Button, IconButton, ProgressRing } from '../components/ui'
@@ -12,6 +13,7 @@ import { PageLayout, PageHeader, PageMain, PageSection } from '../components/lay
 import QuickActionsGrid from '../components/dashboard/QuickActionsGrid'
 import EnvironmentWidget from '../components/dashboard/EnvironmentWidget'
 import PairingCodeDisplay from '../components/dashboard/PairingCodeDisplay' // New component
+import LiveVitalsPanel, { SensorStatusBadge } from '../components/dashboard/LiveVitalsPanel'
 
 // Import stickers
 import goodmoodSticker from '../assets/images/stickers/goodmood.jpeg'
@@ -36,6 +38,9 @@ export default function ElderDashboard() {
   const [healthStats, setHealthStats] = useState(null)
   const [healthLoading, setHealthLoading] = useState(true)
   const [countdown, setCountdown] = useState(null)
+
+  // Live sensor simulation
+  const { readings: sensorReadings, connected: sensorConnected, lastUpdated: sensorLastUpdated } = useFakeSensorData()
 
   const {
     nextMedication,
@@ -145,7 +150,7 @@ export default function ElderDashboard() {
   const nextMedicationTime = nextMedication
     ? new Date(nextMedication.scheduled_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
     : null
-  const heartRateDisplay = vitals.heart_rate ? `${vitals.heart_rate} bpm` : '--'
+  const heartRateDisplay = sensorConnected ? `${sensorReadings.heartRate} bpm` : (vitals.heart_rate ? `${vitals.heart_rate} bpm` : '--')
 
   return (
     <PageLayout
@@ -157,9 +162,12 @@ export default function ElderDashboard() {
                 Hello, {profile?.full_name?.split(' ')[0] || 'User'}
               </h1>
               <p className="text-sage-500 text-base sm:text-lg mt-1">Your most important care tasks are ready.</p>
-              <span className="inline-flex mt-2 px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide bg-sage-100 text-sage-700">
-                {hasCaregiverRole ? 'Caregiver Connected' : 'Connected'}
-              </span>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <span className="inline-flex px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide bg-sage-100 text-sage-700">
+                  {hasCaregiverRole ? 'Caregiver Connected' : 'Connected'}
+                </span>
+                <SensorStatusBadge connected={sensorConnected} />
+              </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
@@ -405,7 +413,7 @@ export default function ElderDashboard() {
           </Card>
         </PageSection>
 
-        {/* VITALS SECTION - Expanded by default */}
+        {/* VITALS SECTION - Live Sensor Readings */}
         <PageSection delay={0.2}>
           <Card className="overflow-hidden p-0">
             <button
@@ -431,42 +439,12 @@ export default function ElderDashboard() {
                   exit={{ height: 0, opacity: 0 }}
                   className="px-6 pb-6"
                 >
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Heart Rate */}
-                    <div className="bg-rose-50 rounded-2xl p-5 border-2 border-rose-100">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Activity className="w-4 h-4 text-rose-500" />
-                        <div className="text-sage-500 text-sm font-bold uppercase tracking-wide">Heart Rate</div>
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-sage-800">{vitals.heart_rate || '--'}</span>
-                        {vitals.heart_rate && <span className="text-sage-500 text-lg">bpm</span>}
-                      </div>
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className="w-2 h-2 bg-sage-500 rounded-full" />
-                        <span className="text-sage-600 font-medium">{vitals.heart_rate ? 'Normal' : 'No reading yet'}</span>
-                      </div>
-                    </div>
-
-                    {/* Blood Pressure */}
-                    <div className="bg-sage-50 rounded-2xl p-5 border-2 border-sage-100">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Droplets className="w-4 h-4 text-sage-500" />
-                        <div className="text-sage-500 text-sm font-bold uppercase tracking-wide">Blood Pressure</div>
-                      </div>
-                      <div className="text-3xl font-bold text-sage-800">
-                        {vitals.blood_pressure_systolic && vitals.blood_pressure_diastolic
-                          ? `${vitals.blood_pressure_systolic}/${vitals.blood_pressure_diastolic}`
-                          : '--'}
-                      </div>
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className="w-2 h-2 bg-sage-500 rounded-full" />
-                        <span className="text-sage-600 font-medium">
-                          {vitals.blood_pressure_systolic && vitals.blood_pressure_diastolic ? 'Normal' : 'No reading yet'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                  <LiveVitalsPanel
+                    readings={sensorReadings}
+                    connected={sensorConnected}
+                    lastUpdated={sensorLastUpdated}
+                    compact
+                  />
 
                   {/* View More Button */}
                   <motion.button
@@ -474,7 +452,7 @@ export default function ElderDashboard() {
                     onClick={() => navigate('/elder/health')}
                     className="w-full mt-4 py-3 bg-sage-100 text-sage-700 rounded-xl font-bold text-sm hover:bg-sage-200 transition-colors"
                   >
-                    View Health Details
+                    View Full Health Details
                   </motion.button>
                 </motion.div>
               )}
