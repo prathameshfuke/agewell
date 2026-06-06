@@ -17,10 +17,13 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 
 // Generate a realistic next reading based on previous
 function nextReading(prev) {
+  // Heart rate: fluctuates ±5–10 bpm each tick so it's clearly visible
+  const hrDelta = rnd(5, 10) * (Math.random() < 0.5 ? -1 : 1)
   const heartRate = clamp(
-    (prev?.heartRate ?? 72) + rnd(-3, 3),
-    55, 105
+    (prev?.heartRate ?? 72) + hrDelta,
+    58, 105
   )
+
   const systolic = clamp(
     (prev?.systolic ?? 118) + rnd(-4, 4),
     100, 145
@@ -29,9 +32,12 @@ function nextReading(prev) {
     (prev?.diastolic ?? 76) + rnd(-3, 3),
     60, 95
   )
+
+  // SpO2: cycles through a wider range (94–100) so the number visibly changes
+  const spo2Delta = rnd(1, 3) * (Math.random() < 0.5 ? -1 : 1)
   const spo2 = clamp(
-    (prev?.spo2 ?? 98) + rnd(-1, 1),
-    93, 100
+    (prev?.spo2 ?? 98) + spo2Delta,
+    94, 100
   )
   const temperature = parseFloat(
     clamp(
