@@ -33,9 +33,10 @@ import { api } from '../api/client'
  */
 export default function FamilySettings() {
   const navigate = useNavigate()
-  const { logout, profile, roles, setActiveRole } = useAuth()
+  const { logout, user, profile, roles, setActiveRole } = useAuth()
   const hasElderRole = roles?.includes('elderly')
-  
+  const userId = user?.id || profile?.id
+
   const [settings, setSettings] = useState({
     emailNotifications: true,
     pushNotifications: true,
@@ -45,20 +46,30 @@ export default function FamilySettings() {
   })
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
-  
-  // Use a ref to store the initial load flag to prevent re-initialization
+
+  // Keys are never stored or displayed in the browser - only a masked
+  // preview + whether a key is set. `apiKeyInputs` holds what the user is
+  // currently typing (cleared after a successful save) and is only ever
+  // sent to the backend, never persisted client-side.
   const hasInitialized = useRef(false)
-  const [apiKeys, setApiKeys] = useState({ groqApiKey: '', geminiApiKey: '' })
+  const [keyStatus, setKeyStatus] = useState({ GROQ_API_KEY: null, GEMINI_API_KEY: null })
+  const [apiKeyInputs, setApiKeyInputs] = useState({ groqApiKey: '', geminiApiKey: '' })
   const [apiKeyStatus, setApiKeyStatus] = useState('')
 
-  // Load API keys on mount only - never reinitialize from localStorage
+  // Load masked key status from the server on mount only.
   useEffect(() => {
-    if (!hasInitialized.current) {
-      const savedKeys = api.getUserApiKeys()
-      setApiKeys(savedKeys)
+    if (!hasInitialized.current && userId) {
       hasInitialized.current = true
+      api.getUserApiKeys(userId).then((result) => {
+        if (result.success) {
+          setKeyStatus({
+            GROQ_API_KEY: result.keys.GROQ_API_KEY || null,
+            GEMINI_API_KEY: result.keys.GEMINI_API_KEY || null,
+          })
+        }
+      })
     }
-  }, [])
+  }, [userId])
 
   const toggleSetting = (key) => {
     setSettings(prev => ({ ...prev, [key]: !prev[key] }))
@@ -136,21 +147,38 @@ export default function FamilySettings() {
     navigate('/elder/dashboard')
   }
 
-  const handleSaveApiKeys = () => {
-    const result = api.saveUserApiKeys(apiKeys)
+  const handleSaveApiKeys = async () => {
+    if (!userId) {
+      setApiKeyStatus('✗ Error: You must be signed in to save keys.')
+      return
+    }
+
+    const result = await api.saveUserApiKeys(userId, apiKeyInputs)
     if (result.success) {
-      setApiKeyStatus('✓ Your API keys were saved on this device.')
+      const nextStatus = { ...keyStatus }
+      for (const row of result.saved || []) {
+        nextStatus[row.setting_key] = { maskedValue: row.masked_value, hasValue: row.has_value }
+      }
+      setKeyStatus(nextStatus)
+      setApiKeyInputs({ groqApiKey: '', geminiApiKey: '' })
+      setApiKeyStatus('✓ Your API keys were saved securely.')
     } else {
       const errorMsg = result.error || 'Could not save API keys.'
       setApiKeyStatus(`✗ Error: ${errorMsg}`)
     }
   }
 
-  const handleClearApiKeys = () => {
-    const result = api.clearUserApiKeys()
+  const handleClearApiKeys = async () => {
+    if (!userId) {
+      setApiKeyStatus('✗ Error: You must be signed in to clear keys.')
+      return
+    }
+
+    const result = await api.clearUserApiKeys(userId)
     if (result.success) {
-      setApiKeys({ groqApiKey: '', geminiApiKey: '' })
-      setApiKeyStatus('✓ API keys were removed from this device.')
+      setKeyStatus({ GROQ_API_KEY: null, GEMINI_API_KEY: null })
+      setApiKeyInputs({ groqApiKey: '', geminiApiKey: '' })
+      setApiKeyStatus('✓ API keys were removed.')
     } else {
       const errorMsg = result.error || 'Could not clear API keys.'
       setApiKeyStatus(`✗ Error: ${errorMsg}`)
@@ -284,23 +312,39 @@ export default function FamilySettings() {
 
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-bold text-primary mb-1">Groq API Key</label>
+                <label className="block text-sm font-bold text-primary mb-1">
+                  Groq API Key
+                  {keyStatus.GROQ_API_KEY?.hasValue && (
+                    <span className="ml-2 font-normal text-primary/70">
+                      Saved ({keyStatus.GROQ_API_KEY.maskedValue})
+                    </span>
+                  )}
+                </label>
                 <input
                   type="password"
-                  value={apiKeys.groqApiKey}
-                  onChange={(e) => setApiKeys((prev) => ({ ...prev, groqApiKey: e.target.value }))}
-                  placeholder="gsk_..."
+                  autoComplete="off"
+                  value={apiKeyInputs.groqApiKey}
+                  onChange={(e) => setApiKeyInputs((prev) => ({ ...prev, groqApiKey: e.target.value }))}
+                  placeholder={keyStatus.GROQ_API_KEY?.hasValue ? 'Enter a new key to replace it' : 'gsk_...'}
                   className="w-full rounded-xl border-2 border-primary-light/30 px-4 py-3 text-base text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-primary mb-1">Gemini API Key</label>
+                <label className="block text-sm font-bold text-primary mb-1">
+                  Gemini API Key
+                  {keyStatus.GEMINI_API_KEY?.hasValue && (
+                    <span className="ml-2 font-normal text-primary/70">
+                      Saved ({keyStatus.GEMINI_API_KEY.maskedValue})
+                    </span>
+                  )}
+                </label>
                 <input
                   type="password"
-                  value={apiKeys.geminiApiKey}
-                  onChange={(e) => setApiKeys((prev) => ({ ...prev, geminiApiKey: e.target.value }))}
-                  placeholder="AIza..."
+                  autoComplete="off"
+                  value={apiKeyInputs.geminiApiKey}
+                  onChange={(e) => setApiKeyInputs((prev) => ({ ...prev, geminiApiKey: e.target.value }))}
+                  placeholder={keyStatus.GEMINI_API_KEY?.hasValue ? 'Enter a new key to replace it' : 'AIza...'}
                   className="w-full rounded-xl border-2 border-primary-light/30 px-4 py-3 text-base text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
               </div>

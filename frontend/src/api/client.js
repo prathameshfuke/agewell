@@ -5,29 +5,22 @@ import { supabase, db, isSupabaseConfigured } from '../lib/supabase'
 
 // Use environment variable for production, fallback to localhost for development
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api'
-const USER_GROQ_KEY_STORAGE = 'agewell_user_groq_api_key'
-const USER_GEMINI_KEY_STORAGE = 'agewell_user_gemini_api_key'
 
 // Check if we should use Supabase or mock/local API
 const useSupabase = isSupabaseConfigured()
 
-const getStoredUserApiKeys = () => {
-    if (typeof window === 'undefined') {
-        return { groqApiKey: '', geminiApiKey: '' }
-    }
-
-    return {
-        groqApiKey: (localStorage.getItem(USER_GROQ_KEY_STORAGE) || '').trim(),
-        geminiApiKey: (localStorage.getItem(USER_GEMINI_KEY_STORAGE) || '').trim(),
-    }
-}
+// NOTE: User-supplied AI provider keys (Groq/Gemini) are intentionally never
+// held in the browser (localStorage/sessionStorage/JS state) in plaintext.
+// They are stored server-side (see /api/settings/keys) and the backend
+// resolves them by user id for each request. Do not reintroduce a client-side
+// cache of the raw key value - anyone with access to the device or devtools
+// (or any XSS on the page) can read localStorage/JS state.
 
 // Helper for fetch requests to local backend
 const fetchApi = async (endpoint, options = {}) => {
     try {
         const providedHeaders = options.headers || {}
         const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
-        const { groqApiKey, geminiApiKey } = getStoredUserApiKeys()
 
         const headers = {
             ...providedHeaders
@@ -35,14 +28,6 @@ const fetchApi = async (endpoint, options = {}) => {
 
         if (!isFormData && !headers['Content-Type']) {
             headers['Content-Type'] = 'application/json'
-        }
-
-        if (groqApiKey) {
-            headers['X-User-Groq-Key'] = groqApiKey
-        }
-
-        if (geminiApiKey) {
-            headers['X-User-Gemini-Key'] = geminiApiKey
         }
 
         const response = await fetch(`${API_URL}${endpoint}`, {
@@ -187,50 +172,6 @@ const groupActivities = (activities = []) => {
 
 // Unified API interface
 export const api = {
-    // ====== USER AI KEYS (LOCAL) ======
-    getUserApiKeys: () => getStoredUserApiKeys(),
-
-    saveUserApiKeys: ({ groqApiKey = '', geminiApiKey = '' } = {}) => {
-        try {
-            if (typeof window === 'undefined') {
-                return { success: false, error: 'Not available outside browser context.' }
-            }
-
-            const normalizedGroq = (groqApiKey || '').trim()
-            const normalizedGemini = (geminiApiKey || '').trim()
-
-            if (normalizedGroq) {
-                localStorage.setItem(USER_GROQ_KEY_STORAGE, normalizedGroq)
-            } else {
-                localStorage.removeItem(USER_GROQ_KEY_STORAGE)
-            }
-
-            if (normalizedGemini) {
-                localStorage.setItem(USER_GEMINI_KEY_STORAGE, normalizedGemini)
-            } else {
-                localStorage.removeItem(USER_GEMINI_KEY_STORAGE)
-            }
-
-            return { success: true }
-        } catch (error) {
-            return { success: false, error: error.message }
-        }
-    },
-
-    clearUserApiKeys: () => {
-        try {
-            if (typeof window === 'undefined') {
-                return { success: false, error: 'Not available outside browser context.' }
-            }
-
-            localStorage.removeItem(USER_GROQ_KEY_STORAGE)
-            localStorage.removeItem(USER_GEMINI_KEY_STORAGE)
-            return { success: true }
-        } catch (error) {
-            return { success: false, error: error.message }
-        }
-    },
-
     getProfile: async (userId) => {
         if (!userId) return null
 
@@ -247,7 +188,12 @@ export const api = {
         return result?.user || null
     },
 
-    // ====== USER AI KEYS (BACKEND / SUPABASE) ======
+    // ====== USER AI KEYS ======
+    // Keys live server-side only. The frontend only ever sees a masked
+    // preview (e.g. "gs****23") plus a has_value flag - never the raw
+    // secret - so it can never be read out of localStorage, JS state, or
+    // React devtools. Saving/clearing writes straight through to the
+    // backend; nothing is cached in the browser.
     getRuntimeApiKeys: async (userId) => {
         if (!userId) {
             return { success: false, error: 'userId is required' }
@@ -270,6 +216,45 @@ export const api = {
                 keys
             })
         })
+    },
+
+    // Convenience wrappers used by the settings pages.
+    getUserApiKeys: async (userId) => {
+        const result = await api.getRuntimeApiKeys(userId)
+        if (!result?.success) {
+            return { success: false, error: result?.error || 'Could not load API key status.', keys: {} }
+        }
+
+        const keys = {}
+        for (const row of result.keys || []) {
+            keys[row.setting_key] = {
+                maskedValue: row.masked_value || '',
+                hasValue: !!row.has_value
+            }
+        }
+        return { success: true, keys }
+    },
+
+    // `updates` only needs to contain the fields the user actually typed a
+    // new value into - omit a key entirely to leave it untouched.
+    saveUserApiKeys: async (userId, { groqApiKey, geminiApiKey } = {}) => {
+        const keys = {}
+        if (typeof groqApiKey === 'string' && groqApiKey.trim()) {
+            keys.GROQ_API_KEY = groqApiKey.trim()
+        }
+        if (typeof geminiApiKey === 'string' && geminiApiKey.trim()) {
+            keys.GEMINI_API_KEY = geminiApiKey.trim()
+        }
+
+        if (Object.keys(keys).length === 0) {
+            return { success: false, error: 'Enter at least one key to save.' }
+        }
+
+        return api.saveRuntimeApiKeys(userId, keys)
+    },
+
+    clearUserApiKeys: async (userId) => {
+        return api.saveRuntimeApiKeys(userId, { GROQ_API_KEY: '', GEMINI_API_KEY: '' })
     },
 
     // ====== CAREGIVER LINKING ======
