@@ -24,7 +24,7 @@ const urgencyStyles = {
 
 export default function DiagnosisHistory() {
     const navigate = useNavigate()
-    const { user, profile, activeRole } = useAuth()
+    const { user, profile, activeRole, linkedElderId } = useAuth()
 
     const [history, setHistory] = useState([])
     const [loading, setLoading] = useState(true)
@@ -33,7 +33,7 @@ export default function DiagnosisHistory() {
     const [auditLoadingId, setAuditLoadingId] = useState(null)
 
     const patientId = useMemo(() => {
-        if (activeRole === 'caregiver') return profile?.linked_elderly_id
+        if (activeRole === 'caregiver') return linkedElderId
         return user?.id
     }, [activeRole, profile, user])
 

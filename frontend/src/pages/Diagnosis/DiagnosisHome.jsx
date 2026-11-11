@@ -18,7 +18,7 @@ const urgencyStyles = {
 
 export default function DiagnosisHome() {
     const navigate = useNavigate()
-    const { user, profile, activeRole } = useAuth()
+    const { user, profile, activeRole, linkedElderId } = useAuth()
 
     const dashboardPath = activeRole === 'caregiver' ? '/family/dashboard' : '/elder/dashboard'
 
@@ -26,7 +26,7 @@ export default function DiagnosisHome() {
     const [loading, setLoading] = useState(true)
 
     const patientId = useMemo(() => {
-        if (activeRole === 'caregiver') return profile?.linked_elderly_id
+        if (activeRole === 'caregiver') return linkedElderId
         return user?.id
     }, [activeRole, profile, user])
 

@@ -12,16 +12,14 @@ import notwellSticker from '../assets/images/stickers/notwell.jpeg'
 
 export default function HealthMonitor() {
     const navigate = useNavigate()
-    const { user, profile } = useAuth()
+    const { user, activeRole, linkedElderId } = useAuth()
     const [healthData, setHealthData] = useState(null)
     const [environmentData, setEnvironmentData] = useState(null)
     const [loading, setLoading] = useState(true)
     const [lastUpdated, setLastUpdated] = useState(null)
 
     // Get the elderly user ID (self if elderly, linked if caregiver)
-    const elderlyId = profile?.role === 'caregiver'
-        ? profile?.linked_elderly_id
-        : user?.id || 'mock-elderly-1'
+    const elderlyId = activeRole === 'caregiver' ? linkedElderId : user?.id
 
     useEffect(() => {
         loadData()

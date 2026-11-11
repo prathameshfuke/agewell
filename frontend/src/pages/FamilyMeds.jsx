@@ -12,7 +12,7 @@ import doneSticker from '../assets/images/stickers/done.jpeg'
 
 export default function FamilyMeds() {
     const navigate = useNavigate()
-    const { profile } = useAuth()
+    const { profile, linkedElderId } = useAuth()
     const [medications, setMedications] = useState([])
     const [loading, setLoading] = useState(true)
 
@@ -25,7 +25,7 @@ export default function FamilyMeds() {
     const loadMedications = async () => {
         setLoading(true)
 
-        const elderId = profile?.linked_elderly_id
+        const elderId = linkedElderId
 
         if (!elderId) {
             setLoading(false)
@@ -115,7 +115,7 @@ export default function FamilyMeds() {
                         <RefreshCw className="w-8 h-8 text-sage-400 animate-spin mx-auto mb-2" />
                         <p className="text-sage-500">Loading medications...</p>
                     </div>
-                ) : !profile?.linked_elderly_id ? (
+                ) : !linkedElderId ? (
                     <div className="bg-white rounded-3xl p-8 border-2 border-sage-100 text-center">
                         <AlertCircle className="w-12 h-12 text-sage-400 mx-auto mb-4" />
                         <h3 className="text-xl font-bold text-sage-800 mb-2">No Elder Linked</h3>

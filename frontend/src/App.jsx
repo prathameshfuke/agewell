@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import FullScreenLoader from './components/FullScreenLoader'
 import BottomNav from './components/BottomNav'
 import AppErrorBoundary from './components/AppErrorBoundary'
+import PinGate from './components/PinGate'
 
 import DemoSimulationPanel from './components/DemoSimulationPanel'
 
@@ -163,7 +164,7 @@ function OnboardingRoute({ children, requiredRole = null }) {
 }
 
 function ProtectedRoute({ children, requiredRole = null }) {
-    const { user, loading, role, isOnboardingComplete } = useAuth()
+    const { user, loading, role, isOnboardingComplete, caregiverUnlocked } = useAuth()
 
     if (loading) return <RouteLoader />
     if (!user) return <Navigate to="/auth" replace />
@@ -180,6 +181,11 @@ function ProtectedRoute({ children, requiredRole = null }) {
 
     if (!isOnboardingComplete(normalizedActiveRole)) {
         return <Navigate to={onboardingPathForRole(normalizedActiveRole)} replace />
+    }
+
+    // One account with both roles: caregiver mode needs the PIN.
+    if (normalizedActiveRole === 'caregiver' && !caregiverUnlocked) {
+        return <PinGate />
     }
 
     return children

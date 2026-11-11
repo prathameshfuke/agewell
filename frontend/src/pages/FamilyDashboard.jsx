@@ -28,11 +28,11 @@ import { useAuth } from '../contexts/AuthContext'
 
 export default function FamilyDashboard() {
     const navigate = useNavigate()
-    const { user, profile, loading: authLoading, logout, roles, setActiveRole } = useAuth()
+    const { user, profile, loading: authLoading, logout, roles, setActiveRole, linkedElderId } = useAuth()
     const hasElderRole = roles?.includes('elderly')
 
     const caregiverId = user?.id
-    const linkedElderlyId = profile?.linked_elderly_id
+    const linkedElderlyId = linkedElderId
 
     const [elderlyInfo, setElderlyInfo] = useState(null)
     const [healthStats, setHealthStats] = useState(null)

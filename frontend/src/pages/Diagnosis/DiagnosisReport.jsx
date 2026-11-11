@@ -21,7 +21,7 @@ const DISCLAIMER = 'This summary is for informational purposes only and is not a
 export default function DiagnosisReport() {
     const navigate = useNavigate()
     const location = useLocation()
-    const { user, profile, activeRole } = useAuth()
+    const { user, profile, activeRole, linkedElderId } = useAuth()
 
     const [sharing, setSharing] = useState(false)
     const [shareMessage, setShareMessage] = useState('')
@@ -71,7 +71,7 @@ export default function DiagnosisReport() {
     }, [location.state, profile, reportState?.patient_name, user])
 
     const patientId = useMemo(() => {
-        if (activeRole === 'caregiver') return profile?.linked_elderly_id
+        if (activeRole === 'caregiver') return linkedElderId
         return user?.id
     }, [activeRole, profile, user])
 

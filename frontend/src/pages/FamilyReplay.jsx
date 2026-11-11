@@ -7,8 +7,8 @@ import { useAuth } from '../contexts/AuthContext'
 
 export default function FamilyReplay() {
     const navigate = useNavigate()
-    const { profile } = useAuth()
-    const { activities, grouped, loading, error, stats, selectedDate } = useActivity(profile?.linked_elderly_id)
+    const { profile, linkedElderId } = useAuth()
+    const { activities, grouped, loading, error, stats, selectedDate } = useActivity(linkedElderId)
 
     const formatDate = (dateStr) => {
         if (!dateStr) {

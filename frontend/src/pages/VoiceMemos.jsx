@@ -12,7 +12,7 @@ import goodmoodSticker from '../assets/images/stickers/goodmood.jpeg'
 
 export default function VoiceMemos() {
     const navigate = useNavigate()
-    const { user, profile } = useAuth()
+    const { user, profile, linkedElderId } = useAuth()
     const [memos, setMemos] = useState([])
     const [loading, setLoading] = useState(true)
     const [isRecording, setIsRecording] = useState(false)
@@ -28,7 +28,7 @@ export default function VoiceMemos() {
 
     const isCaregiver = profile?.role === 'caregiver'
     const userId = user?.id
-    const linkedElderlyId = profile?.linked_elderly_id
+    const linkedElderlyId = linkedElderId
 
     useEffect(() => {
         loadMemos()

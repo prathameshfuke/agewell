@@ -10,7 +10,7 @@ const PRESCRIPTION_REVIEW_STORAGE_KEY = 'agewell_prescription_review_data'
 
 export default function PrescriptionUpload() {
   const navigate = useNavigate()
-  const { profile } = useAuth()
+  const { profile, linkedElderId } = useAuth()
   const fileInputRef = useRef(null)
   const [preview, setPreview] = useState(null)
   const [file, setFile] = useState(null)
@@ -32,14 +32,14 @@ export default function PrescriptionUpload() {
   const handleUpload = async () => {
     if (!file) return
 
-    if (!profile?.linked_elderly_id) {
+    if (!linkedElderId) {
       alert("No elder linked. Please pair first.")
       return
     }
 
     setUploading(true)
     try {
-      const result = await api.uploadPrescription(file, profile.linked_elderly_id)
+      const result = await api.uploadPrescription(file, linkedElderId)
       if (result.success) {
         setUploadSuccess(true)
         setTimeout(() => {

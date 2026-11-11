@@ -21,7 +21,7 @@ function progressPercent(progressLabel) {
 export default function QAFlow() {
     const navigate = useNavigate()
     const location = useLocation()
-    const { user, profile, activeRole } = useAuth()
+    const { user, profile, activeRole, linkedElderId } = useAuth()
 
     const querySessionId = useMemo(() => {
         const params = new URLSearchParams(location.search)
@@ -95,7 +95,7 @@ export default function QAFlow() {
     }
 
     const patientId = useMemo(() => {
-        if (activeRole === 'caregiver') return profile?.linked_elderly_id
+        if (activeRole === 'caregiver') return linkedElderId
         return user?.id
     }, [activeRole, profile, user])
 

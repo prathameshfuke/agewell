@@ -1,7 +1,7 @@
 import json
 import os
 from typing import Dict, List
-from .sarvam_tts import generate_question_with_audio
+from .tts import generate_question_with_audio
 
 try:
     from groq import Groq

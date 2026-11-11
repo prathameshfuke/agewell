@@ -12,7 +12,7 @@ const PRESCRIPTION_MEDS_DRAFT_KEY = 'agewell_prescription_review_meds_draft'
 export default function PrescriptionReview() {
     const navigate = useNavigate()
     const location = useLocation()
-    const { profile } = useAuth()
+    const { profile, linkedElderId } = useAuth()
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
     const [medications, setMedications] = useState([])
@@ -90,7 +90,7 @@ export default function PrescriptionReview() {
     }
 
     const handleConfirmAll = async () => {
-        if (!profile?.linked_elderly_id) {
+        if (!linkedElderId) {
             alert('No elder linked. Please pair first.')
             return
         }
@@ -101,7 +101,7 @@ export default function PrescriptionReview() {
             // Add each medication to the backend
             for (const med of medications) {
                 await api.addMedication({
-                    user_id: profile.linked_elderly_id,
+                    user_id: linkedElderId,
                     name: med.name,
                     dosage: med.dosage,
                     frequency: med.frequency,
