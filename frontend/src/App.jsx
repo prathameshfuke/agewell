@@ -1,5 +1,6 @@
 import { Suspense, lazy } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import FullScreenLoader from './components/FullScreenLoader'
 import BottomNav from './components/BottomNav'
@@ -189,10 +190,23 @@ function ProtectedRoute({ children, requiredRole = null }) {
     return children
 }
 
+// Soft spring between pages: a short fade out, then a small rise in. Skipped for reduced motion.
+const PAGE_ENTER = { type: 'spring', stiffness: 320, damping: 32, mass: 0.9 }
+const PAGE_EXIT = { duration: 0.1, ease: 'easeIn' }
+
 function AppRoutes() {
+    const location = useLocation()
+    const reduce = useReducedMotion()
     return (
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={location.pathname}
+            initial={reduce ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0, transition: PAGE_ENTER }}
+            exit={reduce ? { opacity: 1 } : { opacity: 0, transition: PAGE_EXIT }}
+          >
         <Suspense fallback={<FullScreenLoader message="Loading AgeWell..." />}>
-            <Routes>
+            <Routes location={location}>
                 {/* HOME - redirect authenticated users into their flow */}
                 <Route path="/" element={
                     <ResetHandler>
@@ -322,6 +336,8 @@ function AppRoutes() {
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </Suspense>
+          </motion.div>
+        </AnimatePresence>
     )
 }
 

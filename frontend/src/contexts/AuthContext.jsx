@@ -27,8 +27,11 @@ function readUnlockUntil() {
 }
 
 function getStoredRole() {
-    const raw = localStorage.getItem('activeRole') || sessionStorage.getItem('sessionActiveRole')
-    return normalizeRole(raw)
+    try {
+        return normalizeRole(localStorage.getItem('activeRole') || sessionStorage.getItem('sessionActiveRole'))
+    } catch {
+        return null // storage blocked (private window): a throw here would blank the whole app
+    }
 }
 
 function buildRoleList(profileData) {
@@ -304,12 +307,7 @@ export function AuthProvider({ children }) {
 
         const { data, error } = await supabase.auth.signUp({
             email,
-            password,
-            options: {
-                data: {
-                    full_name: 'Admin User'
-                }
-            }
+            password
         })
 
         if (error) {

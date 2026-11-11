@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Bell, Check, Pill, Stethoscope, Phone, Siren, X, ChevronRight } from 'lucide-react'
 import { api } from '../api/client'
 import { useAuth } from '../contexts/AuthContext'
@@ -8,9 +9,7 @@ import { useNotifications } from '../hooks/useNotifications'
 import { useVitals } from '../hooks/useVitals'
 import { Loading, ErrorNote } from '../components/ElderNav'
 
-import goodmoodSticker from '../assets/images/stickers/goodmood.jpeg'
-import fineSticker from '../assets/images/stickers/fine.jpeg'
-import notwellSticker from '../assets/images/stickers/notwell.jpeg'
+import { danceSticker as goodmoodSticker, fineSticker, notwellSticker, bowSticker, sleepSticker } from '../assets/images'
 
 const MOODS = [
   { key: 'good', label: 'Good', sticker: goodmoodSticker },
@@ -41,6 +40,7 @@ function useCountdown(iso) {
 
 export default function ElderDashboard() {
   const navigate = useNavigate()
+  const reduce = useReducedMotion()
   const { user, profile } = useAuth()
   const userId = user?.id
 
@@ -133,9 +133,10 @@ export default function ElderDashboard() {
   return (
     <div className="min-h-screen bg-cream-50 font-sans text-xl text-sage-900 pb-32 md:pb-12">
       <div className="mx-auto w-full max-w-2xl px-5 pt-8">
-        <header className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="font-serif text-4xl font-bold">{firstName ? `Hello, ${firstName}` : 'Hello'}</h1>
+        <header className="flex items-center gap-4">
+          <img src={goodmoodSticker} alt="" width="287" height="340" className="sticker h-16 w-auto shrink-0" />
+          <div className="min-w-0 flex-1">
+            <h1 className="font-serif text-4xl font-bold break-words">{firstName ? `Hello, ${firstName}` : 'Hello'}</h1>
             <p className="mt-1 text-xl text-sage-600">
               {new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
             </p>
@@ -144,7 +145,7 @@ export default function ElderDashboard() {
             type="button"
             onClick={() => setShowNotifications(true)}
             aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
-            className="relative flex h-14 w-14 items-center justify-center rounded-full border border-sage-200 bg-white hover:bg-sage-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-sage-200 bg-white shadow-soft hover:bg-sage-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
           >
             <Bell className="h-6 w-6" aria-hidden="true" />
             {unreadCount > 0 && (
@@ -156,7 +157,7 @@ export default function ElderDashboard() {
         </header>
 
         {/* The one focal element: today */}
-        <section className="card mt-8 animate-fade-in" aria-live="polite" aria-label="Today">
+        <section className="card mt-8" aria-live="polite" aria-label="Today">
           {loading ? (
             <Loading label="Checking your medicines..." />
           ) : error ? (
@@ -172,13 +173,14 @@ export default function ElderDashboard() {
               <button type="button" onClick={tookIt} disabled={busy} className="btn-primary mt-6 w-full min-h-[64px] text-2xl">
                 <Check className="h-7 w-7" aria-hidden="true" /> I took it
               </button>
-              <div className="mt-3 flex flex-wrap justify-center gap-2">
-                <button type="button" onClick={notSure} disabled={busy} className="btn-ghost">I am not sure</button>
-                <button type="button" onClick={skipIt} disabled={busy} className="btn-ghost">Skip this one</button>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <button type="button" onClick={notSure} disabled={busy} className="btn-ghost px-3 text-base">I am not sure</button>
+                <button type="button" onClick={skipIt} disabled={busy} className="btn-ghost px-3 text-base">Skip this one</button>
               </div>
             </>
           ) : schedule.length > 0 ? (
             <>
+              <img src={bowSticker} alt="" width="459" height="340" className="sticker mb-3 h-24 w-auto" />
               <h2 className="font-serif text-4xl font-bold">All done for today</h2>
               <p className="mt-2 text-2xl text-sage-700">
                 You took {completedMeds.length} of {schedule.length} medicines
@@ -187,6 +189,7 @@ export default function ElderDashboard() {
             </>
           ) : (
             <>
+              <img src={sleepSticker} alt="" width="337" height="340" className="sticker mb-3 h-24 w-auto" />
               <h2 className="font-serif text-3xl font-bold">No medicines today</h2>
               <p className="mt-2 text-xl text-sage-600">Nothing is scheduled. Add your medicines to get reminders.</p>
               <button type="button" onClick={() => navigate('/elder/meds')} className="btn-secondary mt-5">See my medicines</button>
@@ -201,14 +204,14 @@ export default function ElderDashboard() {
               key={label}
               type="button"
               onClick={onClick}
-              className="flex min-h-[64px] w-full items-center gap-4 rounded-full border border-sage-200 bg-white px-6 text-left text-2xl font-bold hover:border-sage-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+              className="flex min-h-[64px] w-full items-center gap-4 rounded-full border border-sage-200 bg-white px-6 text-left text-2xl font-bold shadow-soft hover:border-sage-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
             >
-              <Icon className="h-7 w-7 text-primary" aria-hidden="true" />
+              <Icon className="h-7 w-7 shrink-0 text-primary" aria-hidden="true" />
               <span className="flex-1">
                 {label}
                 {hint && <span className="block text-base font-normal text-sage-600">{hint}</span>}
               </span>
-              <ChevronRight className="h-6 w-6 text-sage-400" aria-hidden="true" />
+              <ChevronRight className="h-6 w-6 shrink-0 text-sage-400" aria-hidden="true" />
             </button>
           ))}
           <button
@@ -223,7 +226,7 @@ export default function ElderDashboard() {
         <button
           type="button"
           onClick={() => navigate('/elder/health')}
-          className="mt-6 w-full rounded-3xl border border-sage-200 bg-white p-5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          className="mt-6 w-full rounded-3xl border border-sage-200/70 bg-white p-5 text-left shadow-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
         >
           <span className="text-lg font-bold text-sage-600">My health</span>
           <span className="mt-1 block text-xl">
@@ -232,9 +235,15 @@ export default function ElderDashboard() {
         </button>
       </div>
 
+      <AnimatePresence>
       {showMood && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-sage-900/40 p-4 sm:items-center" role="dialog" aria-modal="true" aria-label="How do you feel">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6">
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-sage-900/40 p-4 sm:items-center" role="dialog" aria-modal="true" aria-label="How do you feel">
+          <motion.div
+            initial={reduce ? false : { y: 48, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={reduce ? { opacity: 0 } : { y: 32, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+            className="w-full max-w-md rounded-3xl bg-white p-6 shadow-elevated">
             <div className="flex items-center justify-between">
               <h2 className="font-serif text-3xl font-bold">How do you feel?</h2>
               <button type="button" onClick={() => setShowMood(false)} aria-label="Close" className="flex h-14 w-14 items-center justify-center rounded-full hover:bg-sage-100">
@@ -244,7 +253,7 @@ export default function ElderDashboard() {
             <div className="mt-5 grid grid-cols-3 gap-3">
               {MOODS.map((m) => (
                 <button key={m.key} type="button" onClick={() => sendMood(m.key)} className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-2xl border border-sage-200 p-3 hover:border-sage-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
-                  <img src={m.sticker} alt="" className="h-14 w-14 rounded-xl object-contain" />
+                  <img src={m.sticker} alt="" className="sticker h-14 w-auto object-contain" />
                   <span className="text-lg font-bold">{m.label}</span>
                 </button>
               ))}
@@ -252,13 +261,20 @@ export default function ElderDashboard() {
             <button type="button" onClick={() => navigate('/diagnosis/input')} className="btn-secondary mt-5 w-full">
               Check my symptoms
             </button>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
+      <AnimatePresence>
       {showNotifications && (
-        <div className="fixed inset-0 z-[60] bg-sage-900/40" onClick={() => setShowNotifications(false)}>
-          <aside role="dialog" aria-modal="true" aria-label="Notifications" className="absolute bottom-0 right-0 top-0 w-full max-w-md overflow-y-auto bg-white" onClick={(e) => e.stopPropagation()}>
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}
+          className="fixed inset-0 z-[60] bg-sage-900/40" onClick={() => setShowNotifications(false)}>
+          <motion.aside
+            initial={reduce ? false : { x: '100%' }} animate={{ x: 0 }} exit={reduce ? { opacity: 0 } : { x: '100%' }}
+            transition={{ type: 'spring', stiffness: 360, damping: 38 }}
+            role="dialog" aria-modal="true" aria-label="Notifications" className="absolute bottom-0 right-0 top-0 w-full max-w-md overflow-y-auto bg-white shadow-elevated" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-sage-200 p-5">
               <h2 className="font-serif text-3xl font-bold">Notifications</h2>
               <button type="button" onClick={() => setShowNotifications(false)} aria-label="Close notifications" className="flex h-14 w-14 items-center justify-center rounded-full hover:bg-sage-100">
@@ -279,9 +295,10 @@ export default function ElderDashboard() {
                 ))}
               </ul>
             )}
-          </aside>
-        </div>
+          </motion.aside>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   )
 }

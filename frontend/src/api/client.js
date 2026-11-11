@@ -177,6 +177,8 @@ const groupActivities = (activities = []) => {
     return grouped
 }
 
+const scheduleInFlight = new Map()
+
 // Unified API interface
 export const api = {
     // AI keys are server-side now. Inert stubs kept so older settings screens do not crash.
@@ -193,8 +195,7 @@ export const api = {
             }
         }
 
-        const result = await fetchApi(`/users/${userId}`, { method: 'GET' })
-        return result?.user || null
+        return null
     },
 
     // ====== CAREGIVER LINKING ======
@@ -281,17 +282,16 @@ export const api = {
     },
 
     // ====== SCHEDULE / ADHERENCE ======
-    getSchedule: async (userId, date = null) => {
-        const params = new URLSearchParams()
-        if (date) {
-            const normalizedDate = date instanceof Date
-                ? date.toISOString().split('T')[0]
-                : date
-            params.set('date', normalizedDate)
+    getSchedule: (userId, date = null) => {
+        // Concurrent calls (first load + a realtime echo of its own inserts) share one run, or each would create the same pending logs.
+        const key = `${userId}|${dateKey(date)}`
+        if (!scheduleInFlight.has(key)) {
+            scheduleInFlight.set(key, api._buildSchedule(userId, date).finally(() => scheduleInFlight.delete(key)))
         }
+        return scheduleInFlight.get(key)
+    },
 
-        const query = params.toString()
-
+    _buildSchedule: async (userId, date = null) => {
         if (useSupabase) {
             try {
                 const { start, end } = dayBounds(date)
@@ -316,7 +316,13 @@ export const api = {
                                     status: 'pending',
                                 })
                             } catch (error) {
+                                // Another device may have created it first (unique index): read it back.
                                 console.warn('Could not create adherence log:', error)
+                                const again = await db.adherenceLogs.list(userId, start.toISOString(), end.toISOString())
+                                log = again.find((item) =>
+                                    item.medication_id === medication.id &&
+                                    sameScheduledMinute(item.scheduled_time, scheduled)
+                                )
                             }
                         }
 
@@ -370,6 +376,7 @@ export const api = {
                 const end = new Date()
                 const start = new Date()
                 start.setDate(start.getDate() - days)
+                start.setHours(0, 0, 0, 0) // whole days, so the oldest day is not counted partially
 
                 const logs = await db.adherenceLogs.list(userId, start.toISOString(), end.toISOString())
                 return { success: true, logs }
@@ -378,9 +385,7 @@ export const api = {
             }
         }
 
-        return fetchApi(`/medications/adherence/${userId}?days=${encodeURIComponent(days)}`, {
-            method: 'GET'
-        })
+        return NO_SUPABASE
     },
 
     // ====== HEALTH READINGS ======
@@ -507,17 +512,11 @@ export const api = {
             }
         }
 
-        return fetchApi(`/notifications/${userId}`, { method: 'GET' })
+        return NO_SUPABASE
     },
 
     acknowledgeNotification: async (alertId) => {
-        if (useSupabase) {
-            return api.acknowledgeAlert(alertId)
-        }
-
-        return fetchApi(`/notifications/${alertId}/acknowledge`, {
-            method: 'POST'
-        })
+        return api.acknowledgeAlert(alertId)
     },
 
     markAllNotificationsRead: async (userId) => {
@@ -532,9 +531,7 @@ export const api = {
             }
         }
 
-        return fetchApi(`/notifications/mark-all-read/${userId}`, {
-            method: 'POST'
-        })
+        return NO_SUPABASE
     },
 
     // ====== VOICE MEMOS ======
@@ -608,13 +605,6 @@ export const api = {
         })
     },
 
-    processPrescription: async (imageUrl) => {
-        return fetchApi('/prescriptions/process', {
-            method: 'POST',
-            body: JSON.stringify({ image_url: imageUrl })
-        })
-    },
-
     // ====== ASSISTIVE DIAGNOSIS (Flask backend) ======
     startDiagnosisSession: async (patientId, rawComplaint) => {
         return fetchApi('/diagnosis/start', {
@@ -674,6 +664,33 @@ export const api = {
     getDiagnosisPdfUrl: (sessionId, patientName = 'Patient') => {
         const params = new URLSearchParams({ patient_name: patientName })
         return `${API_URL}/diagnosis/export-pdf/${sessionId}?${params.toString()}`
+    },
+
+    // The PDF route needs the bearer token, which window.open cannot send: fetch it, then save the blob.
+    downloadDiagnosisPdf: async (sessionId, patientName = 'Patient') => {
+        if (!API_URL) return { success: false, error: 'The app is not connected to a server (VITE_API_URL is missing).' }
+        try {
+            const { data } = (await supabase?.auth.getSession()) || {}
+            const token = data?.session?.access_token
+            const response = await fetch(`${API_URL}/diagnosis/export-pdf/${sessionId}?${new URLSearchParams({ patient_name: patientName })}`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            })
+            if (!response.ok) {
+                const body = await response.json().catch(() => null)
+                return { success: false, error: body?.error || `Could not download the report (${response.status}).` }
+            }
+            const url = URL.createObjectURL(await response.blob())
+            const link = document.createElement('a')
+            link.href = url
+            link.download = `AgeWell_Report_${String(sessionId).slice(0, 8)}.pdf`
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            setTimeout(() => URL.revokeObjectURL(url), 10000)
+            return { success: true }
+        } catch {
+            return { success: false, error: 'Could not reach the server. Check your connection and try again.' }
+        }
     },
 
     shareDiagnosisReport: async (sessionId, patientName = 'Patient') => {
@@ -776,27 +793,8 @@ export const api = {
             }
         }
 
-        const params = new URLSearchParams()
-        if (date) params.set('date', dateKey(date))
-        const query = params.toString()
-
-        return fetchApi(`/activity/${userId}${query ? `?${query}` : ''}`, {
-            method: 'GET'
-        })
+        return NO_SUPABASE
     },
-
-    // ====== AUTOMATION / SIMULATION ======
-    triggerAutomation: async (userId, eventType = null) => {
-        if (eventType) {
-            return fetchApi(`/automation/simulate/${userId}`, {
-                method: 'POST',
-                body: JSON.stringify({ event: eventType })
-            })
-        }
-        return fetchApi(`/automation/evaluate/${userId}`, {
-            method: 'POST'
-        })
-    }
 }
 
 export default api

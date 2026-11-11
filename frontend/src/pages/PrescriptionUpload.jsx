@@ -77,7 +77,7 @@ export default function PrescriptionUpload() {
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate(-1)}
-          className="p-3 text-sage-500 hover:bg-sage-50 rounded-xl"
+          className="btn-icon-ghost"
         >
           <ArrowLeft className="w-6 h-6" />
         </motion.button>

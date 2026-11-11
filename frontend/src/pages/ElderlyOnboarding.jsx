@@ -117,31 +117,26 @@ export default function ElderlyOnboarding() {
     return (
         <div className="min-h-screen bg-cream-50 flex flex-col p-6">
             {/* Header with Progress */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-8 w-full max-w-md mx-auto">
                 <button
                     onClick={handleBack}
-                    className="text-sage-500 hover:text-sage-700 flex items-center gap-2 text-sm font-bold min-h-[44px]"
+                    className="justify-self-start inline-flex items-center gap-2 min-h-[44px] pr-3 text-sage-600 hover:text-sage-900 text-base font-bold"
                 >
                     <ArrowLeft className="w-5 h-5" /> Back
                 </button>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2" aria-hidden="true">
                     {[1, 2, 3].map(s => (
-                        <div 
-                            key={s} 
-                            className={`w-3 h-3 rounded-full transition-colors ${
-                                s === step ? 'bg-sage-500' : s < step ? 'bg-sage-300' : 'bg-sage-100'
-                            }`} 
-                        />
+                        <div key={s} className={`h-2.5 rounded-full transition-all duration-300 ${s === step ? 'w-8 bg-primary' : s < step ? 'w-2.5 bg-primary/40' : 'w-2.5 bg-sage-200'}`} />
                     ))}
                 </div>
-                <div className="w-16" />
+                <span aria-hidden="true" />
             </div>
 
             <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
                 <motion.img 
                     src={oneSticker} 
                     alt="" 
-                    className="w-24 h-24 rounded-3xl border border-sage-200 mb-6"
+                    width="736" height="601" className="sticker h-28 w-auto mb-6"
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                 />
@@ -281,7 +276,7 @@ export default function ElderlyOnboarding() {
                     )}
                 </div>
 
-                <p className="text-sage-400 text-sm mt-4 font-medium">Step {step} of 3</p>
+                <p className="text-sage-500 text-sm mt-4 font-medium">Step {step} of 3</p>
             </div>
         </div>
     )

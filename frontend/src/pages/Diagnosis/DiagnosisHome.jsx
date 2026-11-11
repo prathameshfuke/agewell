@@ -58,7 +58,7 @@ export default function DiagnosisHome() {
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={() => navigate(dashboardPath)}
-                            className="p-3 rounded-xl text-sage-600 hover:bg-sage-100"
+                            className="btn-icon-ghost"
                             aria-label="Back to dashboard"
                         >
                             <ArrowLeft className="w-6 h-6" />

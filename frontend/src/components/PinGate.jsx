@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Delete, Lock } from 'lucide-react'
+import { motion, useReducedMotion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 
 const PIN_LENGTH = 4
@@ -17,6 +18,7 @@ const formatLockMessage = (lockedUntil) => {
  */
 export default function PinGate() {
     const navigate = useNavigate()
+    const reduce = useReducedMotion()
     const {
         hasCaregiverPin, unlockCaregiver, setCaregiverPin, resetCaregiverPin,
         recentSignIn, setActiveRole, logout, profile,
@@ -130,31 +132,33 @@ export default function PinGate() {
     }[mode]
 
     return (
-        <main className="min-h-screen flex items-center justify-center bg-white px-4 py-8">
-            <section className="w-full max-w-sm text-center" aria-labelledby="pin-title">
-                <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
-                    <Lock className="h-6 w-6 text-slate-700" aria-hidden="true" />
+        <main className="min-h-screen flex items-center justify-center bg-cream-50 px-5 py-8">
+            <section className="w-full max-w-sm rounded-3xl border border-sage-200/70 bg-white px-6 py-8 text-center shadow-elevated" aria-labelledby="pin-title">
+                <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary-bg">
+                    <Lock className="h-6 w-6 text-primary" aria-hidden="true" />
                 </div>
-                <h1 id="pin-title" className="text-2xl font-semibold text-slate-900">{title}</h1>
-                {hint && <p className="mt-2 text-slate-600">{hint}</p>}
+                <h1 id="pin-title" className="font-serif text-3xl text-sage-900">{title}</h1>
+                {hint && <p className="mt-2 text-base text-sage-600 font-normal">{hint}</p>}
                 {profile?.full_name && mode === 'enter' && (
-                    <p className="mt-1 text-sm text-slate-500">Signed in as {profile.full_name}</p>
+                    <p className="mt-1 text-sm text-sage-500 font-normal">Signed in as {profile.full_name}</p>
                 )}
 
                 <div className="my-8 flex justify-center gap-4" role="status" aria-label={`${digits.length} of ${PIN_LENGTH} digits entered`}>
                     {Array.from({ length: PIN_LENGTH }, (_, i) => (
-                        <span
+                        <motion.span
                             key={i}
-                            className={`h-4 w-4 rounded-full border-2 border-slate-900 ${i < digits.length ? 'bg-slate-900' : 'bg-transparent'}`}
+                            animate={{ scale: i < digits.length && !reduce ? [1, 1.25, 1] : 1 }}
+                            transition={{ duration: 0.2 }}
+                            className={`h-4 w-4 rounded-full border-2 border-sage-900 ${i < digits.length ? 'bg-sage-900' : 'bg-transparent'}`}
                         />
                     ))}
                 </div>
 
-                <p className="min-h-[1.5rem] text-sm font-medium text-red-600" role="alert">{message}</p>
+                <p className="min-h-[1.5rem] text-base font-bold text-rose-600" role="alert">{message}</p>
 
-                <div className="mt-4 grid grid-cols-3 gap-3">
+                <div className="mt-4 grid grid-cols-3 gap-3 justify-items-center">
                     {KEYS.map((key) => {
-                        if (key === 'blank') return <span key={key} />
+                        if (key === 'blank') return <span key={key} aria-hidden="true" />
                         const isBack = key === 'back'
                         return (
                             <button
@@ -163,7 +167,7 @@ export default function PinGate() {
                                 onClick={() => press(key)}
                                 disabled={busy || mode === 'loading'}
                                 aria-label={isBack ? 'Delete last digit' : key}
-                                className="h-16 rounded-full border border-slate-200 bg-white text-2xl font-medium text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 active:bg-slate-100 disabled:opacity-50"
+                                className="flex h-16 w-full max-w-[5.5rem] items-center justify-center rounded-full border border-sage-200 bg-white text-3xl font-bold text-sage-900 shadow-soft hover:bg-sage-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:bg-sage-100 disabled:opacity-50"
                             >
                                 {isBack ? <Delete className="mx-auto h-6 w-6" aria-hidden="true" /> : key}
                             </button>
@@ -171,13 +175,13 @@ export default function PinGate() {
                     })}
                 </div>
 
-                <div className="mt-8 flex flex-col items-center gap-3 text-sm">
+                <div className="mt-6 flex flex-col items-stretch gap-1 text-base">
                     {mode === 'enter' && (
-                        <button type="button" onClick={forgot} className="font-medium text-blue-700 underline-offset-4 hover:underline">
+                        <button type="button" onClick={forgot} className="min-h-[44px] rounded-full px-4 font-bold text-primary hover:bg-primary-bg">
                             {recentSignIn ? 'Reset PIN' : 'Forgot PIN? Sign in again to reset it'}
                         </button>
                     )}
-                    <button type="button" onClick={leave} className="font-medium text-slate-600 underline-offset-4 hover:underline">
+                    <button type="button" onClick={leave} className="min-h-[44px] rounded-full px-4 font-bold text-sage-600 hover:bg-sage-100">
                         Back to elder mode
                     </button>
                 </div>

@@ -43,10 +43,11 @@ export function useNotifications(userId) {
         const result = await api.acknowledgeNotification(alertId);
         if (result.success) {
             // Update local state
+            const wasUnread = notifications.some(n => n.id === alertId && n.status === 'active' && !n.acknowledged);
             setNotifications(prev =>
-                prev.map(n => n.id === alertId ? { ...n, status: 'acknowledged' } : n)
+                prev.map(n => n.id === alertId ? { ...n, status: 'acknowledged', acknowledged: true } : n)
             );
-            setUnreadCount(prev => Math.max(0, prev - 1));
+            if (wasUnread) setUnreadCount(prev => Math.max(0, prev - 1));
         }
         return result;
     };
@@ -55,7 +56,7 @@ export function useNotifications(userId) {
         const result = await api.markAllNotificationsRead(userId);
         if (result.success) {
             setNotifications(prev =>
-                prev.map(n => ({ ...n, status: 'acknowledged' }))
+                prev.map(n => ({ ...n, status: 'acknowledged', acknowledged: true }))
             );
             setUnreadCount(0);
         }

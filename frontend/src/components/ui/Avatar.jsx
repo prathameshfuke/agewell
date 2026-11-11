@@ -65,7 +65,7 @@ export const AvatarFallback = forwardRef(({
   return (
     <div
       ref={ref}
-      className={`flex items-center justify-center w-full h-full bg-gradient-sage text-white font-bold ${className}`}
+      className={`flex items-center justify-center w-full h-full bg-primary text-white font-bold ${className}`}
       {...props}
     >
       {children}

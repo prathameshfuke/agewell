@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FileText } from 'lucide-react'
+import { motion, useReducedMotion } from 'framer-motion'
+import { familyPhoto, chatSticker } from '../assets/images'
 import { api } from '../api/client'
 import { supabase } from '../lib/supabase'
 import { useActivity } from '../hooks/useActivity'
@@ -62,6 +64,7 @@ const urgencyClass = (u) =>
 const focusRing = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
 
 export default function FamilyDashboard() {
+    const reduce = useReducedMotion()
     const navigate = useNavigate()
     const { user, profile, logout, roles, setActiveRole, linkedElderId } = useAuth()
     const hasElderRole = roles?.includes('elderly')
@@ -226,7 +229,7 @@ export default function FamilyDashboard() {
 
     return (
         <div className="min-h-screen bg-cream-50 font-sans pb-24 md:pb-8">
-            <header className="px-4 md:px-6 py-4 flex items-center justify-between gap-3 border-b border-sage-200 bg-cream-50 sticky top-0 z-20">
+            <header className="px-5 md:px-6 min-h-[72px] py-3 flex items-center justify-between gap-3 border-b border-sage-200 bg-cream-50 sticky top-0 z-20">
                 <div className="min-w-0">
                     <p className="text-sm text-sage-500">{unlinked ? 'Caregiver' : 'Caring for'}</p>
                     <h1 className="font-serif text-2xl text-sage-900 truncate">
@@ -248,14 +251,17 @@ export default function FamilyDashboard() {
                 />
             </header>
 
-            <main className="px-4 md:px-6 py-5 space-y-5 max-w-3xl mx-auto">
+            <main className="px-5 md:px-6 py-6 space-y-5 max-w-3xl mx-auto">
                 {unlinked ? (
-                    <section className="rounded-2xl border border-sage-200 bg-white p-6">
-                        <h2 className="font-serif text-xl text-sage-900">Connect to someone you care for</h2>
+                    <section className="overflow-hidden rounded-3xl border border-sage-200/70 bg-white shadow-card">
+                        <img src={familyPhoto} alt="" width="1536" height="1024" className="h-40 w-full object-cover object-top sm:h-56" />
+                        <div className="p-6">
+                        <h2 className="font-serif text-2xl text-sage-900">Connect to someone you care for</h2>
                         <p className="text-sage-600 mt-1">You are not linked to anyone yet. Ask them for their 6-character pairing code.</p>
-                        <button type="button" onClick={() => navigate('/link')} className="btn-primary mt-4 !min-h-[44px] !text-base">
+                        <button type="button" onClick={() => navigate('/link')} className="btn-primary mt-4 btn-sm">
                             Enter a pairing code
                         </button>
+                        </div>
                     </section>
                 ) : (
                     <>
@@ -291,9 +297,14 @@ export default function FamilyDashboard() {
                         )}
 
                         {/* The one focal element: how is today going */}
-                        <section className="rounded-3xl border border-sage-200 bg-white p-6" aria-labelledby="today-title">
-                            <p className="text-sm text-sage-500">Today</p>
-                            <h2 id="today-title" className={`font-serif text-2xl ${tone}`}>{headline}</h2>
+                        <section className="rounded-3xl border border-sage-200/70 bg-white p-6 shadow-card" aria-labelledby="today-title">
+                            <div className="flex items-center justify-between gap-4">
+                                <div className="min-w-0">
+                                    <p className="text-sm text-sage-500">Today</p>
+                                    <h2 id="today-title" className={`font-serif text-2xl ${tone}`}>{headline}</h2>
+                                </div>
+                                <img src={chatSticker} alt="" width="472" height="340" className="sticker h-14 w-auto shrink-0" />
+                            </div>
                             {concerns.length > 0 && <p className="text-sage-700 mt-1">{concerns.join(', ')}.</p>}
 
                             <dl className="mt-5 divide-y divide-sage-100">
@@ -364,7 +375,7 @@ export default function FamilyDashboard() {
                             </dl>
                         </section>
 
-                        <div role="tablist" aria-label="Dashboard sections" className="flex gap-2">
+                        <div role="tablist" aria-label="Dashboard sections" className="flex gap-1 rounded-full border border-sage-200 bg-white p-1 shadow-soft">
                             {[['overview', 'Overview'], ['symptom_reports', 'Symptom reports']].map(([key, label]) => (
                                 <button
                                     key={key}
@@ -372,11 +383,10 @@ export default function FamilyDashboard() {
                                     role="tab"
                                     aria-selected={tab === key}
                                     onClick={() => setTab(key)}
-                                    className={`min-h-[44px] px-5 rounded-full text-sm font-semibold border transition-colors ${focusRing} ${
-                                        tab === key ? 'bg-sage-900 text-white border-sage-900' : 'bg-white text-sage-700 border-sage-300 hover:bg-sage-50'
-                                    }`}
+                                    className={`relative flex-1 min-h-[44px] rounded-full px-4 text-base whitespace-nowrap transition-colors ${focusRing} ${tab === key ? 'text-white' : 'text-sage-700 hover:text-sage-900'}`}
                                 >
-                                    {label}
+                                    {tab === key && <motion.span layoutId="family-tab" transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 34 }} className="absolute inset-0 rounded-full bg-sage-900" />}
+                                    <span className="relative">{label}</span>
                                 </button>
                             ))}
                         </div>
@@ -424,9 +434,9 @@ export default function FamilyDashboard() {
                                     onAddContact={() => navigate('/family/settings')}
                                 />
 
-                                <div className="flex flex-wrap gap-3">
-                                    <button type="button" onClick={() => navigate('/family/meds')} className="btn-primary !min-h-[44px] !text-base !py-2">Manage medications</button>
-                                    <button type="button" onClick={() => navigate('/family/health')} className="btn-secondary !min-h-[44px] !text-base !py-2">Health monitor</button>
+                                <div className="btn-row">
+                                    <button type="button" onClick={() => navigate('/family/meds')} className="btn-primary btn-sm">Manage medications</button>
+                                    <button type="button" onClick={() => navigate('/family/health')} className="btn-secondary btn-sm">Health monitor</button>
                                 </div>
                             </>
                         )}

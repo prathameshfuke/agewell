@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
+import { sleepSticker } from '../assets/images'
 
 // Global bottom navigation lives in BottomNav; this default export is kept for old imports.
 export default function ElderNav() {
@@ -16,10 +17,10 @@ export function ElderPage({ title, subtitle, back = true, backTo, children }) {
           <button
             type="button"
             onClick={() => (backTo ? navigate(backTo) : navigate(-1))}
-            className="-ml-3 mb-2 inline-flex min-h-[56px] items-center gap-2 rounded-full px-4 text-lg font-bold text-sage-700 hover:bg-sage-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            className="-ml-3 mb-2 inline-flex min-h-[48px] items-center gap-2 rounded-full pl-3 pr-5 text-lg font-bold text-sage-700 hover:bg-sage-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
             aria-label="Go back"
           >
-            <ArrowLeft className="h-6 w-6" aria-hidden="true" /> Back
+            <ArrowLeft className="h-6 w-6 shrink-0" aria-hidden="true" /> Back
           </button>
         )}
         <h1 className="font-serif text-4xl font-bold text-sage-900">{title}</h1>
@@ -53,9 +54,10 @@ export function ErrorNote({ children, onRetry }) {
   )
 }
 
-export function EmptyNote({ title, children, action }) {
+export function EmptyNote({ title, children, action, sticker = sleepSticker }) {
   return (
     <div className="card text-center">
+      <img src={sticker} alt="" width="337" height="340" className="sticker mx-auto mb-3 h-24 w-auto" />
       <h2 className="font-serif text-2xl font-bold">{title}</h2>
       {children && <p className="mt-2 text-xl text-sage-600">{children}</p>}
       {action && <div className="mt-5 flex justify-center">{action}</div>}

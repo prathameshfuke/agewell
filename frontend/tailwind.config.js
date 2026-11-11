@@ -29,8 +29,8 @@ export default {
                     bg: '#E9EEFD',
                 },
                 secondary: {
-                    DEFAULT: '#FBFBF8',
-                    dark: '#E9E8E1',
+                    DEFAULT: '#FBF7F0',
+                    dark: '#EBE2D0',
                 },
                 accent: {
                     DEFAULT: '#C2362B',
@@ -39,29 +39,35 @@ export default {
                 // Legacy names kept so existing pages inherit the new palette.
                 // sage = ink neutrals (text, borders, dark buttons)
                 sage: {
-                    50: '#F6F7F9',
-                    100: '#EEF0F4',
-                    200: '#E1E4EA',
-                    300: '#CDD1DA',
-                    400: '#757C8C',
-                    500: '#646B7B',
-                    600: '#4B5161',
-                    700: '#2E3340',
-                    800: '#1E222B',
-                    900: '#12141A',
+                    50: '#F8F5EF',
+                    100: '#F1ECE2',
+                    200: '#E6DFD1',
+                    300: '#D3CBBA',
+                    400: '#7D7566',
+                    500: '#6A6355',
+                    600: '#524C40',
+                    700: '#3A352C',
+                    800: '#27231D',
+                    900: '#1A1713',
                 },
                 // cream = warm paper surfaces
                 cream: {
-                    50: '#FBFBF8',
-                    100: '#F5F5F0',
-                    200: '#E9E8E1',
-                    300: '#DAD9D0',
-                    400: '#B9B7AB',
-                    500: '#8F8D80',
-                    600: '#6B695E',
-                    700: '#4F4E45',
-                    800: '#36352F',
-                    900: '#24231F',
+                    50: '#FBF7F0',
+                    100: '#F5EEE1',
+                    200: '#EBE2D0',
+                    300: '#DDD1BA',
+                    400: '#BDB19A',
+                    500: '#948976',
+                    600: '#70675A',
+                    700: '#52493F',
+                    800: '#38322B',
+                    900: '#26221D',
+                },
+                // Warm secondary: terracotta. Sparing use: accents, highlights, illustrations.
+                clay: {
+                    DEFAULT: '#B5522F',
+                    light: '#F7E4D9',
+                    dark: '#8C3E22',
                 },
                 status: {
                     success: '#1E7F5C',
@@ -89,12 +95,13 @@ export default {
                 '6xl': ['56px', { lineHeight: '1.1', letterSpacing: '-0.025em' }],
             },
             boxShadow: {
-                'soft': '0 1px 2px rgba(18, 20, 26, 0.05)',
-                'elevated': '0 8px 24px rgba(18, 20, 26, 0.08)',
+                // Warm, low, wide shadows: brown-tinted so they read as paper, not plastic
+                'soft': '0 1px 2px rgba(74, 52, 28, 0.06), 0 6px 18px -10px rgba(74, 52, 28, 0.14)',
+                'elevated': '0 2px 4px rgba(74, 52, 28, 0.06), 0 18px 40px -18px rgba(74, 52, 28, 0.22)',
                 'glow-sage': '0 0 0 4px rgba(47, 91, 234, 0.15)',
-                'glow-cream': '0 0 0 4px rgba(233, 232, 225, 0.6)',
-                'card': '0 1px 2px rgba(18, 20, 26, 0.05)',
-                'card-hover': '0 6px 20px rgba(18, 20, 26, 0.08)',
+                'glow-cream': '0 0 0 4px rgba(235, 226, 208, 0.6)',
+                'card': '0 1px 2px rgba(74, 52, 28, 0.06), 0 6px 18px -10px rgba(74, 52, 28, 0.14)',
+                'card-hover': '0 2px 4px rgba(74, 52, 28, 0.06), 0 14px 30px -14px rgba(74, 52, 28, 0.22)',
             },
             borderRadius: {
                 // Tighter than Tailwind defaults: cleaner, less bubbly
@@ -146,8 +153,8 @@ export default {
             },
             backgroundImage: {
                 'gradient-sage': 'linear-gradient(135deg, #2F5BEA 0%, #1E3FAE 100%)',
-                'gradient-cream': 'linear-gradient(135deg, #FBFBF8 0%, #F5F5F0 100%)',
-                'gradient-soft': 'linear-gradient(135deg, #E9EEFD 0%, #F5F5F0 100%)',
+                'gradient-cream': 'linear-gradient(135deg, #FBF7F0 0%, #F5EEE1 100%)',
+                'gradient-soft': 'linear-gradient(135deg, #E9EEFD 0%, #F5EEE1 100%)',
             },
             // Mobile-first spacing utilities
             spacing: {

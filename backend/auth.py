@@ -12,7 +12,8 @@ import requests
 from flask import g, jsonify, request
 
 SUPABASE_URL = (os.getenv('SUPABASE_URL') or '').rstrip('/')
-SERVICE_KEY = os.getenv('SUPABASE_SERVICE_KEY') or os.getenv('SUPABASE_SECRET_KEY') or ''
+SERVICE_KEY = (os.getenv('SUPABASE_SERVICE_KEY') or os.getenv('SUPABASE_SECRET_KEY')
+               or os.getenv('SUPABASE_SERVICE_ROLE_KEY') or '')
 CACHE_SECONDS = 60
 UUID_RE = re.compile(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
 

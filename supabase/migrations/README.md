@@ -6,6 +6,7 @@ Timestamped SQL for the Supabase project `AgeWell`. Apply in order (SQL editor o
 |---|---|
 | `20261111000000_caregiver_pin.sql` | `caregiver_pins` (RLS on, no policies, grants revoked) plus security-definer functions `has_/verify_/set_/reset_caregiver_pin`. bcrypt via pgcrypto; 5 wrong tries lock 15 min; reset needs a sign-in within 5 min. Granted to `authenticated` only. |
 | `20261111000100_diagnosis_alerts_audit_log.sql` | `diagnosis_alerts`, `symptom_audit_log`; select policy via `can_access_user()`. Backend writes with the service key. |
+| `20261111000400_adherence_unique_slot.sql` | Dedupes `adherence_logs`, then unique index on `(medication_id, scheduled_time)`. Not applied yet. |
 | `20261111000200_harden_grants.sql` | Revokes all table privileges from `anon`, and TRUNCATE/REFERENCES/TRIGGER from `authenticated`; same for future tables. |
 
 ## Gotchas

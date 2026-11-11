@@ -3,55 +3,27 @@ from flask_cors import CORS
 from datetime import datetime
 import os
 from dotenv import load_dotenv
-from database import db
-from auth import authenticate
 
-load_dotenv()
+load_dotenv()  # before importing auth, which reads SUPABASE_* at import time
+from auth import authenticate  # noqa: E402
 
 app = Flask(__name__)
-CORS(app)
+ALLOWED_ORIGINS = ['https://agewell-pi.vercel.app', 'http://localhost:5173'] + [
+    o.strip() for o in os.getenv('CORS_ORIGINS', '').split(',') if o.strip()]
+CORS(app, origins=ALLOWED_ORIGINS)
 app.before_request(authenticate)
 
-# Configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///agewell.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
-app.config['UPLOAD_FOLDER'] = 'uploads/prescriptions'
-app.config['DEBUG_TB_ENABLED'] = False
-app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # prescription and symptom photos; rejects bigger bodies with 413
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY') or os.urandom(32).hex()  # sessions are unused; never a known default
 
-# Initialize database
-db.init_app(app)
-
-# Ensure upload folder exists
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-# Import models and create tables
-with app.app_context():
-    import models
-    db.create_all()
-
-# Import and register blueprints
 from routes import (
-    health_routes,
-    medication_routes,
-    ai_routes,
-    user_routes,
     prescription_routes,
-    notification_routes,
-    automation_routes,
     diagnosis_routes,
     linking_routes,
     settings_routes,
 )
 
-app.register_blueprint(health_routes.bp)
-app.register_blueprint(medication_routes.bp)
-app.register_blueprint(ai_routes.bp)
-app.register_blueprint(user_routes.bp)
 app.register_blueprint(prescription_routes.bp)
-app.register_blueprint(notification_routes.bp)
-app.register_blueprint(automation_routes.bp)
 app.register_blueprint(diagnosis_routes.bp)
 app.register_blueprint(linking_routes.bp)
 app.register_blueprint(settings_routes.bp)
@@ -59,6 +31,11 @@ app.register_blueprint(settings_routes.bp)
 @app.route('/health', methods=['GET'])
 def health_check():
     return jsonify({'status': 'healthy', 'timestamp': datetime.utcnow().isoformat()})
+
+@app.errorhandler(413)
+def too_large(_):
+    return jsonify({'error': 'That file is too large. Please use a photo under 10 MB.'}), 413
+
 
 @app.after_request
 def hide_server_errors(response):
@@ -92,9 +69,9 @@ def health_deps():
             'https://api.groq.com/openai/v1/models', {'Authorization': f'Bearer {groq_key}'})},
         'gemini': {'configured': bool(gemini_key), 'reachable': bool(gemini_key) and ping(
             'https://generativelanguage.googleapis.com/v1beta/models', {'x-goog-api-key': gemini_key})},
-        'bhashini': {'configured': bool(os.getenv('BHASHINI_API_KEY', '').strip())},
+        'bhashini': {'configured': bool((os.getenv('BHASHINI_API_KEY') or os.getenv('BHASHINI_INFERNCE') or '').strip())},
         'supabase': {'configured': bool(os.getenv('SUPABASE_URL')) and bool(
-            os.getenv('SUPABASE_SERVICE_KEY') or os.getenv('SUPABASE_SECRET_KEY'))},
+            os.getenv('SUPABASE_SERVICE_KEY') or os.getenv('SUPABASE_SECRET_KEY') or os.getenv('SUPABASE_SERVICE_ROLE_KEY'))},
     }
     health_deps.cache = (time.time() + 60, result)
     return jsonify(result)
@@ -106,10 +83,9 @@ def index():
         'message': 'AGEWELL API - Elderly Medication & Wellness Management',
         'version': '1.0.0',
         'endpoints': {
-            'health': '/api/health',
-            'medications': '/api/medications',
-            'ai': '/api/ai',
-            'users': '/api/users',
+            'diagnosis': '/api/diagnosis',
+            'link': '/api/link',
+            'settings': '/api/settings',
             'prescriptions': '/api/prescriptions'
         }
     })

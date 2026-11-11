@@ -1,5 +1,6 @@
 import { Activity, AlertTriangle, Bell, Home, Pill, Stethoscope, User } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { motion, useReducedMotion } from 'framer-motion'
 
 import { useAuth } from '../contexts/AuthContext'
 
@@ -38,6 +39,7 @@ export default function BottomNav() {
   const location = useLocation()
   const { user, role, loading, isOnboardingComplete } = useAuth()
 
+  const reduce = useReducedMotion()
   const pathname = location.pathname || ''
 
   const hideForPath = pathname === '/'
@@ -57,8 +59,8 @@ export default function BottomNav() {
   const tabs = normalizedRole === 'caregiver' ? CAREGIVER_TABS : ELDER_TABS
 
   return (
-    <nav className="bottom-nav fixed inset-x-0 bottom-0 z-40 md:hidden bg-white border-t border-sage-200">
-      <div className="mx-auto w-full max-w-xl px-2 py-2 flex items-center justify-between gap-1">
+    <nav aria-label="Main" className="bottom-nav z-40 md:hidden">
+      <div className="mx-auto w-full max-w-xl px-2 pb-2 flex items-stretch gap-1">
         {tabs.map((tab) => {
           const isActive = isRouteMatch(pathname, tab.match)
           const Icon = tab.icon
@@ -68,15 +70,19 @@ export default function BottomNav() {
               key={tab.key}
               type="button"
               onClick={() => navigate(tab.path)}
-              className={`relative flex-1 min-h-[64px] rounded-2xl flex flex-col items-center justify-center gap-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${isActive ? 'bg-sage-100' : ''}`}
+              className="relative flex-1 min-w-0 min-h-[60px] rounded-2xl flex flex-col items-center justify-center gap-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
               aria-current={isActive ? 'page' : undefined}
-                          >
-
-              <span className="relative z-10 flex flex-col items-center gap-1">
-                <Icon aria-hidden="true" className={`w-6 h-6 ${isActive ? 'text-primary' : 'text-sage-600'}`} strokeWidth={2.4} />
-                <span className={`text-sm font-bold ${isActive ? 'text-primary' : 'text-sage-600'}`}>
-                  {tab.label}
-                </span>
+            >
+              {isActive && (
+                <motion.span
+                  layoutId="bottom-nav-pill"
+                  transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 34 }}
+                  className="absolute inset-0 rounded-2xl bg-primary-bg"
+                />
+              )}
+              <Icon aria-hidden="true" className={`relative w-6 h-6 transition-colors ${isActive ? 'text-primary' : 'text-sage-500'}`} strokeWidth={2.2} />
+              <span className={`relative text-sm leading-none font-bold transition-colors ${isActive ? 'text-primary' : 'text-sage-500'}`}>
+                {tab.label}
               </span>
             </button>
           )

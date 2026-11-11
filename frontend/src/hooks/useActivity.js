@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api/client';
 
 export function useActivity(userId, date = null) {
@@ -7,6 +7,7 @@ export function useActivity(userId, date = null) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedDate, setSelectedDate] = useState(date);
+    const latest = useRef(0); // ignore a slow response for a date/user the screen has already left
 
     const fetchActivity = useCallback(async () => {
         if (!userId) {
@@ -14,9 +15,11 @@ export function useActivity(userId, date = null) {
             return;
         }
 
+        const request = ++latest.current;
         try {
             setLoading(true);
             const result = await api.getActivityTimeline(userId, selectedDate);
+            if (request !== latest.current) return;
             if (result.success) {
                 setActivities(result.activities || []);
                 setGrouped(result.grouped || { morning: [], afternoon: [], evening: [] });
@@ -25,9 +28,9 @@ export function useActivity(userId, date = null) {
                 setError(result.error);
             }
         } catch (err) {
-            setError(err.message);
+            if (request === latest.current) setError(err.message);
         } finally {
-            setLoading(false);
+            if (request === latest.current) setLoading(false);
         }
     }, [userId, selectedDate]);
 

@@ -7,6 +7,7 @@ import { api } from '../../api/client'
 import { useAuth } from '../../contexts/AuthContext'
 import ElderNav from '../../components/ElderNav'
 import FamilyNav from '../../components/FamilyNav'
+import { notify } from '../../lib/notify'
 import { Card, Button } from '../../components/ui'
 import { PageLayout, PageHeader, PageMain, PageSection } from '../../components/layout'
 
@@ -114,10 +115,10 @@ export default function DiagnosisReport() {
         navigate('/diagnosis/history')
     }
 
-    const handleDownloadPdf = () => {
+    const handleDownloadPdf = async () => {
         if (!sessionId) return
-        const url = api.getDiagnosisPdfUrl(sessionId, patientName)
-        window.open(url, '_blank', 'noopener,noreferrer')
+        const result = await api.downloadDiagnosisPdf(sessionId, patientName)
+        if (!result.success) notify(result.error, { error: true })
     }
 
     const handleShare = async () => {
@@ -144,7 +145,7 @@ export default function DiagnosisReport() {
                             <motion.button
                                 whileTap={{ scale: 0.95 }}
                                 onClick={goBack}
-                                className="p-3 rounded-xl text-sage-600 hover:bg-sage-100"
+                                className="btn-icon-ghost"
                                 aria-label="Back to history"
                             >
                                 <ArrowLeft className="w-6 h-6" />
@@ -180,7 +181,7 @@ export default function DiagnosisReport() {
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={goBack}
-                            className="p-3 rounded-xl text-sage-600 hover:bg-sage-100"
+                            className="btn-icon-ghost"
                             aria-label="Back to history"
                         >
                             <ArrowLeft className="w-6 h-6" />

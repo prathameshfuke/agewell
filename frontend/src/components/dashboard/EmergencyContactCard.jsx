@@ -17,7 +17,7 @@ export default function EmergencyContactCard({ contacts = [], onCall, onMessage,
           <p className="text-sage-800 font-semibold">No contacts saved</p>
           <p className="text-sm text-sage-500 mt-1">Add an emergency contact so you can reach someone quickly.</p>
           {onAddContact && (
-            <button type="button" onClick={onAddContact} className="btn-secondary mt-3 !min-h-[44px] !text-sm !px-5 !py-2">
+            <button type="button" onClick={onAddContact} className="btn-secondary mt-3 btn-sm">
               Add a contact
             </button>
           )}

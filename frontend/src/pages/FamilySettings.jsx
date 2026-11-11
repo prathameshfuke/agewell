@@ -73,7 +73,7 @@ function ChangePin({ onChange }) {
           <label htmlFor="pin-new" className="block text-sm text-sage-700 mb-1">New 4-digit PIN</label>
           <input id="pin-new" type="password" inputMode="numeric" autoComplete="off" value={next} onChange={digits(setNext)} className="input" />
         </div>
-        <button type="submit" disabled={!valid || busy} className="btn-primary !min-h-[44px] !text-base !py-2 disabled:opacity-50">Change PIN</button>
+        <button type="submit" disabled={!valid || busy} className="btn-primary btn-sm disabled:opacity-50">Change PIN</button>
         {status.text && <p role="status" className={`text-sm ${status.ok ? 'text-sage-600' : 'text-rose-700'}`}>{status.text}</p>}
       </form>
     </section>
@@ -143,7 +143,7 @@ export default function FamilySettings() {
 
         {pinRequired && <ChangePin onChange={setCaregiverPin} />}
 
-        <button type="button" onClick={() => setConfirmingLogout(true)} className="btn-secondary w-full !min-h-[44px] !text-base !py-2">Sign out</button>
+        <button type="button" onClick={() => setConfirmingLogout(true)} className="btn-secondary w-full btn-sm">Sign out</button>
       </main>
 
       {confirmingLogout && (
@@ -151,9 +151,9 @@ export default function FamilySettings() {
           <div role="dialog" aria-modal="true" aria-labelledby="logout-title" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.key === 'Escape' && setConfirmingLogout(false)} className="bg-white rounded-2xl border border-sage-200 p-6 max-w-sm w-full">
             <h2 id="logout-title" className="font-serif text-xl text-sage-900">Sign out?</h2>
             <p className="text-sage-600 mt-1">You will need to sign in again to see your dashboard.</p>
-            <div className="flex gap-3 mt-5">
-              <button type="button" autoFocus onClick={() => setConfirmingLogout(false)} className="btn-secondary flex-1 !min-h-[44px] !text-base !py-2">Cancel</button>
-              <button type="button" onClick={handleLogout} className="btn-primary flex-1 !min-h-[44px] !text-base !py-2">Sign out</button>
+            <div className="btn-row mt-5">
+              <button type="button" autoFocus onClick={() => setConfirmingLogout(false)} className="btn-secondary btn-sm">Cancel</button>
+              <button type="button" onClick={handleLogout} className="btn-primary btn-sm">Sign out</button>
             </div>
           </div>
         </div>

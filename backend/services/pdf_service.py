@@ -1,4 +1,5 @@
 from datetime import datetime
+from xml.sax.saxutils import escape
 import io
 
 from reportlab.lib import colors
@@ -13,7 +14,13 @@ URGENCY_COLORS = {
     "GO_NOW": colors.HexColor("#ef4444")        # red
 }
 
+def _t(value) -> str:
+    """Paragraph parses markup; patient text and LLM output must be escaped or a stray '<' fails the export."""
+    return escape(str(value))
+
+
 def generate_diagnosis_pdf(session: dict, patient_name: str) -> bytes:
+    patient_name = " ".join(str(patient_name or "Patient").split())[:80]
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer, 
@@ -77,7 +84,7 @@ def generate_diagnosis_pdf(session: dict, patient_name: str) -> bytes:
     
     # Meta Info
     date_str = datetime.now().strftime('%d %b %Y, %I:%M %p')
-    meta_html = f"<b>Patient:</b> {patient_name} <br/><b>Date:</b> {date_str}"
+    meta_html = f"<b>Patient:</b> {_t(patient_name)} <br/><b>Date:</b> {date_str}"
     story.append(Paragraph(meta_html, normal_text))
     
     story.append(Spacer(1, 4 * mm))
@@ -102,14 +109,14 @@ def generate_diagnosis_pdf(session: dict, patient_name: str) -> bytes:
     
     story.append(Paragraph(f"Urgency Level: {urgency.replace('_', ' ')}", urgency_badge))
     if report.get("urgency_reason"):
-        story.append(Paragraph(f"<b>Assessment:</b> {report.get('urgency_reason')}", normal_text))
+        story.append(Paragraph(f"<b>Assessment:</b> {_t(report.get('urgency_reason'))}", normal_text))
     
     story.append(Spacer(1, 5 * mm))
 
     # 3. Symptom Summary
     if report.get("symptom_summary"):
         story.append(Paragraph("Symptom Summary", section_heading))
-        story.append(Paragraph(report.get("symptom_summary", ""), normal_text))
+        story.append(Paragraph(_t(report.get("symptom_summary", "")), normal_text))
     
     # 4. Q&A Log Table
     qa_pairs = session.get("qa_pairs", [])
@@ -130,8 +137,8 @@ def generate_diagnosis_pdf(session: dict, patient_name: str) -> bytes:
                 a_text = "No answer provided"
             
             qa_rows.append([
-                Paragraph(q_text, normal_text), 
-                Paragraph(a_text, normal_text)
+                Paragraph(_t(q_text), normal_text), 
+                Paragraph(_t(a_text), normal_text)
             ])      
 
         # Auto width layout inside table
@@ -155,7 +162,7 @@ def generate_diagnosis_pdf(session: dict, patient_name: str) -> bytes:
             story.append(Paragraph(title, section_heading))
             for item in items:
                 # Wrap each item in <bullet> text for built-in list look
-                story.append(Paragraph(f"&bull; {str(item)}", bullet_style))
+                story.append(Paragraph(f"&bull; {_t(item)}", bullet_style))
             story.append(Spacer(1, 3 * mm))
 
     add_bullet_section("Conditions to Discuss With Your Doctor", report.get("possible_conditions", []))
@@ -167,7 +174,7 @@ def generate_diagnosis_pdf(session: dict, patient_name: str) -> bytes:
     story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#e2e8f0"), spaceAfter=10))
     disclaimer_style = ParagraphStyle('Disclaimer', parent=styles['Normal'], textColor=colors.gray, fontSize=9, leading=12)
     disclaimer_text = report.get("disclaimer", "This summary is for informational purposes only and is not a medical diagnosis. Please consult a qualified healthcare provider.")
-    story.append(Paragraph(f"<b>Disclaimer:</b> {disclaimer_text}", disclaimer_style))
+    story.append(Paragraph(f"<b>Disclaimer:</b> {_t(disclaimer_text)}", disclaimer_style))
 
     doc.build(story)
     buffer.seek(0)

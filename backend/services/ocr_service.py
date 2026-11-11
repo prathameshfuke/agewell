@@ -10,7 +10,7 @@ try:
     TESSERACT_AVAILABLE = True
 except ImportError:
     TESSERACT_AVAILABLE = False
-    print("WARNING: pytesseract not available. OCR will use mock data.")
+    print("WARNING: pytesseract not available. Prescription OCR is disabled.")
 
 class PrescriptionOCRService:
     """
@@ -44,73 +44,24 @@ class PrescriptionOCRService:
             else:
                 print("WARNING: Tesseract not found in common paths. OCR may not work.")
     
-    def process_prescription_image(self, image_path: str) -> Dict:
-        """
-        Process prescription image and extract text using OCR
-        """
+    def process_prescription_image(self, image: Image.Image) -> Dict:
+        """Extract text from a prescription image with Tesseract and parse medicines from it."""
+        if not self.tesseract_available:
+            # Never invent medicines for a patient: report failure instead of mock data.
+            return {'success': False, 'error': 'OCR engine is not installed', 'ocr_text': None, 'parsed_data': None}
         try:
-            # If Tesseract not available, return mock data for testing
-            if not self.tesseract_available:
-                mock_data = {
-                    'medications': [
-                        {
-                            'name': 'Lisinopril',
-                            'dosage': '10 mg',
-                            'type': 'pill',
-                            'frequency': 'once daily',
-                            'timing': 'morning',
-                            'duration': '',
-                            'special_instructions': 'Take with food',
-                            'schedule_times': ['08:00']
-                        },
-                        {
-                            'name': 'Metformin',
-                            'dosage': '500 mg',
-                            'type': 'pill',
-                            'frequency': 'twice daily',
-                            'timing': 'morning after meal',
-                            'duration': '',
-                            'special_instructions': 'Take after meals',
-                            'schedule_times': ['08:00', '20:00']
-                        }
-                    ],
-                    'total_count': 2,
-                    'parsed_at': datetime.utcnow().isoformat()
-                }
-                return {
-                    'success': True,
-                    'ocr_text': '[Mock OCR - Tesseract not available]',
-                    'parsed_data': mock_data,
-                    'medications_found': 2
-                }
-            
-            # Open and preprocess image
-            image = Image.open(image_path)
-            
-            # Convert to grayscale for better OCR
-            image = image.convert('L')
-            
-            # Extract text using Tesseract
-            ocr_text = pytesseract.image_to_string(image)
-            
-            # Parse the extracted text
+            ocr_text = pytesseract.image_to_string(image.convert('L'))
             parsed_data = self.parse_prescription_text(ocr_text)
-            
             return {
                 'success': True,
                 'ocr_text': ocr_text,
                 'parsed_data': parsed_data,
                 'medications_found': len(parsed_data.get('medications', []))
             }
-        
-        except Exception as e:
-            return {
-                'success': False,
-                'error': str(e),
-                'ocr_text': None,
-                'parsed_data': None
-            }
-    
+        except Exception as e:  # e.g. tesseract binary missing on the host
+            print(f"OCR failed: {type(e).__name__}")
+            return {'success': False, 'error': str(e), 'ocr_text': None, 'parsed_data': None}
+
     def parse_prescription_text(self, text: str) -> Dict:
         """
         Parse OCR text to extract structured medication information
@@ -299,32 +250,3 @@ class PrescriptionOCRService:
             schedule = ['08:00']  # Default
         
         return schedule
-    
-    def create_medications_from_prescription(self, user_id: int, parsed_data: Dict, db) -> List:
-        """
-        Create medication records from parsed prescription data
-        """
-        from models import Medication
-        
-        medications = []
-        
-        for med_data in parsed_data.get('medications', []):
-            medication = Medication(
-                user_id=user_id,
-                name=med_data.get('name', 'Unknown Medication'),
-                dosage=med_data.get('dosage', ''),
-                frequency=med_data.get('frequency', ''),
-                type=med_data.get('type', 'pill'),
-                slot_number=med_data.get('slot_number'),
-                schedule_times=med_data.get('schedule_times', []),
-                special_instructions=med_data.get('special_instructions', ''),
-                start_date=datetime.utcnow().date(),
-                active=True
-            )
-            
-            db.session.add(medication)
-            medications.append(medication)
-        
-        db.session.commit()
-        
-        return medications

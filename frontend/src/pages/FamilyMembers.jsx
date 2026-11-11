@@ -68,7 +68,7 @@ export default function FamilyMembers() {
                     <section className="rounded-2xl border border-sage-200 bg-white p-6">
                         <h2 className="font-serif text-xl text-sage-900">You are not linked to anyone yet</h2>
                         <p className="text-sage-600 mt-1">Enter a pairing code to start caring for someone.</p>
-                        <button type="button" onClick={() => navigate('/link')} className="btn-primary mt-4 !min-h-[44px] !text-base">Enter a pairing code</button>
+                        <button type="button" onClick={() => navigate('/link')} className="btn-primary mt-4 btn-sm">Enter a pairing code</button>
                     </section>
                 ) : (
                     <>

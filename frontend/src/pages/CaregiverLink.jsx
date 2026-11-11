@@ -161,7 +161,7 @@ export default function CaregiverLink() {
                     ))}
                   </div>
                   {expiryLabel && <p className="text-sm text-sage-500">Expires {expiryLabel}</p>}
-                  <button type="button" onClick={handleCopyCode} disabled={!linkCode} className="btn-secondary !min-h-[44px] !text-base !py-2 !px-5 disabled:opacity-50">
+                  <button type="button" onClick={handleCopyCode} disabled={!linkCode} className="btn-secondary btn-sm disabled:opacity-50">
                     <Copy className="w-4 h-4" aria-hidden="true" />
                     Copy code
                   </button>
@@ -179,7 +179,7 @@ export default function CaregiverLink() {
                     placeholder="A1B2C3"
                     className="w-full min-h-[48px] rounded-xl border border-sage-300 px-4 tracking-[0.2em] text-center font-semibold text-[16px] focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/30"
                   />
-                  <button type="submit" disabled={working || joinCode.length !== 6} className="btn-primary !min-h-[44px] !text-base !py-2 disabled:opacity-60">
+                  <button type="submit" disabled={working || joinCode.length !== 6} className="btn-primary btn-sm disabled:opacity-60">
                     {working && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}
                     Link account
                   </button>

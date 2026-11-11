@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 import os
 
 from PIL import Image
@@ -8,6 +9,11 @@ try:
     import google.generativeai as genai
 except Exception:  # pragma: no cover - optional runtime dependency in dev
     genai = None
+
+
+logger = logging.getLogger(__name__)
+# Google retires Gemini models without notice (2.0-flash and 2.5-flash 404 now): override with GEMINI_MODEL.
+MODEL = os.getenv("GEMINI_MODEL", "").strip() or "gemini-3.5-flash"
 
 
 def _clean_json_text(text: str) -> str:
@@ -42,7 +48,7 @@ def analyze_medical_image(image_bytes: bytes, api_key: str = "") -> dict:
     try:
         image = Image.open(io.BytesIO(image_bytes))
     except Exception as e:
-        print(f"Gemini Image Processing Error: {e}")
+        logger.error("Gemini could not open the image: %s", type(e).__name__)
         return {
             "observations": "The uploaded file could not be read as an image.",
             "flagged_urgent": False
@@ -54,7 +60,7 @@ def analyze_medical_image(image_bytes: bytes, api_key: str = "") -> dict:
 
     try:
         genai.configure(api_key=resolved_key)
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        model = genai.GenerativeModel(MODEL)
 
         prompt = """
 You are analyzing a medical image or report scan uploaded by an elderly patient for preliminary intake only.
@@ -63,14 +69,20 @@ Do NOT diagnose. Flag anything that appears abnormal or potentially urgent.
 Return ONLY valid JSON:
 {"observations": "...", "flagged_urgent": false}
 """
-        response = model.generate_content([prompt, image])
+        response = model.generate_content(
+            [prompt, image],
+            generation_config={"response_mime_type": "application/json"},
+            request_options={"timeout": 45},
+        )
         text = _clean_json_text(getattr(response, "text", ""))
 
         parsed = json.loads(text)
+        if not isinstance(parsed, dict):
+            raise ValueError("Gemini returned non-object JSON")
         return {
             "observations": parsed.get("observations", "No clear observations generated."),
             "flagged_urgent": bool(parsed.get("flagged_urgent", False))
         }
     except Exception as e:
-        print(f"Gemini API Error in analyze_medical_image: {e}")
+        logger.error("Gemini call failed in analyze_medical_image: %s", e)
         return _fallback_observation(image_bytes)

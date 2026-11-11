@@ -25,7 +25,7 @@ export default class AppErrorBoundary extends Component {
           <h1 className="text-3xl font-serif text-sage-900">Something went wrong</h1>
           <p className="text-sage-600 mt-2">This page failed to load. Your data is safe. Reloading usually fixes it.</p>
           <p className="mt-4 text-sm text-sage-600 break-words rounded-xl bg-sage-50 border border-sage-200 p-3">{message}</p>
-          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          <div className="btn-row mt-6">
             <button type="button" onClick={() => window.location.reload()} className="btn-primary">Reload</button>
             <button type="button" onClick={() => window.location.assign('/')} className="btn-secondary">Go to home</button>
           </div>

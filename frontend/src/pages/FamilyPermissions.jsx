@@ -39,7 +39,7 @@ export default function FamilyPermissions() {
                 <p className="text-sm text-sage-600">
                     Location is not collected. Per-person sharing controls are not available yet. To remove someone, ask the elder to unlink them.
                 </p>
-                <button type="button" onClick={() => navigate('/family/members')} className="btn-secondary !min-h-[44px] !text-base !py-2">View care team</button>
+                <button type="button" onClick={() => navigate('/family/members')} className="btn-secondary btn-sm">View care team</button>
             </main>
         </div>
     )

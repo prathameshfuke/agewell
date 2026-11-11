@@ -9,9 +9,11 @@ One Flask blueprint per file. Auth is applied globally in `../auth.py`, not per 
 | `linking_routes.py` | `/api/link` | generate-code, join (6-char code, 24 h pending window, legacy `profiles.pairing_code` fallback), my-elders, my-caregivers. |
 | `settings_routes.py` | `/api/settings` | save/list per-user Groq/Gemini keys in `app_settings` (values returned masked). |
 
-## Legacy (SQLite via `models.py`, integer ids, not called by the frontend)
-`ai_routes.py`, `automation_routes.py`, `health_routes.py`, `medication_routes.py`, `user_routes.py`, `notification_routes.py`, `prescription_routes.py`. Because their ids are integers, `auth.py` cannot ownership-check them: any signed-in user can call them. Safe only while the SQLite DB holds no real data. Candidates for deletion.
+| `prescription_routes.py` | `/api/prescriptions` | `POST /upload`: OCR a photo and return parsed medicines. Stateless; the review screen saves them to Supabase. Needs the tesseract binary on the host. |
+
+The SQLite-era routes (ai, automation, health, medication, user, notification) were deleted: nothing in the frontend called them and their integer ids could not be ownership-checked. `models.py`, `database.py`, `seed_data.py` are now unused.
 
 ## Gotchas
-- Handlers return `str(e)` on failure; `app.py` rewrites 5xx bodies, but 4xx `ValueError` messages still reach the client.
+- Handlers return `str(e)` on failure; `app.py` rewrites 5xx bodies. Keep 4xx messages static.
+- Link-code `join` is rate limited in-process (10 wrong codes per 15 min per caregiver).
 - Routes must read user ids from `user_id/patient_id/elder_id/elderly_id/caregiver_id` for the central check to apply. A new id key needs adding to `auth.py`.

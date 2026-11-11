@@ -103,8 +103,7 @@ const toAlertPayload = (alert = {}) => ({
 export const signInWithGoogle = async () => {
     if (!supabase) throw new Error('Supabase not configured')
 
-    // IMPORTANT: When using HashRouter, OAuth tokens come back in the URL hash.
-    // We redirect to origin, and the Home page will detect and handle the tokens.
+    // Supabase parses the OAuth tokens from the URL on /auth/callback (BrowserRouter).
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -532,11 +531,15 @@ export const db = {
 }
 
 // Real-time subscriptions helper
+let channelCount = 0
+
 export const subscriptions = {
     subscribe: (table, callback, filter = null) => {
         if (!supabase) return { unsubscribe: () => { } }
 
-        let channel = supabase.channel(`public:${table}`)
+        // Unique name: supabase.channel() returns the existing channel for a repeated name, and adding
+        // listeners to an already-subscribed channel throws (and removing it would kill the other listener).
+        let channel = supabase.channel(`public:${table}:${++channelCount}`)
 
         const eventConfig = {
             event: '*',

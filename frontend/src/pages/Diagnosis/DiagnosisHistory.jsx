@@ -123,7 +123,7 @@ export default function DiagnosisHistory() {
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={() => navigate('/diagnosis')}
-                            className="p-3 rounded-xl text-sage-600 hover:bg-sage-100"
+                            className="btn-icon-ghost"
                             aria-label="Back"
                         >
                             <ArrowLeft className="w-6 h-6" />

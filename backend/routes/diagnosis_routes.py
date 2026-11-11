@@ -223,8 +223,9 @@ def generate_report():
         data = request.get_json() or {}
 
         session_id = data.get('session_id')
-        medications = data.get('medications', [])
-        patient_name = data.get('patient_name', 'Patient')
+        medications = data.get('medications')
+        medications = [str(m) for m in medications] if isinstance(medications, list) else []
+        patient_name = data.get('patient_name') or 'Patient'
 
         if not session_id:
             return jsonify({'error': 'session_id is required'}), 400
@@ -270,7 +271,8 @@ def generate_report():
         })
 
         alert_result = {'sent': False, 'channels': []}
-        if urgency_level in ('GO_NOW', 'CONSULT_SOON'):
+        # Regenerating a report (reopening the screen) must not page the family again.
+        if urgency_level in ('GO_NOW', 'CONSULT_SOON') and not session.get('alert_sent'):
             alert_result = trigger_emergency_alerts(
                 patient_id=session['patient_id'],
                 patient_name=patient_name,
@@ -292,7 +294,7 @@ def generate_report():
             'report': report,
             'session_id': session_id,
             'urgency_level': urgency_level,
-            'alert_sent': bool(alert_result.get('sent')),
+            'alert_sent': bool(alert_result.get('sent')) or bool(session.get('alert_sent')),
             'alert_channels': alert_result.get('channels', []),
         })
 

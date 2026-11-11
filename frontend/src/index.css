@@ -45,16 +45,17 @@
     --primary-dark: #1E3FAE;
     --primary-bg: #E9EEFD;
 
-    --secondary: #FBFBF8;         /* Paper */
-    --secondary-dark: #E9E8E1;
+    --secondary: #FBF7F0;         /* Warm paper */
+    --secondary-dark: #EBE2D0;
 
     --accent: #C2362B;            /* Emergency */
     --accent-light: #FBE9E7;
 
-    --bg-cream: #FBFBF8;
+    --bg-cream: #FBF7F0;
     --bg-surface: #FFFFFF;
-    --text-main: #12141A;         /* Ink */
-    --text-muted: #646B7B;
+    --text-main: #1A1713;         /* Warm ink */
+    --text-muted: #6A6355;
+    --clay: #B5522F;              /* Warm secondary, sparing */
 }
 
 ::selection {
@@ -108,8 +109,31 @@ h3 {
 /* Ensure all interactive elements are easily tappable */
 button,
 a {
-    min-height: 48px;             /* Minimum touch target */
     font-weight: 700;
+}
+
+/* Touch target floor for real buttons only. Links inside text stay inline. */
+button {
+    min-height: 44px;
+}
+
+/* Press feedback for every button; framer-motion buttons override via whileTap. */
+button:not(:disabled) {
+    transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), background-color 200ms, border-color 200ms, color 200ms, box-shadow 200ms;
+}
+button:not(:disabled):active {
+    transform: scale(0.97);
+}
+@media (prefers-reduced-motion: reduce) {
+    button:not(:disabled):active { transform: none; }
+    html { scroll-behavior: auto; }
+    .animate-fade-in, .animate-slide-up, .animate-scale-in { animation: none; }
+}
+
+img {
+    display: block;
+    max-width: 100%;
+    height: auto;
 }
 
 @layer components {
@@ -119,51 +143,58 @@ a {
 
     /* === CARDS === */
     .card {
-        @apply bg-white rounded-3xl p-6 border border-sage-200 shadow-soft;
+        @apply bg-white rounded-3xl p-6 border border-sage-200/70 shadow-card;
     }
 
     .card-sm {
-        @apply bg-white rounded-2xl p-5 border border-sage-200 shadow-soft;
+        @apply bg-white rounded-2xl p-5 border border-sage-200/70 shadow-card;
     }
 
     .card-interactive {
-        @apply card transition-all duration-200 hover:shadow-card-hover hover:border-sage-300 cursor-pointer active:scale-[0.98];
+        @apply card transition-[box-shadow,transform] duration-200 hover:shadow-card-hover hover:-translate-y-0.5 cursor-pointer;
     }
 
     /* === BUTTONS === */
-    /* Base button styles - Larger targets */
+    /* One height scale: .btn = 56px (elder), .btn-sm = 44px (caregiver). Icon + label always centred. */
     .btn {
-        @apply px-7 py-4 rounded-full font-bold transition-colors duration-200 active:scale-[0.98] min-h-[56px] flex items-center justify-center gap-2 text-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+        @apply inline-flex items-center justify-center gap-2.5 px-7 min-h-[56px] rounded-full font-bold text-lg leading-tight text-center whitespace-normal select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60 disabled:cursor-not-allowed;
     }
+    :where(.btn) > svg { @apply shrink-0 w-6 h-6; }
 
-    /* Primary - Deep Sage */
     .btn-primary {
-        @apply btn bg-primary text-white hover:bg-primary-dark border-2 border-transparent;
+        @apply btn bg-primary text-white border-2 border-transparent shadow-[0_6px_16px_-8px_rgba(30,63,174,0.55)] hover:bg-primary-dark;
     }
 
-    /* Secondary - Outlined High Contrast */
     .btn-secondary {
         @apply btn bg-white text-sage-900 border-2 border-sage-300 hover:border-sage-900 hover:bg-sage-50;
     }
 
-    /* Ghost - No background */
     .btn-ghost {
-        @apply btn bg-transparent text-sage-700 hover:bg-sage-100;
+        @apply btn bg-transparent text-sage-700 border-2 border-transparent hover:bg-sage-100;
     }
 
-    /* Danger - Vivid Red */
     .btn-danger {
-        @apply btn bg-rose-600 text-white hover:bg-rose-700;
+        @apply btn bg-rose-600 text-white border-2 border-transparent hover:bg-rose-700;
     }
 
-    /* Cream variant for caregiver flows */
     .btn-cream {
-        @apply btn bg-sage-900 text-white hover:bg-sage-700;
+        @apply btn bg-sage-900 text-white border-2 border-transparent hover:bg-sage-700;
     }
 
-    /* Icon button - circular large */
+    /* Caregiver density: same shape, 44px */
+    .btn-sm {
+        @apply min-h-[44px] px-5 text-base gap-2;
+    }
+    :where(.btn-sm) > svg { @apply w-5 h-5; }
+
+    /* Button pairs: equal width side by side from 640px, stacked full-width on phones */
+    .btn-row {
+        @apply flex flex-col sm:flex-row items-stretch gap-3;
+    }
+    .btn-row > * { @apply flex-1 min-w-0; }
+
     .btn-icon {
-        @apply w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 active:scale-95;
+        @apply inline-flex shrink-0 items-center justify-center w-12 h-12 min-h-0 rounded-full;
     }
 
     .btn-icon-primary {
@@ -174,13 +205,17 @@ a {
         @apply btn-icon bg-white border-2 border-sage-200 text-sage-700 hover:border-sage-300;
     }
 
+    .btn-icon-ghost {
+        @apply btn-icon text-sage-700 hover:bg-sage-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+    }
+
     /* === PAGE LAYOUT === */
     .page-container {
         @apply min-h-screen bg-cream-50 font-sans;
     }
 
     .page-header {
-        @apply px-6 py-6 bg-cream-50 sticky top-0 z-20;
+        @apply px-5 py-5 bg-cream-50 sticky top-0 z-20;
     }
 
     .page-main {
@@ -200,7 +235,7 @@ a {
 
     /* === FORM INPUTS === */
     .input {
-        @apply w-full px-5 py-4 border-2 border-sage-300 rounded-2xl focus:border-primary focus:outline-none text-lg bg-white transition-colors text-sage-900 placeholder:text-sage-400;
+        @apply w-full px-5 min-h-[56px] py-3 border-2 border-sage-300 rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/15 focus:outline-none text-lg bg-white transition-colors text-sage-900 placeholder:text-sage-400;
     }
 
     .input-error {
@@ -217,21 +252,20 @@ a {
     }
 
     .badge-warning {
-        @apply badge bg-amber-50 text-amber-800 border-2 border-amber-200;
+        @apply badge bg-amber-50 text-amber-800 border border-amber-200;
     }
 
     .badge-danger {
-        @apply badge bg-rose-50 text-rose-700 border-2 border-rose-200;
+        @apply badge bg-rose-50 text-rose-700 border border-rose-200;
     }
 
     .badge-neutral {
-        @apply badge bg-gray-100 text-gray-700 border-2 border-gray-200;
+        @apply badge bg-sage-100 text-sage-700 border border-sage-200;
     }
 
     /* === NAVIGATION === */
     .bottom-nav {
-        @apply fixed bottom-0 left-0 right-0 bg-white border-t border-sage-200 px-2 flex justify-between items-center z-50;
-        
+        @apply fixed inset-x-0 bottom-0 bg-cream-50 border-t border-sage-200 shadow-[0_-8px_24px_-16px_rgba(74,52,28,0.25)];
         padding-bottom: env(safe-area-inset-bottom);
         padding-top: 0.5rem;
     }
@@ -303,4 +337,8 @@ a {
         word-break: break-word;
         min-width: 0;
     }
+}
+/* Stickers and the logo are JPEGs on white: multiply lets the warm paper show through. */
+.sticker {
+    mix-blend-mode: multiply;
 }
