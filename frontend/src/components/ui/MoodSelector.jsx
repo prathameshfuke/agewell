@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 
 export default function MoodSelector({ moods, onSelect, selected }) {
   return (
-    <div className="bg-white rounded-3xl p-6 shadow-soft border border-slate-100">
+    <div className="bg-white rounded-3xl p-6 border border-line">
       <div className="flex justify-between items-center gap-2">
         {moods.map((mood, index) => (
           <motion.button
@@ -13,7 +13,7 @@ export default function MoodSelector({ moods, onSelect, selected }) {
             className={`
               flex flex-col items-center gap-2 flex-1 p-3 rounded-2xl transition-all
               ${selected === mood.value 
-                ? 'bg-blue-50 ring-2 ring-blue-500 ring-offset-2' 
+                ? 'bg-primary-bg ring-2 ring-primary' 
                 : 'hover:bg-slate-50'
               }
             `}

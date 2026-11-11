@@ -38,7 +38,7 @@ export default function ElderHistory() {
   }
 
   return (
-    <ElderPage title="Past medicines" subtitle="The last 14 days" backTo="/elder/meds">
+    <ElderPage title="Past medicines" subtitle="The last 14 days" art="done" backTo="/elder/meds">
       {error ? (
         <ErrorNote onRetry={load}>{error}</ErrorNote>
       ) : logs === null ? (
@@ -51,15 +51,16 @@ export default function ElderHistory() {
           Your past medicines will show here after your first day.
         </EmptyNote>
       ) : (
-        days.map((day) => (
-          <section key={day.label} aria-label={day.label}>
-            <h2 className="mb-3 font-serif text-2xl font-bold">{day.label}</h2>
-            <ul className="space-y-3">
+        <div className="grid gap-10 lg:grid-cols-2 lg:gap-x-12">
+        {days.map((day) => (
+          <section key={day.label} aria-label={day.label} className="min-w-0">
+            <h2 className="mb-2 text-2xl">{day.label}</h2>
+            <ul className="list">
               {day.items.map((item) => (
-                <li key={item.id} className="card flex items-center justify-between gap-3 !p-5">
+                <li key={item.id} className="flex items-center justify-between gap-3 py-4">
                   <div className="min-w-0">
-                    <p className="text-2xl font-bold break-words">{item.medication?.name || 'Medicine'}</p>
-                    <p className="text-lg text-sage-600">{timeOf(item.when)}</p>
+                    <p className="break-words text-xl font-bold">{item.medication?.name || 'Medicine'}</p>
+                    <p className="text-base text-sage-600">{timeOf(item.when)}</p>
                   </div>
                   <span className={item.status === 'taken' ? 'badge-success' : item.status === 'missed' ? 'badge-danger' : 'badge-neutral'}>
                     {STATUS[item.status] || 'Not taken'}
@@ -68,7 +69,8 @@ export default function ElderHistory() {
               ))}
             </ul>
           </section>
-        ))
+        ))}
+        </div>
       )}
     </ElderPage>
   )

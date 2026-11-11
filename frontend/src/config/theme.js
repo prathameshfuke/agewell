@@ -10,43 +10,21 @@
  */
 
 export const theme = {
-  // Simplified Color Palette
+  // Palette: paper + ink + forest green. Saffron and terracotta are sparing accents. No blue or violet.
   colors: {
-    // Primary - Sage Green (calming, trustworthy)
-    primary: {
-      main: '#2F5BEA',      // Main sage green - high contrast
-      light: '#9BB5A5',     // Light sage - backgrounds
-      dark: '#3A4E46',      // Dark sage - text
-      bg: '#E8F0EB',        // Very light sage for subtle backgrounds
-    },
-    
-    // Secondary - Warm Cream (comfortable, accessible)
-    secondary: {
-      main: '#FAF8F5',      // Cream background
-      dark: '#C9B9A4',      // Cream border/divider
-      text: '#665D52',      // Cream text for subtle info
-    },
-    
-    // Accent - Emergency Red (alerts only)
-    accent: {
-      main: '#EF4444',      // Emergency red
-      light: '#FEE2E2',     // Light red background
-    },
-    
-    // Status Colors (clear communication)
-    status: {
-      success: '#10B981',
-      warning: '#F59E0B',
-      danger: '#EF4444',
-      info: '#3B82F6',
-    }
+    paper: { main: '#FAF6EE', sunken: '#F2ECDF', surface: '#FFFFFF' },
+    ink: { main: '#1B2A24', secondary: '#4B5B53' },
+    line: '#E3DCCB',
+    primary: { main: '#1F5F4A', hover: '#174A3A', tint: '#E3EEE7' },
+    accent: { saffron: '#E8A33D', terracotta: '#C8643C' },
+    status: { success: '#2E7D4F', warning: '#B87A1B', danger: '#B3261E' },
   },
 
   // Typography Scale - Big & Bold for Elderly Users
   typography: {
     // Font families
     fonts: {
-      sans: ['Poppins', 'sans-serif'],
+      sans: ['"Atkinson Hyperlegible"', 'system-ui', 'sans-serif'],
       serif: ['Butler', 'serif'],
       romelio: ['Romelio', 'sans-serif'],
     },
@@ -55,7 +33,7 @@ export const theme = {
     sizes: {
       xs: '14px',      // Minimum readable size
       sm: '16px',      // Small labels
-      base: '20px',    // Body text (was 16px)
+      base: '18px',    // Elder body (caregiver 16px)
       lg: '22px',      // Large body
       xl: '24px',      // Subheadings
       '2xl': '28px',   // Buttons
@@ -112,13 +90,8 @@ export const theme = {
     full: '9999px',
   },
 
-  // Shadows (soft and elevated)
-  shadows: {
-    soft: '0 4px 20px rgba(92, 122, 110, 0.08)',
-    elevated: '0 8px 30px rgba(92, 122, 110, 0.12)',
-    card: '0 2px 12px rgba(0, 0, 0, 0.04)',
-    cardHover: '0 8px 24px rgba(92, 122, 110, 0.15)',
-  },
+  // Flat: no shadows except overlays
+  shadows: { overlay: '0 12px 40px -12px rgba(27, 42, 36, 0.28)' },
 
   // Touch Targets (minimum 48x48px)
   touchTargets: {
@@ -144,7 +117,7 @@ export const theme = {
     
     // Focus visible styles
     focus: {
-      outline: '3px solid #2F5BEA',
+      outline: '2px solid #1F5F4A',
       offset: '2px',
     },
   },

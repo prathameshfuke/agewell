@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react'
  * Mobile-First Design for Elderly Users
  * 
  * Variants:
- * - primary: Sage green filled button (main actions)
+ * - primary: Forest green filled pill (main actions)
  * - secondary: Outlined button (secondary actions)
  * - ghost: Transparent background (tertiary actions)
  * - danger: Soft red for destructive actions
@@ -35,13 +35,13 @@ export default function Button({
   const baseClasses = 'font-bold !transition-colors duration-200 inline-flex items-center justify-center gap-2.5 rounded-full text-center leading-tight focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:cursor-not-allowed'
   
   const variantClasses = {
-    primary: 'bg-primary text-white border-2 border-transparent shadow-[0_6px_16px_-8px_rgba(30,63,174,0.55)] hover:bg-primary-dark',
-    secondary: 'bg-white text-sage-900 border-2 border-sage-300 hover:border-sage-900 hover:bg-sage-50',
+    primary: 'bg-primary text-white border-2 border-transparent hover:bg-primary-dark',
+    secondary: 'bg-transparent text-primary border-2 border-primary/40 hover:border-primary hover:bg-primary-bg',
     ghost: 'bg-transparent text-sage-700 border-2 border-transparent hover:bg-sage-100',
     danger: 'bg-rose-600 text-white border-2 border-transparent hover:bg-rose-700',
     cream: 'bg-sage-900 text-white border-2 border-transparent hover:bg-sage-700',
-    'soft-sage': 'bg-sage-100 text-sage-800 hover:bg-sage-200 border border-sage-200',
-    'soft-amber': 'bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-200',
+    'soft-sage': 'bg-primary-bg text-primary hover:bg-primary-200 border border-transparent',
+    'soft-amber': 'bg-saffron-light text-saffron-dark hover:bg-amber-100 border border-transparent',
   }
 
   const sizeClasses = {
@@ -70,7 +70,7 @@ export default function Button({
 
   return (
     <motion.button
-      whileTap={{ scale: disabled ? 1 : 0.96 }}
+      whileTap={{ scale: disabled ? 1 : 0.98 }}
       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       type={type}
       disabled={disabled || loading}
@@ -99,8 +99,8 @@ export function IconButton({
   const baseClasses = 'rounded-full flex items-center justify-center !transition-colors duration-200 relative shrink-0 min-h-0'
   
   const variantClasses = {
-    primary: 'bg-sage-100 text-sage-700 hover:bg-sage-200',
-    secondary: 'bg-white border-2 border-sage-200 text-sage-600 hover:border-sage-300',
+    primary: 'bg-primary-bg text-primary hover:bg-primary-200',
+    secondary: 'bg-transparent border border-line text-sage-600 hover:border-sage-300',
     ghost: 'bg-transparent text-sage-600 hover:bg-sage-50',
   }
 
@@ -126,7 +126,7 @@ export function IconButton({
     >
       {Icon && <Icon className={iconSizes[size]} />}
       {badge !== undefined && badge > 0 && (
-        <div className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 rounded-full flex items-center justify-center">
+        <div className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 rounded-full flex items-center justify-center">
           <span className="text-white text-xs font-bold">{badge > 9 ? '9+' : badge}</span>
         </div>
       )}

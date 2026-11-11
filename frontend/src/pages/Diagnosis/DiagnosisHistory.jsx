@@ -129,14 +129,13 @@ export default function DiagnosisHistory() {
                             <ArrowLeft className="w-6 h-6" />
                         </motion.button>
                         <div>
-                            <div className="text-sage-500 text-sm font-bold">Assistive Diagnosis</div>
-                            <h1 className="text-2xl font-serif font-bold text-sage-900">Session History</h1>
+                            <h1 className="text-2xl font-serif text-sage-900">Past checks</h1>
                         </div>
                     </div>
                 </PageHeader>
             }
             nav={activeRole === 'caregiver' ? <FamilyNav /> : <ElderNav onImOk={() => { }} />}
-            background="gradient"
+            
         >
             <PageMain>
                 {loading ? (
@@ -149,14 +148,14 @@ export default function DiagnosisHistory() {
                     <PageSection>
                         <Card>
                             <p className="text-sage-700 text-lg">No symptom reports found yet.</p>
-                            <Button className="mt-4" onClick={() => navigate('/diagnosis/input')}>Start New Check</Button>
+                            <Button className="mt-4" onClick={() => navigate('/diagnosis/input')}>Start a new check</Button>
                         </Card>
                     </PageSection>
                 ) : (
                     <PageSection>
                         <div className="space-y-3">
                             {history.map((row) => (
-                                <Card key={row.session_id} className="border-2 border-sage-100">
+                                <Card key={row.session_id}>
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0 flex-1">
                                             <p className="text-sage-800 text-lg font-semibold break-words">{row.raw_complaint}</p>

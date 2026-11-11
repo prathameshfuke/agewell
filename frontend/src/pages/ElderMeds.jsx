@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom'
-import { Check, Clock, Pill } from 'lucide-react'
+import { Check, Clock } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useMedications } from '../hooks/useMedications'
-import { ElderPage, Loading, ErrorNote, EmptyNote } from '../components/ElderNav'
+import { ElderPage, Split, Loading, ErrorNote, EmptyNote } from '../components/ElderNav'
 
 const PERIODS = [
   { key: 'morning', label: 'Morning' },
@@ -13,9 +13,9 @@ const PERIODS = [
 const timeOf = (iso) => (iso ? new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '')
 
 function Status({ status }) {
-  if (status === 'taken') return <span className="badge-success"><Check className="h-4 w-4" aria-hidden="true" />Taken</span>
+  if (status === 'taken') return <span className="badge-success"><Check className="h-4 w-4" strokeWidth={2} aria-hidden="true" />Taken</span>
   if (status === 'missed') return <span className="badge-neutral">Skipped</span>
-  return <span className="badge-warning"><Clock className="h-4 w-4" aria-hidden="true" />To take</span>
+  return <span className="badge-warning"><Clock className="h-4 w-4" strokeWidth={2} aria-hidden="true" />To take</span>
 }
 
 export default function ElderMeds() {
@@ -26,6 +26,7 @@ export default function ElderMeds() {
   return (
     <ElderPage
       title="My medicines"
+      art="pills"
       backTo="/elder/dashboard"
       subtitle={new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
     >
@@ -34,29 +35,44 @@ export default function ElderMeds() {
       ) : error ? (
         <ErrorNote onRetry={() => refresh()}>We could not load your medicines. Check your connection and try again.</ErrorNote>
       ) : schedule.length === 0 ? (
-        <EmptyNote title="No medicines today">
+        <EmptyNote
+          title="No medicines today"
+          art="rest"
+          action={<button type="button" onClick={() => navigate('/elder/meds/history')} className="btn-secondary">See past days</button>}
+        >
           Nothing is scheduled for today. Your caregiver can add medicines for you.
         </EmptyNote>
       ) : (
-        <>
-          <p className="text-2xl font-bold" aria-live="polite">
-            {pendingMeds.length === 0
-              ? 'You have taken all your medicines today'
-              : `You have taken ${completedMeds.length} of ${schedule.length}`}
-          </p>
+        <Split
+          asideFirst
+          aside={
+            <div>
+              <p className="text-xl" aria-live="polite">
+                {pendingMeds.length === 0
+                  ? 'You have taken all your medicines today'
+                  : `You have taken ${completedMeds.length} of ${schedule.length}`}
+              </p>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-paper-2" role="presentation">
+                <div className="h-full rounded-full bg-saffron transition-[width] duration-500" style={{ width: `${(completedMeds.length / schedule.length) * 100}%` }} />
+              </div>
+              <button type="button" onClick={() => navigate('/elder/meds/history')} className="btn-secondary mt-6 w-full">
+                See past days
+              </button>
+            </div>
+          }
+        >
           {PERIODS.map(({ key, label }) => {
             const items = groupedSchedule[key] || []
             if (items.length === 0) return null
             return (
               <section key={key} aria-label={label}>
-                <h2 className="mb-3 font-serif text-2xl font-bold">{label}</h2>
-                <ul className="space-y-3">
+                <h2 className="mb-2 text-2xl">{label}</h2>
+                <ul className="list">
                   {items.map((item, i) => (
-                    <li key={item.log?.id || item.id || i} className="card flex items-center gap-4 !p-5">
-                      <Pill className="h-8 w-8 shrink-0 text-primary" aria-hidden="true" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-2xl font-bold break-words">{item.medication?.name || 'Medicine'}</p>
-                        <p className="text-lg text-sage-600">
+                    <li key={item.log?.id || item.id || i} className="flex items-center justify-between gap-4 py-4">
+                      <div className="min-w-0">
+                        <p className="break-words text-xl font-bold">{item.medication?.name || 'Medicine'}</p>
+                        <p className="text-base text-sage-600">
                           {[item.medication?.dosage, timeOf(item.scheduled_time)].filter(Boolean).join(' at ')}
                         </p>
                       </div>
@@ -67,11 +83,8 @@ export default function ElderMeds() {
               </section>
             )
           })}
-        </>
+        </Split>
       )}
-      <button type="button" onClick={() => navigate('/elder/meds/history')} className="btn-secondary w-full">
-        See past days
-      </button>
     </ElderPage>
   )
 }

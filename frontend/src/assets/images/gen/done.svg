@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+<defs>
+<linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2E7D5B"/><stop offset="1" stop-color="#1F5F4A"/></linearGradient>
+</defs>
+<ellipse cx="200" cy="352" rx="110" ry="9" fill="#1B2A24" opacity=".08"/>
+<!-- leaves behind, lower-left sprig -->
+<path d="M70 330Q60 270 108 236" fill="none" stroke="#174A3A" stroke-width="5" stroke-linecap="round"/>
+<path d="M66 304Q36 290 38 252Q72 256 66 304Z" fill="#2E7D5B"/>
+<path d="M76 276Q56 252 72 222Q98 238 76 276Z" fill="#A9C8B4"/>
+<path d="M92 252Q86 224 110 206Q124 230 92 252Z" fill="#1F5F4A"/>
+<path d="M66 304Q74 330 100 338Q108 312 66 304Z" fill="#A9C8B4"/>
+<!-- upper-right sprig -->
+<path d="M332 62Q340 112 300 146" fill="none" stroke="#174A3A" stroke-width="5" stroke-linecap="round"/>
+<path d="M334 86Q362 80 366 112Q336 116 334 86Z" fill="#2E7D5B"/>
+<path d="M326 112Q296 108 292 78Q324 74 326 112Z" fill="#A9C8B4"/>
+<path d="M312 136Q340 140 346 166Q316 168 312 136Z" fill="#1F5F4A"/>
+<!-- badge -->
+<g transform="translate(200 200) scale(.88) translate(-200 -200)">
+<circle cx="200" cy="200" r="142" fill="#E3EEE7"/>
+<circle cx="200" cy="200" r="124" fill="#A9C8B4"/>
+<circle cx="200" cy="200" r="108" fill="url(#b)"/>
+<path d="M104 176A108 108 0 0 1 224 94" fill="none" stroke="#FAF6EE" stroke-width="7" stroke-linecap="round" opacity=".25"/>
+<path d="M146 206L186 244L258 164" fill="none" stroke="#174A3A" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" opacity=".5" transform="translate(0 6)"/>
+<path d="M146 206L186 244L258 164" fill="none" stroke="#FAF6EE" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<path d="M60 130Q62 144 76 146Q62 148 60 162Q58 148 44 146Q58 144 60 130Z" fill="#E8A33D"/>
+<circle cx="344" cy="262" r="6" fill="#F3C77A"/>
+</svg>

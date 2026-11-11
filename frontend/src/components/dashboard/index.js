@@ -1,10 +1,6 @@
-// Dashboard Components - AgeWell+ Dashboard UI
+// Dashboard Components - caregiver dashboard sections
 export { default as WeeklyHealthSummary } from './WeeklyHealthSummary'
-export { default as QuickActionsGrid } from './QuickActionsGrid'
-export { default as HealthOverviewCard } from './HealthOverviewCard'
-export { default as VitalsStatsRow } from './VitalsStatsRow'
 export { default as ActivityTimeline } from './ActivityTimeline'
 export { default as EmergencyContactCard } from './EmergencyContactCard'
 export { default as CareTeamAvatars } from './CareTeamAvatars'
 export { default as CareTeamCard } from './CareTeamCard'
-export { default as LiveVitalsPanel, SensorStatusBadge } from './LiveVitalsPanel'

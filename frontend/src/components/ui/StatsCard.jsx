@@ -60,8 +60,8 @@ export default function StatsCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
       onClick={onClick}
-      className={`bg-white p-4 sm:p-5 rounded-2xl shadow-soft border border-sage-200 transition-all w-full break-words flex flex-col ${
-        onClick ? 'cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5 active:scale-[0.98]' : ''
+      className={`bg-white p-4 sm:p-5 rounded-[20px] border border-line transition-all w-full break-words flex flex-col ${
+        onClick ? 'cursor-pointer hover:-translate-y-0.5 active:scale-[0.98]' : ''
       }`}
     >
       <div className="flex items-start justify-between gap-3 mb-3">

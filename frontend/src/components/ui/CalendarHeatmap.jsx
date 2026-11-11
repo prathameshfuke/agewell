@@ -28,7 +28,7 @@ export default function CalendarHeatmap({ data = [], month = 'January', year = 2
   }
 
   return (
-    <div className="bg-white rounded-2xl p-4 shadow-soft border border-sage-100">
+    <div className="bg-white rounded-2xl p-4 border border-line">
       <div className="text-sm font-bold text-sage-900 mb-4">{month} {year}</div>
       
       {/* Week day headers */}

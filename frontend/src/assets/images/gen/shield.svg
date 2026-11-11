@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+<defs>
+<clipPath id="r"><rect x="200" y="0" width="200" height="400"/></clipPath>
+<linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FAF6EE"/><stop offset="1" stop-color="#E3EEE7"/></linearGradient>
+</defs>
+<ellipse cx="200" cy="372" rx="90" ry="9" fill="#1B2A24" opacity=".08"/>
+<g transform="translate(0 -6)">
+<path d="M200 48C246 78 296 90 334 92Q340 92 340 100V200C340 284 280 334 200 368C120 334 60 284 60 200V100Q60 92 66 92C104 90 154 78 200 48Z" fill="#1F5F4A"/>
+<path d="M200 48C246 78 296 90 334 92Q340 92 340 100V200C340 284 280 334 200 368Z" fill="#2E7D5B"/>
+<path d="M200 74C238 98 278 108 314 111V200C314 268 266 310 200 338C134 310 86 268 86 200V111C122 108 162 98 200 74Z" fill="url(#sg)"/>
+<path d="M200 74C238 98 278 108 314 111V200C314 268 266 310 200 338Z" fill="#E3EEE7" opacity=".6"/>
+<path d="M176 166Q176 158 184 158H216Q224 158 224 166V186H244Q252 186 252 194V206Q252 214 244 214H224V234Q224 242 216 242H184Q176 242 176 234V214H156Q148 214 148 206V194Q148 186 156 186H176Z" fill="#2E7D5B" transform="translate(0 6)"/>
+</g>
+<g fill="#E8A33D"><path d="M340 40 Q342 62 362 64 Q342 66 340 88 Q338 66 318 64 Q338 62 340 40Z"/></g>
+<path d="M92 66Q93 77 104 78Q93 79 92 90Q91 79 80 78Q91 77 92 66Z" fill="#F3C77A"/>
+<circle cx="366" cy="132" r="5" fill="#A9C8B4"/><circle cx="48" cy="170" r="6" fill="#E59A74"/>
+</svg>

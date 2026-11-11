@@ -105,7 +105,7 @@ export default function ImageUpload({ sessionId, onUploadComplete }) {
             {result?.success && (
                 <div className="mt-4 space-y-3">
                     <div className="bg-sage-50 border border-sage-200 rounded-xl p-4">
-                        <div className="text-sm font-bold text-sage-600 mb-1">Image Observations</div>
+                        <div className="text-sm font-bold text-sage-600 mb-1">Image observations</div>
                         <p className="text-sage-800 text-lg">{result.observations}</p>
                     </div>
 

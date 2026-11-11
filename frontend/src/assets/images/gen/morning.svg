@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+<defs>
+<clipPath id="h"><rect x="0" y="0" width="400" height="345"/></clipPath>
+<radialGradient id="sn" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#F3C77A"/><stop offset="1" stop-color="#E8A33D"/></radialGradient>
+</defs>
+<g transform="translate(-2 -50)">
+<g clip-path="url(#h)"><circle cx="272" cy="300" r="80" fill="url(#sn)"/><circle cx="272" cy="300" r="58" fill="#F3C77A" opacity=".45"/></g>
+<path d="M181.8 267.2L161.1 259.6" stroke="#E8A33D" stroke-width="9" stroke-linecap="round"/>
+<path d="M198.5 238.3L181.6 224.2" stroke="#F3C77A" stroke-width="9" stroke-linecap="round"/>
+<path d="M224.0 216.9L213.0 197.8" stroke="#E8A33D" stroke-width="9" stroke-linecap="round"/>
+<path d="M255.3 205.5L251.5 183.8" stroke="#F3C77A" stroke-width="9" stroke-linecap="round"/>
+<path d="M288.7 205.5L292.5 183.8" stroke="#E8A33D" stroke-width="9" stroke-linecap="round"/>
+<path d="M320.0 216.9L331.0 197.8" stroke="#F3C77A" stroke-width="9" stroke-linecap="round"/>
+<path d="M345.5 238.3L362.4 224.2" stroke="#E8A33D" stroke-width="9" stroke-linecap="round"/>
+<path d="M362.2 267.2L382.9 259.6" stroke="#F3C77A" stroke-width="9" stroke-linecap="round"/>
+
+<path d="M30 346Q30 336 62 330Q200 298 338 330Q372 336 372 346Q372 364 200 364Q30 364 30 346Z" fill="#A9C8B4"/>
+<ellipse cx="124" cy="334" rx="72" ry="13" fill="#1B2A24" opacity=".12"/>
+<!-- steam -->
+<g fill="none" stroke="#A9C8B4" stroke-width="7" stroke-linecap="round">
+<path d="M100 224Q86 206 100 190Q114 174 100 156"/>
+<path d="M124 218Q110 198 124 182Q138 166 124 146" stroke="#C5DCCD"/>
+<path d="M148 224Q134 206 148 190Q162 174 148 156"/>
+</g>
+<!-- saucer -->
+<ellipse cx="124" cy="326" rx="68" ry="12" fill="#E8A33D"/>
+<ellipse cx="124" cy="323" rx="68" ry="11" fill="#F3C77A"/>
+<ellipse cx="124" cy="322" rx="46" ry="6" fill="#E8A33D" opacity=".5"/>
+<!-- handle -->
+<path d="M164 262Q196 260 194 286Q192 310 160 306" fill="none" stroke="#C8643C" stroke-width="10" stroke-linecap="round"/>
+<!-- cup -->
+<path d="M76 248H172Q172 322 124 326Q76 322 76 248Z" fill="#C8643C"/>
+<path d="M124 248H172Q172 322 124 326Z" fill="#B3552F" opacity=".55"/>
+<path d="M76 276H172" stroke="#F3C77A" stroke-width="7"/>
+<path d="M76 288H172" stroke="#E59A74" stroke-width="3"/>
+<ellipse cx="124" cy="248" rx="48" ry="11" fill="#E59A74"/>
+<ellipse cx="124" cy="249" rx="41" ry="8.5" fill="#8D5A3B"/>
+<ellipse cx="116" cy="247" rx="22" ry="4" fill="#B97A56" opacity=".7"/>
+<path d="M86 256Q88 296 104 312" fill="none" stroke="#FAF6EE" stroke-width="4" stroke-linecap="round" opacity=".35"/>
+<!-- sprig -->
+<path d="M332 332Q316 312 326 294Q346 306 332 332Z" fill="#2E7D5B"/><path d="M346 336Q352 316 372 314Q368 332 346 336Z" fill="#1F5F4A"/>
+</g>
+</svg>

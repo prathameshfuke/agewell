@@ -12,16 +12,14 @@ import { motion } from 'framer-motion'
 export default function FloatingActionButton({ 
   icon: Icon, 
   onClick, 
-  color = 'blue',
+  color = 'green',
   size = 'md',
   label,
   pulse = false 
 }) {
   const colorClasses = {
-    blue: 'bg-blue-600 hover:bg-blue-700 shadow-blue-200',
-    green: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200',
-    red: 'bg-red-600 hover:bg-red-700 shadow-red-200',
-    purple: 'bg-purple-600 hover:bg-purple-700 shadow-purple-200',
+    green: 'bg-primary hover:bg-primary-dark',
+    red: 'bg-rose-600 hover:bg-rose-700',
   }
 
   const sizeClasses = {
@@ -43,7 +41,7 @@ export default function FloatingActionButton({
       whileTap={{ scale: 0.95 }}
       className={`
         ${sizeClasses[size]} ${colorClasses[color]}
-        rounded-full text-white shadow-xl
+        rounded-full text-white
         flex items-center justify-center flex-shrink-0
         transition-all duration-200
         ${pulse ? 'animate-pulse-slow' : ''}

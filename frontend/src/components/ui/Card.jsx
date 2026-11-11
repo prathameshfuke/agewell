@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
  * Variants:
  * - default: Standard card with border and shadow
  * - interactive: Clickable card with hover effects
- * - elevated: Card with stronger shadow
+ * - elevated: Sunken paper surface
  * 
  * Mobile-First Principles:
  * - Auto-expanding height (no fixed heights)
@@ -25,13 +25,13 @@ export default function Card({
 }) {
   // Mobile-first: Start with mobile padding, scale up for desktop
   // No fixed heights - cards auto-expand with content
-  const baseClasses = 'bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 border border-sage-200/70 shadow-card w-full break-words'
+  const baseClasses = 'bg-white rounded-[20px] p-4 sm:p-5 md:p-6 border border-line w-full break-words'
 
   const variantClasses = {
     default: '',
-    interactive: 'hover:shadow-card-hover cursor-pointer !transition-shadow duration-200',
-    elevated: 'shadow-elevated',
-    flush: '', // No shadow or extra styling
+    interactive: 'cursor-pointer transition-transform duration-200 hover:-translate-y-0.5 hover:border-sage-300',
+    elevated: 'bg-paper-2 border-transparent', // flat sunken surface; no shadows in this system
+    flush: '',
   }
 
   const classes = `${baseClasses} ${variantClasses[variant] || variantClasses.default} ${className}`
@@ -68,7 +68,7 @@ export function CardHeader({ icon, label, action, className = '' }) {
           <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: 'currentColor' }} />
         )}
         {typeof icon === 'string' ? null : icon}
-        <span className="text-sage-600 font-bold text-xs sm:text-sm break-words">{label}</span>
+        <span className="text-sage-600 font-bold text-sm break-words">{label}</span>
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}
     </div>
@@ -81,7 +81,7 @@ export function CardHeader({ icon, label, action, className = '' }) {
  */
 export function CardSection({ children, className = '' }) {
   return (
-    <div className={`bg-sage-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 break-words ${className}`}>
+    <div className={`bg-paper-2 rounded-2xl p-3 sm:p-4 md:p-5 break-words ${className}`}>
       {children}
     </div>
   )

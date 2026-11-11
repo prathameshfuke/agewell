@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, CheckCircle, XCircle } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
+import { done } from '../assets/images/gen'
+import { Art } from '../components/family/FamilyPage'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 
@@ -106,15 +108,15 @@ export default function AuthCallback() {
     }, [user, loading, initialized, navigate])
 
     return (
-        <main className="min-h-screen bg-cream-50 flex items-center justify-center px-5">
-            <div role="status" aria-live="polite" className="bg-white rounded-3xl p-8 border border-sage-200 text-center max-w-sm w-full">
+        <main className="flex min-h-screen items-center justify-center bg-paper px-4 font-sans text-ink">
+            <div role="status" aria-live="polite" className="w-full max-w-sm text-center">
                 {status === 'processing' && (
                     <>
-                        <Loader2 className="w-10 h-10 text-primary animate-spin motion-reduce:animate-none mx-auto mb-4" aria-hidden="true" />
-                        <h1 className="text-2xl font-serif text-sage-900 mb-1">Signing you in…</h1>
-                        <p className="text-sage-600 font-normal">This only takes a moment.</p>
+                        <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-primary motion-reduce:animate-none" aria-hidden="true" />
+                        <h1 className="font-serif text-4xl">Signing you in...</h1>
+                        <p className="mt-2 text-ink-2">This only takes a moment.</p>
                         {fallbackVisible && (
-                            <button type="button" onClick={() => navigate('/auth', { replace: true })} className="btn-secondary mt-4 mx-auto">
+                            <button type="button" onClick={() => navigate('/auth', { replace: true })} className="btn-secondary mt-6 w-full">
                                 Back to sign in
                             </button>
                         )}
@@ -122,17 +124,16 @@ export default function AuthCallback() {
                 )}
                 {status === 'success' && (
                     <>
-                        <CheckCircle className="w-10 h-10 text-emerald-600 mx-auto mb-4" aria-hidden="true" />
-                        <h1 className="text-2xl font-serif text-sage-900 mb-1">Signed in</h1>
-                        <p className="text-sage-600 font-normal">Setting things up…</p>
+                        <Art src={done} className="mx-auto mb-4 w-32" />
+                        <h1 className="font-serif text-4xl">Signed in</h1>
+                        <p className="mt-2 text-ink-2">Setting things up...</p>
                     </>
                 )}
                 {status === 'error' && (
                     <>
-                        <XCircle className="w-10 h-10 text-rose-600 mx-auto mb-4" aria-hidden="true" />
-                        <h1 className="text-2xl font-serif text-sage-900 mb-1">Sign-in failed</h1>
-                        <p className="text-rose-700 text-sm font-normal">{error}</p>
-                        <button type="button" onClick={() => navigate('/auth', { replace: true })} className="btn-secondary mt-4 mx-auto">
+                        <h1 className="font-serif text-4xl">Sign-in failed</h1>
+                        <p className="mt-2 text-rose-700">{error}</p>
+                        <button type="button" onClick={() => navigate('/auth', { replace: true })} className="btn-secondary mt-6 w-full">
                             Back to sign in
                         </button>
                     </>

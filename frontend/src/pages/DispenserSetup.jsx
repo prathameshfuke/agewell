@@ -95,9 +95,9 @@ export default function DispenserSetup() {
     }
 
     return (
-        <div className="min-h-screen bg-cream-50 font-sans pb-24 md:pb-0">
+        <div className="min-h-dvh bg-paper font-sans pb-28 lg:pb-12">
             {/* Header */}
-            <header className="px-6 py-5 flex items-center gap-4 bg-cream-50 sticky top-0 z-10">
+            <header className="mx-auto flex w-full max-w-[1120px] items-center gap-4 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 lg:px-10">
                 <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={() => navigate(-1)}
@@ -106,28 +106,28 @@ export default function DispenserSetup() {
                     <ArrowLeft className="w-6 h-6" />
                 </motion.button>
                 <div className="flex-1">
-                    <h1 className="text-2xl font-serif font-bold text-sage-900">Dispenser Setup</h1>
+                    <h1 className="text-2xl font-serif text-sage-900">Dispenser setup</h1>
                     <p className="text-sage-500">Manage your medicine dispenser</p>
                 </div>
             </header>
 
-            <main className="px-6 space-y-6">
+            <main className="mx-auto grid w-full max-w-[1120px] items-start gap-8 px-4 sm:px-6 lg:grid-cols-12 lg:gap-12 lg:px-10">
                 {/* Device Selection */}
-                <section>
+                <section className="min-w-0 lg:col-span-5">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-bold text-sage-800">Your Devices</h2>
+                        <h2 className="text-lg font-bold text-sage-800">Your devices</h2>
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={() => setShowAddDevice(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-sage-500 text-white rounded-xl font-bold"
+                            className="btn-primary btn-sm"
                         >
                             <Plus className="w-5 h-5" />
-                            Add Device
+                            Add device
                         </motion.button>
                     </div>
 
                     {loading ? (
-                        <div className="bg-white rounded-2xl p-8 border-2 border-sage-100 text-center">
+                        <div className="bg-white rounded-[20px] p-8 border border-line text-center">
                             <RefreshCw className="w-8 h-8 text-sage-400 animate-spin mx-auto mb-2" />
                             <p className="text-sage-500">Loading devices...</p>
                         </div>
@@ -135,17 +135,17 @@ export default function DispenserSetup() {
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-white rounded-2xl p-8 border-2 border-sage-100 text-center"
+                            className="bg-white rounded-[20px] p-8 border border-line text-center"
                         >
-                            <img src={oneSticker} alt="Setup" className="w-24 h-24 mx-auto mb-4 rounded-2xl" />
-                            <h3 className="text-xl font-bold text-sage-800 mb-2">No Dispenser Connected</h3>
+                            <img src={oneSticker} alt="" className="sticker w-24 h-24 mx-auto mb-4 object-contain" />
+                            <h3 className="text-xl font-bold text-sage-800 mb-2">No dispenser connected</h3>
                             <p className="text-sage-500 mb-4">Add your ESP32 dispenser to get started</p>
                             <motion.button
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => setShowAddDevice(true)}
-                                className="px-6 py-3 bg-sage-500 text-white rounded-xl font-bold"
+                                className="btn-primary w-full sm:w-auto"
                             >
-                                Connect Dispenser
+                                Connect dispenser
                             </motion.button>
                         </motion.div>
                     ) : (
@@ -155,8 +155,8 @@ export default function DispenserSetup() {
                                     key={device.id}
                                     whileTap={{ scale: 0.98 }}
                                     onClick={() => setSelectedDevice(device)}
-                                    className={`w-full bg-white rounded-2xl p-5 border-2 text-left transition-all ${selectedDevice?.id === device.id
-                                        ? 'border-sage-500 bg-sage-50'
+                                    className={`w-full bg-white rounded-[20px] p-5 border text-left transition-all ${selectedDevice?.id === device.id
+                                        ? 'border-primary bg-primary-bg'
                                         : 'border-sage-100'
                                         }`}
                                 >
@@ -188,8 +188,8 @@ export default function DispenserSetup() {
 
                 {/* Slot Assignment */}
                 {selectedDevice && (
-                    <section>
-                        <h2 className="text-lg font-bold text-sage-800 mb-4">Medication Slots</h2>
+                    <section className="min-w-0 lg:col-span-7">
+                        <h2 className="text-lg font-bold text-sage-800 mb-4">Medicine slots</h2>
                         <p className="text-sage-500 mb-4">
                             Assign medications to each slot. The LED will guide you during loading.
                         </p>
@@ -207,7 +207,7 @@ export default function DispenserSetup() {
                                         initial={{ opacity: 0, x: -10 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: slotNum * 0.1 }}
-                                        className="bg-white rounded-2xl p-5 border-2 border-sage-100"
+                                        className="bg-white rounded-[20px] p-5 border border-line"
                                     >
                                         <div className="flex items-start gap-4">
                                             {/* LED Indicator */}
@@ -260,7 +260,7 @@ export default function DispenserSetup() {
                                                 onChange={(e) => slot && handleAssignMedication(slot.id, e.target.value || null)}
                                                 className="px-4 py-2 bg-sage-50 border-2 border-sage-200 rounded-xl text-sage-700 font-medium"
                                             >
-                                                <option value="">Select Medication</option>
+                                                <option value="">Select a medicine</option>
                                                 {medications.map((med) => (
                                                     <option key={med.id} value={med.id}>
                                                         {med.name} ({med.dosage})
@@ -274,7 +274,7 @@ export default function DispenserSetup() {
                         </div>
 
                         {/* LED Guidance Info */}
-                        <div className="mt-6 bg-sage-50 rounded-2xl p-5 border-2 border-sage-100">
+                        <div className="mt-6 bg-sage-50 rounded-2xl p-5 border border-line">
                             <h3 className="font-bold text-sage-800 mb-3 flex items-center gap-2">
                                 <Settings className="w-5 h-5" />
                                 LED Guidance System
@@ -303,26 +303,26 @@ export default function DispenserSetup() {
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/50 backdrop-blur-sm"
+                    className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-sage-900/40"
                     onClick={() => setShowAddDevice(false)}
                 >
                     <motion.div
                         initial={{ scale: 0.95, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="bg-white w-full max-w-md rounded-3xl p-8"
+                        className="bg-white w-full max-w-md rounded-[20px] p-6 sm:p-8 shadow-elevated max-h-[90dvh] overflow-y-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <h3 className="text-2xl font-bold text-sage-900 mb-6">Add Dispenser</h3>
+                        <h3 className="text-2xl font-bold text-sage-900 mb-6">Add a dispenser</h3>
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sage-600 font-bold mb-2">Device ID (MAC Address)</label>
+                                <label className="block text-sage-600 font-bold mb-2">Device ID (MAC address)</label>
                                 <input
                                     type="text"
                                     value={newDeviceId}
                                     onChange={(e) => setNewDeviceId(e.target.value)}
                                     placeholder="e.g., ESP32-ABCD1234"
-                                    className="w-full px-4 py-3 border-2 border-sage-200 rounded-xl text-sage-800 focus:border-sage-500 focus:outline-none"
+                                    className="input"
                                 />
                                 <p className="text-sage-400 text-sm mt-1">
                                     Find this on your dispenser or its packaging
@@ -330,22 +330,22 @@ export default function DispenserSetup() {
                             </div>
 
                             <div>
-                                <label className="block text-sage-600 font-bold mb-2">Device Name (Optional)</label>
+                                <label className="block text-sage-600 font-bold mb-2">Device name (optional)</label>
                                 <input
                                     type="text"
                                     value={newDeviceName}
                                     onChange={(e) => setNewDeviceName(e.target.value)}
                                     placeholder="e.g., Living Room Dispenser"
-                                    className="w-full px-4 py-3 border-2 border-sage-200 rounded-xl text-sage-800 focus:border-sage-500 focus:outline-none"
+                                    className="input"
                                 />
                             </div>
                         </div>
 
-                        <div className="flex gap-3 mt-6">
+                        <div className="flex flex-col-reverse gap-3 mt-6 sm:flex-row">
                             <motion.button
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => setShowAddDevice(false)}
-                                className="flex-1 py-3 border-2 border-sage-200 text-sage-600 rounded-xl font-bold"
+                                className="btn-secondary flex-1"
                             >
                                 Cancel
                             </motion.button>
@@ -353,10 +353,10 @@ export default function DispenserSetup() {
                                 whileTap={{ scale: 0.95 }}
                                 onClick={handleAddDevice}
                                 disabled={!newDeviceId.trim()}
-                                className="flex-1 py-3 bg-sage-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                                className="btn-primary flex-1"
                             >
                                 <Check className="w-5 h-5" />
-                                Add Device
+                                Add device
                             </motion.button>
                         </div>
                     </motion.div>

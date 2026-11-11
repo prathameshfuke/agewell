@@ -1,28 +1,33 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { Check } from 'lucide-react'
-import { logo, familyPhoto, couplePhoto, handsPhoto, walkIllustration, chatSticker } from '../assets/images'
+import { motion, useReducedMotion } from 'framer-motion'
+import { Menu, X, Plus } from 'lucide-react'
+import { logo, familyPhoto, couplePhoto, handsPhoto } from '../assets/images'
+import { pills, voice, shield } from '../assets/images/gen'
 
-const TABS = {
-  elder: {
+const NAV = [['How it works', '#how'], ['Two views', '#views'], ['Hindi and English', '#voice'], ['Privacy', '#privacy'], ['Questions', '#faq']]
+
+const VIEWS = [
+  {
     label: 'For elders',
     title: 'Big, simple screens made for daily use',
     photo: couplePhoto,
     size: [1024, 1210],
+    pos: 'object-[50%_12%]',
     alt: 'An older couple taking their medicines with a glass of water',
     points: [
-      'Today\'s medicines in one list, with a single large button to mark each one taken.',
-      'Symptom check by voice, in Hindi or English. Speak, and AgeWell asks follow-up questions and reads the answer back.',
+      "Today's medicines in one list, with a single large button to mark each one taken.",
+      'Symptom check by voice. Speak, and AgeWell asks follow-up questions and reads the answer back.',
       'An emergency button that is always within reach.',
       'Heart rate and SpO2 readings from a connected device, shown in plain language.',
     ],
   },
-  caregiver: {
+  {
     label: 'For caregivers',
     title: 'Know when something needs attention',
     photo: handsPhoto,
     size: [736, 1104],
+    pos: 'object-[50%_35%]',
     alt: 'A younger hand resting on an older hand that holds a walking stick',
     points: [
       'Alerts when a dose is missed or a reading looks unusual.',
@@ -31,13 +36,18 @@ const TABS = {
       'A 4-digit PIN keeps caregiver mode private, even on a shared phone.',
     ],
   },
-}
+]
 
 const STEPS = [
-  'Sign in with Google and choose elder, caregiver, or both.',
-  'The elder adds medicines by hand or by uploading a prescription.',
-  'The elder shares a link code so family can follow along.',
-  'Reminders, readings and alerts show up where each person needs them.',
+  ['Sign in and choose your role', 'Sign in with Google and choose elder, caregiver, or both. One email can do both.'],
+  ['Add medicines, share a code', 'The elder adds medicines by hand or from a prescription, then shares a short link code so family can follow along.'],
+  ['Stay in the loop', 'Reminders, readings and alerts show up where each person needs them.'],
+]
+
+const PRIVACY = [
+  ['Caregiver mode needs a PIN', 'A 4-digit PIN keeps it private, even on a shared phone. After too many wrong tries it locks for 15 minutes.'],
+  ['Family joins with a code', 'Caregivers see an elder\'s data only after the elder shares a short link code. Codes expire after 24 hours.'],
+  ['No location tracking', 'Caregivers see vitals, medicines, activity, symptom reports and the emergency contact. Location is not collected.'],
 ]
 
 const FAQ = [
@@ -49,42 +59,95 @@ const FAQ = [
   ['What does it cost?', 'This is an early version and there is no pricing yet.'],
 ]
 
-const spring = { type: 'spring', stiffness: 380, damping: 32 }
+const wrap = 'mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10'
+const h2 = 'font-serif text-5xl'
+const focus = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
 
 export default function Home() {
   const navigate = useNavigate()
   const reduce = useReducedMotion()
-  const [tab, setTab] = useState('elder')
-  const current = TABS[tab]
+  const [menu, setMenu] = useState(false)
 
   const start = (role) => {
     try { sessionStorage.setItem('intendedRole', role) } catch { /* private mode */ }
     navigate('/auth')
   }
 
-  return (
-    <div className="min-h-screen bg-cream-50 font-sans text-sage-900">
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:rounded-full focus:border focus:border-sage-300">Skip to content</a>
+  // Full-screen menu: lock page scroll, close on Escape.
+  useEffect(() => {
+    if (!menu) return undefined
+    const onKey = (e) => e.key === 'Escape' && setMenu(false)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prev
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [menu])
 
-      <header className="max-w-6xl mx-auto px-5 h-20 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2" aria-label="AgeWell home">
-          <img src={logo} alt="" width="48" height="48" className="sticker w-10 h-10 sm:w-12 sm:h-12 object-contain" />
-          <span className="font-serif text-xl sm:text-2xl leading-none">AgeWell</span>
-        </Link>
-        <nav aria-label="Account" className="flex items-center gap-2">
-          <Link to="/auth" className="hidden sm:inline-flex items-center min-h-[44px] px-4 rounded-full text-sage-700 hover:bg-sage-100 font-normal">Sign in</Link>
-          <Link to="/auth" className="btn-primary btn-sm whitespace-nowrap">Get started</Link>
-        </nav>
+  const brand = (
+    <Link to="/" className={`inline-flex min-h-[44px] items-center gap-2 ${focus}`} aria-label="AgeWell home">
+      <img src={logo} alt="" width="40" height="40" className="sticker h-10 w-10 object-contain" />
+      <span className="font-serif text-2xl leading-none">AgeWell</span>
+    </Link>
+  )
+
+  return (
+    <div className="min-h-screen bg-paper font-sans text-ink">
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:border focus:border-line focus:bg-paper focus:px-4 focus:py-2">Skip to content</a>
+
+      <header className="sticky top-0 z-40 border-b border-line bg-paper">
+        <div className={`${wrap} flex h-16 items-center justify-between`}>
+          {brand}
+          <nav aria-label="Sections" className="hidden items-center gap-7 md:flex">
+            {NAV.map(([label, href]) => (
+              <a key={href} href={href} className={`font-normal text-ink-2 hover:text-ink ${focus}`}>{label}</a>
+            ))}
+          </nav>
+          <div className="flex items-center gap-2">
+            <Link to="/auth" className={`hidden min-h-[44px] items-center px-3 font-normal text-ink-2 hover:text-ink md:inline-flex ${focus}`}>Sign in</Link>
+            <Link to="/auth" className="btn-primary btn-sm whitespace-nowrap">Get started</Link>
+            <button type="button" onClick={() => setMenu(true)} aria-label="Open menu" aria-expanded={menu} aria-controls="mobile-menu" className="btn-icon-ghost md:hidden">
+              <Menu className="h-6 w-6" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
       </header>
 
+      {menu && (
+        <div id="mobile-menu" role="dialog" aria-modal="true" aria-label="Menu" className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-paper px-4 pb-6">
+          <div className="flex h-16 shrink-0 items-center justify-between">
+            {brand}
+            <button type="button" onClick={() => setMenu(false)} aria-label="Close menu" className="btn-icon-ghost" autoFocus>
+              <X className="h-6 w-6" aria-hidden="true" />
+            </button>
+          </div>
+          <nav aria-label="Sections" className="mt-4 flex flex-col divide-y divide-line border-y border-line">
+            {NAV.map(([label, href]) => (
+              <a key={href} href={href} onClick={() => setMenu(false)} className={`flex min-h-[64px] items-center font-serif text-3xl font-medium ${focus}`}>{label}</a>
+            ))}
+          </nav>
+          <div className="mt-auto flex flex-col gap-3 pt-8">
+            <button type="button" onClick={() => start('elderly')} className="btn-primary">Get started</button>
+            <Link to="/auth" className="btn-secondary">Sign in</Link>
+          </div>
+        </div>
+      )}
+
       <main id="main">
-        {/* Hero: copy left, one real photo right */}
-        <section className="max-w-6xl mx-auto px-5 pt-6 pb-16 sm:pb-24 grid lg:grid-cols-[1.05fr_1fr] gap-10 lg:gap-14 items-center">
-          <div>
-            <h1 className="font-serif text-4xl sm:text-6xl leading-[1.08]">
-              Medicines taken, health watched, <span className="text-clay">family in the loop.</span>
+        {/* Hero: one entrance on load */}
+        <motion.section
+          initial={reduce ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+          className={`${wrap} grid items-center gap-10 pb-16 pt-8 lg:min-h-[calc(100svh-4rem)] lg:grid-cols-12 lg:gap-14 lg:py-12`}
+        >
+          <div className="lg:col-span-6">
+            <h1 className="font-serif text-[clamp(2.75rem,7vw,5.25rem)] leading-[1.02] tracking-tight">
+              Medicines taken, health watched, <span className="text-primary">family in the loop.</span>
             </h1>
-            <p className="mt-6 text-lg sm:text-xl text-sage-600 max-w-xl font-normal">
+            <p className="mt-6 max-w-xl text-lg text-ink-2 sm:text-xl">
               AgeWell gives elderly people simple medication reminders and voice symptom checks in Hindi or English, and lets family follow along without constant phone calls.
             </p>
             <div className="btn-row mt-9 max-w-lg">
@@ -92,122 +155,139 @@ export default function Home() {
               <button type="button" onClick={() => start('caregiver')} className="btn-secondary">I am a caregiver</button>
             </div>
           </div>
-          <div className="relative">
-            <div aria-hidden="true" className="absolute -inset-3 sm:-inset-4 rounded-[2.25rem] bg-clay-light rotate-2" />
+          <div className="lg:col-span-6">
             <img
               src={familyPhoto}
               alt="A smiling family of four at home: two grandparents with their grown son and daughter"
               width="1536" height="1024" fetchpriority="high"
-              className="relative w-full aspect-[4/3] object-cover rounded-[2rem] shadow-elevated"
+              className="aspect-[4/3] w-full rounded-[20px] object-cover"
             />
           </div>
-        </section>
+        </motion.section>
 
-        {/* Two views: tabs with a shared sliding pill */}
-        <section aria-labelledby="two-modes" className="bg-cream-100 py-16 sm:py-24">
-          <div className="max-w-6xl mx-auto px-5">
-            <h2 id="two-modes" className="font-serif text-3xl sm:text-5xl text-center">Two views, one app</h2>
-            <div role="tablist" aria-label="Interface" className="mt-8 mx-auto flex w-full max-w-md gap-1 rounded-full bg-white p-1 border border-sage-200 shadow-soft">
-              {Object.entries(TABS).map(([key, t]) => (
-                <button
-                  key={key}
-                  role="tab"
-                  id={`tab-${key}`}
-                  aria-selected={tab === key}
-                  aria-controls="tabpanel"
-                  onClick={() => setTab(key)}
-                  className={`relative flex-1 min-h-[48px] rounded-full px-3 text-base whitespace-nowrap sm:text-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${tab === key ? 'text-white' : 'text-sage-700 hover:text-sage-900'}`}
-                >
-                  {tab === key && <motion.span layoutId="home-tab" transition={reduce ? { duration: 0 } : spring} className="absolute inset-0 rounded-full bg-sage-900" />}
-                  <span className="relative">{t.label}</span>
-                </button>
-              ))}
+        {/* How it works */}
+        <section id="how" aria-labelledby="how-title" className="scroll-mt-16 border-t border-line">
+          <div className={`${wrap} grid gap-10 py-16 lg:grid-cols-12 lg:gap-14 lg:py-24`}>
+            <div className="lg:col-span-5">
+              <h2 id="how-title" className={h2}>How it works</h2>
+              <p className="mt-4 max-w-md text-lg text-ink-2">Three steps from sign-in to a calmer routine.</p>
+              <img src={pills} alt="" width="400" height="400" loading="lazy" className="mt-8 hidden h-auto w-56 lg:block" />
             </div>
-
-            <div id="tabpanel" role="tabpanel" aria-labelledby={`tab-${tab}`} className="mt-10 grid md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] gap-8 md:gap-12 items-center max-w-4xl mx-auto">
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.img
-                  key={tab + 'img'}
-                  src={current.photo}
-                  alt={current.alt}
-                  width={current.size[0]} height={current.size[1]} loading="lazy"
-                  initial={reduce ? false : { opacity: 0, scale: 0.97 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="w-full max-w-sm md:max-w-none mx-auto aspect-[4/5] object-cover rounded-[2rem] shadow-elevated"
-                />
-              </AnimatePresence>
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={tab}
-                  initial={reduce ? false : { opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <h3 className="font-serif text-2xl sm:text-4xl">{current.title}</h3>
-                  <ul className="mt-6 space-y-4 text-sage-700 text-lg font-normal">
-                    {current.points.map((p) => (
-                      <li key={p} className="flex gap-3">
-                        <Check className="w-6 h-6 mt-0.5 shrink-0 text-clay" aria-hidden="true" />
-                        <span>{p}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </div>
-        </section>
-
-        {/* How it works: illustration beside numbered steps */}
-        <section aria-labelledby="how" className="max-w-5xl mx-auto px-5 py-16 sm:py-24 grid md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-10 md:gap-16 items-center">
-          <img
-            src={walkIllustration}
-            alt="An adult walking slowly beside an elderly woman with a cane along a path toward the sunrise"
-            width="640" height="959" loading="lazy"
-            className="w-full max-w-xs md:max-w-none mx-auto aspect-[4/5] object-cover object-top rounded-[2rem] shadow-soft"
-          />
-          <div>
-            <h2 id="how" className="font-serif text-3xl sm:text-5xl">How it works</h2>
-            <ol className="mt-8 divide-y divide-sage-200 border-y border-sage-200">
-              {STEPS.map((text, i) => (
-                <li key={text} className="flex items-center gap-5 py-5">
-                  <span aria-hidden="true" className="font-serif text-4xl text-clay w-10 shrink-0 text-center leading-none">{i + 1}</span>
-                  <span className="text-lg text-sage-700 font-normal">{text}</span>
+            <ol className="divide-y divide-line border-y border-line lg:col-span-7">
+              {STEPS.map(([title, text], i) => (
+                <li key={title} className="flex gap-5 py-6 sm:gap-8 sm:py-8">
+                  <span aria-hidden="true" className="w-10 shrink-0 font-serif text-5xl leading-none text-primary">{i + 1}</span>
+                  <div>
+                    <h3 className="font-serif text-3xl">{title}</h3>
+                    <p className="mt-2 text-lg text-ink-2">{text}</p>
+                  </div>
                 </li>
               ))}
             </ol>
           </div>
         </section>
 
-        <section aria-labelledby="faq" className="max-w-3xl mx-auto px-5 pb-20 sm:pb-28">
-          <div className="flex items-center justify-center gap-4">
-            <img src={chatSticker} alt="" width="472" height="340" loading="lazy" className="sticker h-20 w-auto" />
-            <h2 id="faq" className="font-serif text-3xl sm:text-5xl">Questions</h2>
+        {/* Two views, side by side on desktop, stacked on phones */}
+        <section id="views" aria-labelledby="views-title" className="scroll-mt-16 bg-paper-2">
+          <div className={`${wrap} py-16 lg:py-20`}>
+            <h2 id="views-title" className={h2}>Two views, one app</h2>
+            <div className="mt-10 grid gap-14 md:grid-cols-2 md:gap-10 lg:gap-16">
+              {VIEWS.map((v) => (
+                <article key={v.label}>
+                  <img
+                    src={v.photo} alt={v.alt} width={v.size[0]} height={v.size[1]} loading="lazy"
+                    className={`aspect-[16/9] w-full rounded-[20px] object-cover ${v.pos}`}
+                  />
+                  <p className="mt-6 font-bold text-primary">{v.label}</p>
+                  <h3 className="mt-1 font-serif text-3xl">{v.title}</h3>
+                  <ul className="mt-4 divide-y divide-line border-y border-line">
+                    {v.points.map((p) => <li key={p} className="py-3 text-ink-2">{p}</li>)}
+                  </ul>
+                </article>
+              ))}
+            </div>
           </div>
-          <div className="mt-8 border-t border-sage-200">
-            {FAQ.map(([q, a]) => (
-              <details key={q} className="group border-b border-sage-200">
-                <summary className="cursor-pointer list-none flex items-center justify-between gap-4 min-h-[64px] py-3 text-lg font-bold rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
-                  <span>{q}</span>
-                  <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sage-100 text-sage-600 group-open:rotate-45 transition-transform motion-reduce:transition-none">+</span>
-                </summary>
-                <p className="pb-5 text-sage-600 font-normal text-lg">{a}</p>
-              </details>
-            ))}
+        </section>
+
+        {/* Voice */}
+        <section id="voice" aria-labelledby="voice-title" className="scroll-mt-16">
+          <div className={`${wrap} grid items-center gap-10 py-16 lg:grid-cols-12 lg:gap-14 lg:py-24`}>
+            <img src={voice} alt="" width="400" height="400" loading="lazy" className="hidden h-auto w-full max-w-xs lg:col-span-4 lg:block" />
+            <div className="lg:col-span-8">
+              <h2 id="voice-title" className={h2}>Speak in Hindi or English</h2>
+              <p className="mt-4 max-w-2xl text-lg text-ink-2">
+                No typing needed. Describe how you feel out loud, and AgeWell asks follow-up questions, then reads the answer back in the same language. It gives general guidance only, not a diagnosis.
+              </p>
+              <dl className="mt-8 divide-y divide-line border-y border-line sm:max-w-xl">
+                <div className="flex gap-6 py-4">
+                  <dt className="w-24 shrink-0 text-ink-2">Hindi</dt>
+                  <dd lang="hi" className="font-serif text-2xl">सिर में दर्द है और चक्कर आ रहे हैं</dd>
+                </div>
+                <div className="flex gap-6 py-4">
+                  <dt className="w-24 shrink-0 text-ink-2">English</dt>
+                  <dd className="font-serif text-2xl">I have a headache and feel dizzy</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </section>
+
+        {/* Privacy */}
+        <section id="privacy" aria-labelledby="privacy-title" className="scroll-mt-16 bg-paper-2">
+          <div className={`${wrap} grid gap-10 py-16 lg:grid-cols-12 lg:gap-14 lg:py-24`}>
+            <div className="lg:col-span-5">
+              <h2 id="privacy-title" className={h2}>Private by design</h2>
+              <p className="mt-4 max-w-md text-lg text-ink-2">Health information stays between the people who look after each other.</p>
+              <img src={shield} alt="" width="400" height="400" loading="lazy" className="mt-8 hidden h-auto w-56 lg:block" />
+            </div>
+            <ul className="divide-y divide-line border-y border-line lg:col-span-7">
+              {PRIVACY.map(([title, text]) => (
+                <li key={title} className="py-6">
+                  <h3 className="font-serif text-3xl">{title}</h3>
+                  <p className="mt-2 text-lg text-ink-2">{text}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section id="faq" aria-labelledby="faq-title" className="scroll-mt-16">
+          <div className={`${wrap} grid gap-10 py-16 lg:grid-cols-12 lg:gap-14 lg:py-24`}>
+            <h2 id="faq-title" className={`${h2} lg:col-span-4`}>Questions</h2>
+            <div className="border-t border-line lg:col-span-8">
+              {FAQ.map(([q, a]) => (
+                <details key={q} className="group border-b border-line">
+                  <summary className={`flex min-h-[64px] cursor-pointer list-none items-center justify-between gap-4 py-3 text-lg font-bold [&::-webkit-details-marker]:hidden ${focus}`}>
+                    <span>{q}</span>
+                    <Plus aria-hidden="true" className="h-6 w-6 shrink-0 text-primary transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+                  </summary>
+                  <p className="max-w-2xl pb-6 text-lg text-ink-2">{a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Final call to action */}
+        <section aria-labelledby="cta-title" className="bg-primary text-paper">
+          <div className={`${wrap} py-16 lg:py-24`}>
+            <h2 id="cta-title" className="max-w-3xl font-serif text-5xl text-paper">Bring the whole family into the routine.</h2>
+            <div className="btn-row mt-8 max-w-lg">
+              <button type="button" onClick={() => start('elderly')} className="btn-primary !bg-paper !text-primary hover:!bg-paper-2">Get started</button>
+              <button type="button" onClick={() => start('caregiver')} className="inline-flex min-h-[56px] items-center justify-center font-bold text-paper underline underline-offset-4">I am a caregiver</button>
+            </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-sage-200">
-        <div className="max-w-6xl mx-auto px-5 py-8 flex flex-col sm:flex-row sm:items-center gap-3 justify-between text-sm text-sage-600 font-normal">
+      <footer className="border-t border-line">
+        <div className={`${wrap} flex flex-col justify-between gap-3 py-8 text-ink-2 sm:flex-row sm:items-center`}>
           <span className="flex items-center gap-2">
-            <img src={logo} alt="" width="28" height="28" className="sticker w-7 h-7 object-contain" />
+            <img src={logo} alt="" width="28" height="28" loading="lazy" className="sticker h-7 w-7 object-contain" />
             AgeWell. Not a substitute for medical advice.
           </span>
-          <Link to="/auth" className="inline-flex items-center min-h-[44px] hover:text-sage-900 underline-offset-4 hover:underline">Sign in</Link>
+          <Link to="/auth" className={`inline-flex min-h-[44px] items-center underline underline-offset-4 hover:text-ink ${focus}`}>Sign in</Link>
         </div>
       </footer>
     </div>

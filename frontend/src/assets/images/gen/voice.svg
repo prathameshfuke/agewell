@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+<defs>
+<linearGradient id="m" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2E7D5B"/><stop offset="1" stop-color="#1F5F4A"/></linearGradient>
+<clipPath id="mc"><rect x="130" y="56" width="80" height="154" rx="40"/></clipPath>
+</defs>
+<g transform="translate(-22 4)">
+<ellipse cx="170" cy="354" rx="86" ry="9" fill="#1B2A24" opacity=".08"/>
+<!-- stand -->
+<path d="M170 286V332" stroke="#174A3A" stroke-width="12" stroke-linecap="round"/>
+<path d="M120 344Q120 326 140 326H200Q220 326 220 344Q220 352 210 352H130Q120 352 120 344Z" fill="#1F5F4A"/>
+<path d="M120 344Q120 326 140 326H200Q220 326 220 344Q220 346 219 347H121Q120 346 120 344Z" fill="#2E7D5B"/>
+<!-- holder -->
+<path d="M110 168V190Q110 276 170 276Q230 276 230 190V168" fill="none" stroke="#A9C8B4" stroke-width="12" stroke-linecap="round"/>
+<path d="M170 276V290" stroke="#A9C8B4" stroke-width="12" stroke-linecap="round"/>
+<!-- mic -->
+<rect x="130" y="56" width="80" height="154" rx="40" fill="url(#m)"/>
+<g clip-path="url(#mc)">
+<rect x="130" y="56" width="80" height="80" fill="#E8A33D"/>
+<rect x="130" y="56" width="40" height="80" fill="#F3C77A" opacity=".55"/>
+<g stroke="#FAF6EE" stroke-width="4" stroke-linecap="round" opacity=".6"><path d="M130 76H210"/><path d="M130 96H210"/><path d="M130 116H210"/></g>
+<path d="M130 134Q170 148 210 134V142Q170 156 130 142Z" fill="#174A3A" opacity=".5"/>
+<rect x="144" y="64" width="9" height="130" rx="4.5" fill="#FAF6EE" opacity=".16"/>
+<rect x="130" y="170" width="80" height="6" fill="#174A3A" opacity=".5"/>
+</g>
+<!-- sound waves -->
+<g fill="none" stroke-linecap="round">
+<path d="M250 118Q274 148 250 178" stroke="#E8A33D" stroke-width="10"/>
+<path d="M276 98Q314 148 276 198" stroke="#E59A74" stroke-width="10"/>
+<path d="M302 78Q354 148 302 218" stroke="#A9C8B4" stroke-width="10"/>
+</g>
+<!-- empty bubble -->
+<path d="M262 252Q262 236 278 236H356Q372 236 372 252V298Q372 314 356 314H306L284 336L286 314H278Q262 314 262 298Z" fill="#E3EEE7"/>
+<path d="M262 252Q262 236 278 236H356Q372 236 372 252V258H262Z" fill="#fff" opacity=".35"/>
+<path d="M262 252Q262 236 278 236H356Q372 236 372 252V298Q372 314 356 314H306L284 336L286 314H278Q262 314 262 298Z" fill="none" stroke="#A9C8B4" stroke-width="3"/>
+</g>
+</svg>

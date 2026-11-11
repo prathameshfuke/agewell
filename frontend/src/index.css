@@ -38,307 +38,199 @@
     font-style: normal;
 }
 
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
 :root {
-    /* Simplified Color Palette - Optimized for Elderly Users */
-    --primary: #2F5BEA;           /* The one accent */
-    --primary-light: #8FA8F5;
-    --primary-dark: #1E3FAE;
-    --primary-bg: #E9EEFD;
-
-    --secondary: #FBF7F0;         /* Warm paper */
-    --secondary-dark: #EBE2D0;
-
-    --accent: #C2362B;            /* Emergency */
-    --accent-light: #FBE9E7;
-
-    --bg-cream: #FBF7F0;
-    --bg-surface: #FFFFFF;
-    --text-main: #1A1713;         /* Warm ink */
-    --text-muted: #6A6355;
-    --clay: #B5522F;              /* Warm secondary, sparing */
+    --paper: #FAF6EE;
+    --paper-2: #F2ECDF;
+    --ink: #1B2A24;
+    --ink-2: #4B5B53;
+    --line: #E3DCCB;
+    --primary: #1F5F4A;
+    --primary-dark: #174A3A;
+    --primary-light: #98BEA9;
+    --primary-bg: #E3EEE7;
+    --saffron: #E8A33D;
+    --clay: #C8643C;
+    --danger: #B3261E;
+    --success: #2E7D4F;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 ::selection {
-    background-color: var(--primary-light);
+    background-color: var(--primary-bg);
     color: var(--primary-dark);
 }
 
 body {
     margin: 0;
+    min-height: 100dvh;
     font-family: 'Atkinson Hyperlegible', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: var(--secondary);
-    color: var(--text-main);
-    font-size: 20px;              /* Large base for elderly users */
+    background-color: var(--paper);
+    color: var(--ink);
+    font-size: 1rem;              /* caregiver body 16px */
     font-weight: 400;
     line-height: 1.55;
-    overflow-wrap: break-word;    /* Prevent long words from overflowing */
+    overflow-wrap: break-word;
+    overflow-x: clip;             /* never scroll sideways, even at 320px */
 }
 
-html {
-    scroll-behavior: smooth;
-}
+/* Elder screens read at 18px minimum. The app shell sets data-role on its wrapper. */
+[data-role='elderly'] { font-size: 1.125rem; }
 
-/* Headings - Larger and Bolder for Elderly Users */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2, h3, h4, h5, h6 {
     font-family: 'Butler', Georgia, serif;
     font-weight: 500;
-    color: var(--text-main);
-    line-height: 1.2;
+    color: var(--ink);
+    line-height: 1.15;
     letter-spacing: -0.015em;
+    text-wrap: balance;
+}
+p { text-wrap: pretty; }
+
+h1 { font-size: clamp(2rem, 6vw, 3.5rem); }
+h2 { font-size: clamp(1.5rem, 3.5vw, 2rem); }
+h3 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); }
+
+/* Headings carry weight 500; "font-bold" utilities on serif text must not fake a heavier cut. */
+.font-serif { font-weight: 500 !important; }
+
+button, a { font-weight: 700; }
+a { color: inherit; }
+button { min-height: 44px; }
+
+/* Press feedback: scale .98. framer-motion buttons override via whileTap. */
+button:not(:disabled),
+a.btn {
+    transition: transform 160ms var(--ease), background-color 200ms, border-color 200ms, color 200ms;
+}
+button:not(:disabled):active,
+a.btn:active {
+    transform: scale(0.98);
 }
 
-h1 {
-    font-size: clamp(32px, 5vw, 48px);
-}
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-h2 {
-    font-size: clamp(26px, 4vw, 36px);
-}
-
-h3 {
-    font-size: 28px;
-}
-
-/* Ensure all interactive elements are easily tappable */
-button,
-a {
-    font-weight: 700;
-}
-
-/* Touch target floor for real buttons only. Links inside text stay inline. */
-button {
-    min-height: 44px;
-}
-
-/* Press feedback for every button; framer-motion buttons override via whileTap. */
-button:not(:disabled) {
-    transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), background-color 200ms, border-color 200ms, color 200ms, box-shadow 200ms;
-}
-button:not(:disabled):active {
-    transform: scale(0.97);
-}
 @media (prefers-reduced-motion: reduce) {
-    button:not(:disabled):active { transform: none; }
     html { scroll-behavior: auto; }
-    .animate-fade-in, .animate-slide-up, .animate-scale-in { animation: none; }
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    button:not(:disabled):active, a.btn:active { transform: none; }
 }
 
-img {
-    display: block;
-    max-width: 100%;
-    height: auto;
-}
+img, svg, video { max-width: 100%; }
+img { display: block; height: auto; }
 
 @layer components {
-    /* ========================================
-       DESIGN SYSTEM - AgeWell+ UI Consistency
-       ======================================== */
-
-    /* === CARDS === */
+    /* One card: flat surface, 1px hairline, 20px radius, no shadow. Never nest more than two deep. */
     .card {
-        @apply bg-white rounded-3xl p-6 border border-sage-200/70 shadow-card;
+        @apply bg-white rounded-[20px] p-5 sm:p-6 border border-line;
     }
-
     .card-sm {
-        @apply bg-white rounded-2xl p-5 border border-sage-200/70 shadow-card;
+        @apply bg-white rounded-[20px] p-4 sm:p-5 border border-line;
     }
-
+    /* Linked cards: 2px lift on hover. */
     .card-interactive {
-        @apply card transition-[box-shadow,transform] duration-200 hover:shadow-card-hover hover:-translate-y-0.5 cursor-pointer;
+        @apply card cursor-pointer transition-transform duration-200 hover:-translate-y-0.5 hover:border-sage-300;
+    }
+    /* Unboxed section on a sunken paper band (alternative to a card). */
+    .band {
+        @apply bg-paper-2 rounded-[20px] p-5 sm:p-6;
+    }
+    /* Hairline-divided list instead of a grid of identical cards. */
+    .list {
+        @apply divide-y divide-line border-y border-line;
     }
 
     /* === BUTTONS === */
-    /* One height scale: .btn = 56px (elder), .btn-sm = 44px (caregiver). Icon + label always centred. */
+    /* One primary action per screen: solid green pill, 56px. Secondary: outlined. .btn-sm = 44px for caregiver density. */
     .btn {
-        @apply inline-flex items-center justify-center gap-2.5 px-7 min-h-[56px] rounded-full font-bold text-lg leading-tight text-center whitespace-normal select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60 disabled:cursor-not-allowed;
+        @apply inline-flex items-center justify-center gap-2.5 px-7 min-h-[56px] rounded-full font-bold text-lg leading-tight text-center whitespace-normal select-none border-2 border-transparent disabled:opacity-60 disabled:cursor-not-allowed;
     }
     :where(.btn) > svg { @apply shrink-0 w-6 h-6; }
 
     .btn-primary {
-        @apply btn bg-primary text-white border-2 border-transparent shadow-[0_6px_16px_-8px_rgba(30,63,174,0.55)] hover:bg-primary-dark;
+        @apply btn bg-primary text-white hover:bg-primary-dark;
     }
-
     .btn-secondary {
-        @apply btn bg-white text-sage-900 border-2 border-sage-300 hover:border-sage-900 hover:bg-sage-50;
+        @apply btn bg-transparent text-primary border-primary/40 hover:border-primary hover:bg-primary-bg;
     }
-
     .btn-ghost {
-        @apply btn bg-transparent text-sage-700 border-2 border-transparent hover:bg-sage-100;
+        @apply btn bg-transparent text-sage-700 hover:bg-sage-100;
     }
-
     .btn-danger {
-        @apply btn bg-rose-600 text-white border-2 border-transparent hover:bg-rose-700;
+        @apply btn bg-rose-600 text-white hover:bg-rose-700;
     }
-
     .btn-cream {
-        @apply btn bg-sage-900 text-white border-2 border-transparent hover:bg-sage-700;
+        @apply btn bg-sage-900 text-white hover:bg-sage-700;
     }
-
-    /* Caregiver density: same shape, 44px */
     .btn-sm {
         @apply min-h-[44px] px-5 text-base gap-2;
     }
     :where(.btn-sm) > svg { @apply w-5 h-5; }
 
-    /* Button pairs: equal width side by side from 640px, stacked full-width on phones */
+    /* Phones: full width, stacked. >=640px: content width, in a row. */
     .btn-row {
-        @apply flex flex-col sm:flex-row items-stretch gap-3;
+        @apply flex flex-col sm:flex-row sm:flex-wrap items-stretch gap-3;
     }
-    .btn-row > * { @apply flex-1 min-w-0; }
+    .btn-row > * { @apply w-full sm:w-auto sm:min-w-[11rem]; }
 
     .btn-icon {
         @apply inline-flex shrink-0 items-center justify-center w-12 h-12 min-h-0 rounded-full;
     }
-
-    .btn-icon-primary {
-        @apply btn-icon bg-sage-100 text-sage-800 hover:bg-sage-200;
-    }
-
-    .btn-icon-secondary {
-        @apply btn-icon bg-white border-2 border-sage-200 text-sage-700 hover:border-sage-300;
-    }
-
-    .btn-icon-ghost {
-        @apply btn-icon text-sage-700 hover:bg-sage-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
-    }
+    .btn-icon-primary { @apply btn-icon bg-primary-bg text-primary hover:bg-primary-200; }
+    .btn-icon-secondary { @apply btn-icon bg-transparent border border-line text-sage-700 hover:border-sage-300; }
+    .btn-icon-ghost { @apply btn-icon text-sage-700 hover:bg-sage-100; }
 
     /* === PAGE LAYOUT === */
-    .page-container {
-        @apply min-h-screen bg-cream-50 font-sans;
-    }
-
-    .page-header {
-        @apply px-5 py-5 bg-cream-50 sticky top-0 z-20;
-    }
-
-    .page-main {
-        @apply px-6 space-y-6 pb-40;
-        /* More bottom padding for nav */
-    }
-
-    .page-content {
-        padding-bottom: calc(80px + env(safe-area-inset-bottom));
-    }
-
-    @media (min-width: 768px) {
-        .page-content {
-            padding-bottom: 0;
-        }
-    }
+    .page-container { @apply min-h-dvh bg-paper font-sans; }
+    .page-header { @apply px-4 sm:px-6 lg:px-10 py-4 bg-paper sticky top-0 z-20; }
+    .page-main { @apply px-4 sm:px-6 lg:px-10 space-y-6 pb-32 lg:pb-12; }
+    .page-content { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+    @media (min-width: 1024px) { .page-content { padding-bottom: 0; } }
 
     /* === FORM INPUTS === */
     .input {
-        @apply w-full px-5 min-h-[56px] py-3 border-2 border-sage-300 rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/15 focus:outline-none text-lg bg-white transition-colors text-sage-900 placeholder:text-sage-400;
+        @apply w-full px-5 min-h-[56px] py-3 border border-sage-300 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none text-base sm:text-lg bg-white transition-colors text-sage-900 placeholder:text-sage-400;
     }
-
-    .input-error {
-        @apply input border-rose-400 focus:border-rose-600;
-    }
+    .input-error { @apply input border-rose-400 focus:border-rose-600; }
 
     /* === STATUS BADGES === */
-    .badge {
-        @apply inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold;
-    }
+    .badge { @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-bold whitespace-nowrap; }
+    .badge-success { @apply badge bg-emerald-50 text-emerald-800 border border-emerald-200; }
+    .badge-warning { @apply badge bg-amber-50 text-amber-800 border border-amber-200; }
+    .badge-danger { @apply badge bg-rose-50 text-rose-700 border border-rose-200; }
+    .badge-neutral { @apply badge bg-sage-100 text-sage-700 border border-sage-200; }
 
-    .badge-success {
-        @apply badge bg-emerald-50 text-emerald-800 border border-emerald-200;
-    }
-
-    .badge-warning {
-        @apply badge bg-amber-50 text-amber-800 border border-amber-200;
-    }
-
-    .badge-danger {
-        @apply badge bg-rose-50 text-rose-700 border border-rose-200;
-    }
-
-    .badge-neutral {
-        @apply badge bg-sage-100 text-sage-700 border border-sage-200;
-    }
-
-    /* === NAVIGATION === */
+    /* === NAVIGATION (see components/shell) === */
     .bottom-nav {
-        @apply fixed inset-x-0 bottom-0 bg-cream-50 border-t border-sage-200 shadow-[0_-8px_24px_-16px_rgba(74,52,28,0.25)];
+        @apply fixed inset-x-0 bottom-0 bg-paper border-t border-line;
         padding-bottom: env(safe-area-inset-bottom);
-        padding-top: 0.5rem;
-    }
-
-    .nav-item {
-        @apply flex flex-col items-center gap-1.5 flex-1 transition-colors min-h-[60px] justify-center;
-    }
-
-    .nav-item-active {
-        @apply nav-item text-primary;
-    }
-
-    .nav-item-inactive {
-        @apply nav-item text-sage-400 hover:text-sage-600;
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
     }
 
     /* === TEXT STYLES === */
-    .text-label {
-        @apply text-sage-600 text-sm font-bold;
-    }
-
-    .text-heading {
-        @apply font-serif font-medium text-sage-900;
-    }
-
-    .text-body {
-        @apply text-sage-800 text-lg;
-    }
-
-    .text-muted {
-        @apply text-sage-500;
-    }
+    .text-label { @apply text-sage-600 text-sm font-bold; }
+    .text-heading { @apply font-serif font-medium text-sage-900; }
+    .text-body { @apply text-sage-800 text-base; }
+    .text-muted { @apply text-sage-500; }
+    .measure { max-width: 65ch; }
 
     /* === UTILITY === */
-    .section-divider {
-        @apply border-t-2 border-sage-100 my-6;
-    }
+    .section-divider { @apply border-t border-line my-6; }
+    .loading-spinner { @apply w-10 h-10 border-4 border-sage-200 border-t-primary rounded-full animate-spin motion-reduce:animate-none; }
 
-    .loading-spinner {
-        @apply w-10 h-10 border-4 border-sage-200 border-t-sage-700 rounded-full animate-spin;
-    }
-
-    /* === MOBILE TEXT UTILITIES === */
-    /* Prevent aggressive word-breaking on mobile */
-    .text-no-break {
-        word-break: normal;
-        overflow-wrap: normal;
-        hyphens: none;
-    }
-
-    /* Better word-breaking for long medicine/medication names */
-    .text-break-better {
-        word-break: keep-all;
-        overflow-wrap: break-word;
-        hyphens: auto;
-    }
-
-    /* For very long words that must break */
-    .text-break-safe {
-        word-break: break-word;
-        overflow-wrap: anywhere;
-        hyphens: auto;
-    }
-
-    /* Ensure text doesn't overflow container */
-    .text-overflow-safe {
-        overflow-wrap: break-word;
-        word-wrap: break-word;
-        word-break: break-word;
-        min-width: 0;
-    }
+    .text-no-break { word-break: normal; overflow-wrap: normal; hyphens: none; }
+    .text-break-better { word-break: keep-all; overflow-wrap: break-word; hyphens: auto; }
+    .text-break-safe { word-break: break-word; overflow-wrap: anywhere; hyphens: auto; }
+    .text-overflow-safe { overflow-wrap: break-word; word-break: break-word; min-width: 0; }
 }
-/* Stickers and the logo are JPEGs on white: multiply lets the warm paper show through. */
+/* Legacy JPEG stickers sit on white: multiply lets the warm paper show through. */
 .sticker {
     mix-blend-mode: multiply;
 }
