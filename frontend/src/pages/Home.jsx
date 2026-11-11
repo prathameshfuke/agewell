@@ -35,7 +35,7 @@ const VIEWS = [
 ]
 
 const STEPS = [
-  ['Sign in and choose your role', 'Sign in with Google and choose elder, caregiver, or both. One email can do both.'],
+  ['Sign in and choose your role', 'Sign in with Google or your phone number and choose elder, caregiver, or both. One account can do both.'],
   ['Add medicines, share a code', 'The elder adds medicines by hand or from a prescription, then shares a short link code so family can follow along.'],
   ['Stay in the loop', 'Reminders, readings and alerts show up where each person needs them.'],
 ]
@@ -48,7 +48,7 @@ const PRIVACY = [
 
 const FAQ = [
   ['Who is AgeWell for?', 'Elderly people in India who take regular medicines, and the family members who look after them from home or from far away.'],
-  ['Can I use one account as both elder and caregiver?', 'Yes. Sign in once with your email, choose "I\'m both", and set a 4-digit PIN. Elder mode opens first. Caregiver mode asks for the PIN. You can also keep two separate accounts.'],
+  ['Can I use one account as both elder and caregiver?', 'Yes. Sign in once, choose "I\'m both", and set a 4-digit PIN. Elder mode opens first. Caregiver mode asks for the PIN. You can also keep two separate accounts.'],
   ['Does it work in Hindi?', 'Yes. The symptom check accepts voice in Hindi and English, and replies can be read aloud in either.'],
   ['Does AgeWell replace a doctor?', 'No. The symptom check gives general guidance only. For anything serious, call your doctor or emergency services.'],
   ['How do I link a family member?', 'The elder generates a short link code in their settings. The caregiver enters it during setup, or from the link page.'],

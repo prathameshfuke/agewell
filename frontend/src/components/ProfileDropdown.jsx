@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import RoleSwitcher from './RoleSwitcher'
+import { contactLabel } from '../lib/phone'
 
 /**
  * ProfileDropdown - Accessible profile menu for elderly users
@@ -135,7 +136,7 @@ export default function ProfileDropdown({
                       {profile?.full_name || 'User'}
                     </p>
                     <p className="text-sm text-primary truncate">
-                      {user?.email}
+                      {contactLabel(user)}
                     </p>
                   </div>
                 </div>

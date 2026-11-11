@@ -318,6 +318,23 @@ export function AuthProvider({ children }) {
         return data
     }
 
+    // Phone numbers and codes are passed straight through: never logged or stored.
+    const signInWithPhone = async (phone) => {
+        if (!supabase) throw new Error('Supabase not configured')
+
+        const { error } = await supabase.auth.signInWithOtp({ phone, options: { shouldCreateUser: true } })
+        if (error) throw error
+    }
+
+    const verifyPhoneCode = async (phone, token) => {
+        if (!supabase) throw new Error('Supabase not configured')
+
+        const { data, error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' })
+        if (error) throw error
+
+        return data
+    }
+
     const signOutUser = useCallback(async () => {
         if (!supabase) {
             clearAuthState()
@@ -564,6 +581,8 @@ export function AuthProvider({ children }) {
         login,
         loginWithEmail,
         signupWithEmail,
+        signInWithPhone,
+        verifyPhoneCode,
         signOut: signOutUser,
         logout: signOutUser,
         addRole,

@@ -4,13 +4,14 @@ import { Repeat } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import BottomNav, { isActive, useNav } from '../BottomNav'
 import { logo } from '../../assets/images'
+import { contactLabel } from '../../lib/phone'
 
 /** Desktop sidebar (>=1024px): logo, labelled nav, profile and role switch at the bottom. */
 function Sidebar({ nav }) {
   const navigate = useNavigate()
   const reduce = useReducedMotion()
   const { profile, user, roles, setActiveRole } = useAuth()
-  const name = profile?.full_name || user?.email || 'You'
+  const name = profile?.full_name || contactLabel(user) || 'You'
   const other = nav.role === 'caregiver' ? 'elderly' : 'caregiver'
   const canSwitch = roles?.includes('elderly') && roles?.includes('caregiver')
 
