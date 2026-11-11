@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 from flask import Blueprint, jsonify, request
 
+from auth import is_self
 from services.settings_service import get_supabase_client
 
 bp = Blueprint('linking', __name__, url_prefix='/api/link')
@@ -17,14 +18,29 @@ CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 # ponytail: in-process failed-guess counter per caregiver (per worker, resets on restart).
 # Move to Redis or a DB table if the API runs on several instances.
 JOIN_MAX_FAILURES = 10
+JOIN_MAX_FAILURES_PER_IP = 30  # accounts are free to create, so also cap guesses per client address
 JOIN_WINDOW_SECONDS = 15 * 60
 _join_failures = {}  # caregiver_id -> [monotonic timestamps of wrong guesses]
 
 
-def join_blocked(caregiver_id: str) -> bool:
+def join_blocked(caregiver_id: str, limit: int = JOIN_MAX_FAILURES) -> bool:
     recent = [t for t in _join_failures.get(caregiver_id, []) if time.monotonic() - t < JOIN_WINDOW_SECONDS]
     _join_failures[caregiver_id] = recent
-    return len(recent) >= JOIN_MAX_FAILURES
+    return len(recent) >= limit
+
+
+def _client_ip() -> str:
+    # Render appends the real client address last in X-Forwarded-For; earlier entries are client-supplied.
+    return 'ip:' + (request.headers.get('X-Forwarded-For', '').split(',')[-1].strip() or request.remote_addr or '')
+
+
+def _join_is_blocked(caregiver_id: str) -> bool:
+    return join_blocked(caregiver_id) or join_blocked(_client_ip(), JOIN_MAX_FAILURES_PER_IP)
+
+
+def _record_wrong_code(caregiver_id: str) -> None:
+    record_join_failure(caregiver_id)
+    record_join_failure(_client_ip())
 
 
 def record_join_failure(caregiver_id: str) -> None:
@@ -106,6 +122,8 @@ def generate_code():
 
         if not elder_id:
             return jsonify({'error': 'elder_id is required'}), 400
+        if not is_self(elder_id):  # a linked caregiver must not be able to invite more people into the elder's data
+            return jsonify({'error': 'Only the elder can create a link code.'}), 403
 
         client = get_supabase_client()
 
@@ -165,7 +183,7 @@ def generate_code():
 def join_with_code():
     try:
         data = request.get_json() or {}
-        caregiver_id = (data.get('caregiver_id') or '').strip()
+        caregiver_id = (data.get('caregiver_id') or '').strip().lower()
         link_code = (data.get('link_code') or '').strip().upper()
 
         if not caregiver_id:
@@ -174,7 +192,7 @@ def join_with_code():
         if len(link_code) != CODE_LENGTH:
             return jsonify({'error': 'link_code must be a 6-character code'}), 400
 
-        if join_blocked(caregiver_id):
+        if _join_is_blocked(caregiver_id):
             return jsonify({'error': 'Too many wrong codes. Please wait 15 minutes and try again.'}), 429
 
         client = get_supabase_client()
@@ -188,41 +206,18 @@ def join_with_code():
             .execute()
         )
         rows = lookup_response.data or []
-        used_legacy_pairing_code = False
-        legacy_elder_profile = None
-
         if not rows:
-            legacy_response = (
-                client.table(PROFILES_TABLE)
-                .select('id, full_name, avatar_url, role')
-                .eq('pairing_code', link_code)
-                .limit(1)
-                .execute()
-            )
-            legacy_rows = legacy_response.data or []
-            if not legacy_rows:
-                record_join_failure(caregiver_id)
-                return jsonify({'error': 'Invalid or already used link code'}), 404
-
-            used_legacy_pairing_code = True
-            legacy_elder_profile = legacy_rows[0]
-            pending_link = {
-                'id': None,
-                'elder_id': legacy_elder_profile.get('id'),
-                'caregiver_id': None,
-                'link_code': link_code,
-                'status': 'pending',
-                'created_at': _iso_now()
-            }
-        else:
-            pending_link = rows[0]
+            # The old profiles.pairing_code fallback is gone: those codes never expired and elders never saw them.
+            _record_wrong_code(caregiver_id)
+            return jsonify({'error': 'Invalid or already used link code'}), 404
+        pending_link = rows[0]
 
         if pending_link['elder_id'] == caregiver_id:
             return jsonify({'error': 'You cannot link to yourself'}), 400
 
-        if not used_legacy_pairing_code and _pending_expired(pending_link):
+        if _pending_expired(pending_link):
             client.table(TABLE).update({'status': 'revoked'}).eq('id', pending_link['id']).execute()
-            record_join_failure(caregiver_id)
+            _record_wrong_code(caregiver_id)
             return jsonify({'error': 'This code has expired. Ask the elder to generate a new code.'}), 410
 
         existing_response = (
@@ -253,52 +248,26 @@ def join_with_code():
                 'elder': elder_profile
             })
 
-        if used_legacy_pairing_code:
-            generated_link_code = _generate_unique_link_code(client)
-            if not generated_link_code:
-                return jsonify({'error': 'Unable to activate link at this time. Please retry.'}), 500
+        update_response = (
+            client.table(TABLE)
+            .update({'caregiver_id': caregiver_id, 'status': 'active', 'linked_at': _iso_now()})
+            .eq('id', pending_link['id'])
+            .eq('status', 'pending')
+            .execute()
+        )
+        updated_rows = update_response.data or []
+        if not updated_rows:  # someone else claimed this code between our lookup and update
+            return jsonify({'error': 'Invalid or already used link code'}), 409
+        updated_link = updated_rows[0]
 
-            insert_payload = {
-                'elder_id': pending_link['elder_id'],
-                'caregiver_id': caregiver_id,
-                'link_code': generated_link_code,
-                'status': 'active',
-                'linked_at': _iso_now(),
-                'created_at': _iso_now()
-            }
-            insert_response = client.table(TABLE).insert(insert_payload).execute()
-            inserted_rows = insert_response.data or []
-            updated_link = inserted_rows[0] if inserted_rows else insert_payload
-        else:
-            update_payload = {
-                'caregiver_id': caregiver_id,
-                'status': 'active',
-                'linked_at': _iso_now()
-            }
-
-            update_response = (
-                client.table(TABLE)
-                .update(update_payload)
-                .eq('id', pending_link['id'])
-                .eq('status', 'pending')
-                .execute()
-            )
-            updated_rows = update_response.data or []
-            if not updated_rows:  # someone else claimed this code between our lookup and update
-                return jsonify({'error': 'Invalid or already used link code'}), 409
-            updated_link = updated_rows[0]
-
-        if used_legacy_pairing_code and legacy_elder_profile:
-            elder_profile_rows = [legacy_elder_profile]
-        else:
-            elder_profile_response = (
-                client.table(PROFILES_TABLE)
-                .select('id, full_name, avatar_url, role')
-                .eq('id', updated_link['elder_id'])
-                .limit(1)
-                .execute()
-            )
-            elder_profile_rows = elder_profile_response.data or []
+        elder_profile_response = (
+            client.table(PROFILES_TABLE)
+            .select('id, full_name, avatar_url, role')
+            .eq('id', updated_link['elder_id'])
+            .limit(1)
+            .execute()
+        )
+        elder_profile_rows = elder_profile_response.data or []
 
         client.table(PROFILES_TABLE).update({
             'linked_elderly_id': updated_link['elder_id'],
@@ -307,7 +276,7 @@ def join_with_code():
 
         return jsonify({
             'success': True,
-            'linked_via': 'pairing_code' if used_legacy_pairing_code else 'link_code',
+            'linked_via': 'link_code',
             'link': {
                 'id': updated_link.get('id'),
                 'elder_id': updated_link.get('elder_id'),

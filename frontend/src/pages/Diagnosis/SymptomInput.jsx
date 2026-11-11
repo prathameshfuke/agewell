@@ -315,8 +315,7 @@ export default function SymptomInput() {
                             <ArrowLeft className="w-6 h-6" />
                         </motion.button>
                         <div>
-                            <div className="text-sage-500 text-sm font-bold">Assistive Diagnosis</div>
-                            <h1 className="text-2xl font-serif font-bold text-sage-900">Describe Your Symptoms</h1>
+                            <h1 className="text-2xl font-serif text-sage-900">Describe your symptoms</h1>
                         </div>
                     </div>
                 </PageHeader>

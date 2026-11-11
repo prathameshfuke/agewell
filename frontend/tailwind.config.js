@@ -1,4 +1,9 @@
 /** @type {import('tailwindcss').Config} */
+const green = {
+    50: '#F1F7F3', 100: '#E3EEE7', 200: '#C4DBCE', 300: '#98BEA9', 400: '#5F9680',
+    500: '#2F7860', 600: '#1F5F4A', 700: '#174A3A', 800: '#113A2D', 900: '#0B2A20',
+}
+
 export default {
     content: [
         "./index.html",
@@ -15,93 +20,62 @@ export default {
         },
         extend: {
             fontFamily: {
-                serif: ['Butler', 'Georgia', 'serif'],
-                sans: ['"Atkinson Hyperlegible"', 'system-ui', 'sans-serif'],
+                serif: ['Butler', '"Noto Serif Devanagari"', 'Georgia', 'serif'],
+                sans: ['"Atkinson Hyperlegible"', '"Noto Sans Devanagari"', 'system-ui', 'sans-serif'],
                 romelio: ['Romelio', 'sans-serif'],
             },
-            // Simplified color palette - only 2-3 colors optimized for elderly users
+            // Palette: paper + ink + forest green, saffron/terracotta as sparing warm accents.
+            // Legacy names (primary, sage, cream, clay) keep working; sage = ink neutrals, cream = paper neutrals.
             colors: {
-                // One accent (blue), ink neutrals, warm paper. Status colours are for status only.
+                paper: { DEFAULT: '#FAF6EE', 2: '#F2ECDF' },
+                ink: { DEFAULT: '#1B2A24', 2: '#4B5B53' },
+                line: '#E3DCCB',
+                saffron: { DEFAULT: '#E8A33D', light: '#FBEFD6', dark: '#8A5A0E' },
                 primary: {
-                    DEFAULT: '#2F5BEA',
-                    light: '#8FA8F5',
-                    dark: '#1E3FAE',
-                    bg: '#E9EEFD',
+                    DEFAULT: '#1F5F4A',
+                    light: '#98BEA9',
+                    dark: '#174A3A',
+                    bg: '#E3EEE7',
+                    ...green,
                 },
-                secondary: {
-                    DEFAULT: '#FBF7F0',
-                    dark: '#EBE2D0',
-                },
-                accent: {
-                    DEFAULT: '#C2362B',
-                    light: '#FBE9E7',
-                },
-                // Legacy names kept so existing pages inherit the new palette.
-                // sage = ink neutrals (text, borders, dark buttons)
+                secondary: { DEFAULT: '#FAF6EE', dark: '#F2ECDF' },
+                accent: { DEFAULT: '#B3261E', light: '#FBEBE9' },
                 sage: {
-                    50: '#F8F5EF',
-                    100: '#F1ECE2',
-                    200: '#E6DFD1',
-                    300: '#D3CBBA',
-                    400: '#7D7566',
-                    500: '#6A6355',
-                    600: '#524C40',
-                    700: '#3A352C',
-                    800: '#27231D',
-                    900: '#1A1713',
+                    50: '#F6F1E6', 100: '#F2ECDF', 200: '#E3DCCB', 300: '#CFC6B0', 400: '#66726B',
+                    500: '#5A6860', 600: '#4B5B53', 700: '#38463F', 800: '#27352F', 900: '#1B2A24',
                 },
-                // cream = warm paper surfaces
                 cream: {
-                    50: '#FBF7F0',
-                    100: '#F5EEE1',
-                    200: '#EBE2D0',
-                    300: '#DDD1BA',
-                    400: '#BDB19A',
-                    500: '#948976',
-                    600: '#70675A',
-                    700: '#52493F',
-                    800: '#38322B',
-                    900: '#26221D',
+                    50: '#FAF6EE', 100: '#F2ECDF', 200: '#E8E0CE', 300: '#D9D0BB', 400: '#BDB296',
+                    500: '#968C74', 600: '#70685A', 700: '#52493F', 800: '#38322B', 900: '#26221D',
                 },
-                // Warm secondary: terracotta. Sparing use: accents, highlights, illustrations.
                 clay: {
-                    DEFAULT: '#B5522F',
-                    light: '#F7E4D9',
-                    dark: '#8C3E22',
+                    DEFAULT: '#C8643C', light: '#F8E6DC', dark: '#A24E2B',
+                    50: '#FBF0EA', 100: '#F8E6DC', 200: '#F0CDB8', 300: '#E5A987', 400: '#D88560',
+                    500: '#C8643C', 600: '#A24E2B', 700: '#7E3C21', 800: '#5C2C18', 900: '#3D1D10',
                 },
-                status: {
-                    success: '#1E7F5C',
-                    warning: '#B7791F',
-                    danger: '#C2362B',
-                    info: '#2F5BEA',
-                },
-                rose: {
-                    50: '#FBE9E7',
-                    500: '#C2362B',
-                    600: '#A82D23',
-                }
+                status: { success: '#2E7D4F', warning: '#B87A1B', danger: '#B3261E', info: '#1F5F4A' },
+                rose: { 50: '#FBEBE9', 100: '#F6D5D2', 200: '#EEB4AF', 400: '#D2645B', 500: '#C0392F', 600: '#B3261E', 700: '#911D17', 800: '#6E1511' },
+                emerald: { 50: '#EAF4EE', 100: '#D5E9DD', 200: '#B0D4BE', 600: '#2E7D4F', 700: '#256640', 800: '#1D5233' },
+                amber: { 50: '#FDF5E4', 100: '#FBEBC8', 200: '#F4D79B', 600: '#B87A1B', 700: '#946010', 800: '#6F480C' },
+                // No blue or violet in this product: any stray use resolves to the green scale.
+                blue: green, indigo: green, violet: green, purple: green, sky: green, fuchsia: green,
             },
-            // Increased font sizes for elderly users
             fontSize: {
-                xs: ['14px', { lineHeight: '1.5', letterSpacing: '0.025em' }],
-                sm: ['16px', { lineHeight: '1.5', letterSpacing: '0.025em' }],
-                base: ['20px', { lineHeight: '1.5', letterSpacing: '0.025em' }],
-                lg: ['22px', { lineHeight: '1.5', letterSpacing: '0.025em' }],
-                xl: ['24px', { lineHeight: '1.5', letterSpacing: '0.025em' }],
-                '2xl': ['28px', { lineHeight: '1.4', letterSpacing: '0' }],
-                '3xl': ['32px', { lineHeight: '1.3', letterSpacing: '-0.025em' }],
-                '4xl': ['36px', { lineHeight: '1.3', letterSpacing: '-0.025em' }],
-                '5xl': ['48px', { lineHeight: '1.2', letterSpacing: '-0.025em' }],
-                '6xl': ['56px', { lineHeight: '1.1', letterSpacing: '-0.025em' }],
+                xs: ['0.875rem', { lineHeight: '1.5' }],
+                sm: ['1rem', { lineHeight: '1.5' }],
+                base: ['1.125rem', { lineHeight: '1.55' }],
+                lg: ['1.25rem', { lineHeight: '1.5' }],
+                xl: ['1.375rem', { lineHeight: '1.45' }],
+                '2xl': ['clamp(1.375rem, 1.15rem + 1vw, 1.625rem)', { lineHeight: '1.3' }],
+                '3xl': ['clamp(1.625rem, 1.3rem + 1.4vw, 2rem)', { lineHeight: '1.2', letterSpacing: '-0.015em' }],
+                '4xl': ['clamp(1.875rem, 1.4rem + 2vw, 2.5rem)', { lineHeight: '1.15', letterSpacing: '-0.02em' }],
+                '5xl': ['clamp(2rem, 1.2rem + 4vw, 3.5rem)', { lineHeight: '1.1', letterSpacing: '-0.02em' }],
+                '6xl': ['clamp(2.25rem, 1.4rem + 5vw, 4.25rem)', { lineHeight: '1.05', letterSpacing: '-0.025em' }],
             },
+            // Flat by design: only overlays (sheets, dialogs) keep a shadow.
             boxShadow: {
-                // Warm, low, wide shadows: brown-tinted so they read as paper, not plastic
-                'soft': '0 1px 2px rgba(74, 52, 28, 0.06), 0 6px 18px -10px rgba(74, 52, 28, 0.14)',
-                'elevated': '0 2px 4px rgba(74, 52, 28, 0.06), 0 18px 40px -18px rgba(74, 52, 28, 0.22)',
-                'glow-sage': '0 0 0 4px rgba(47, 91, 234, 0.15)',
-                'glow-cream': '0 0 0 4px rgba(235, 226, 208, 0.6)',
-                'card': '0 1px 2px rgba(74, 52, 28, 0.06), 0 6px 18px -10px rgba(74, 52, 28, 0.14)',
-                'card-hover': '0 2px 4px rgba(74, 52, 28, 0.06), 0 14px 30px -14px rgba(74, 52, 28, 0.22)',
+                soft: 'none', card: 'none', 'card-hover': 'none', 'glow-sage': 'none', 'glow-cream': 'none',
+                elevated: '0 12px 40px -12px rgba(27, 42, 36, 0.28)',
             },
             borderRadius: {
                 // Tighter than Tailwind defaults: cleaner, less bubbly
@@ -152,9 +126,9 @@ export default {
                 },
             },
             backgroundImage: {
-                'gradient-sage': 'linear-gradient(135deg, #2F5BEA 0%, #1E3FAE 100%)',
-                'gradient-cream': 'linear-gradient(135deg, #FBF7F0 0%, #F5EEE1 100%)',
-                'gradient-soft': 'linear-gradient(135deg, #E9EEFD 0%, #F5EEE1 100%)',
+                'gradient-sage': 'linear-gradient(#1F5F4A, #1F5F4A)',
+                'gradient-cream': 'linear-gradient(#FAF6EE, #FAF6EE)',
+                'gradient-soft': 'linear-gradient(#E3EEE7, #E3EEE7)',
             },
             // Mobile-first spacing utilities
             spacing: {

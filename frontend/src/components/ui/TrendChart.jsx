@@ -2,7 +2,7 @@ import { useId, useMemo } from 'react'
 
 export default function TrendChart({
   data = [],
-  color = '#2563EB',
+  color = '#1F5F4A',
   height = 60,
   showTooltip = true
 }) {

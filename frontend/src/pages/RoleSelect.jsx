@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LogOut, Loader2, Check } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { logo, danceSticker, chatSticker, familyPhoto } from '../assets/images'
+import { logo } from '../assets/images'
+import { morning, together } from '../assets/images/gen'
+import { Art, Notice, textBtn } from '../components/family/FamilyPage'
 
 
 /**
@@ -81,71 +83,63 @@ export default function RoleSelect() {
 
     if (!initialized || authLoading) {
         return (
-            <div className="min-h-screen bg-cream-50 flex items-center justify-center" role="status" aria-label="Loading">
+            <div className="min-h-screen bg-paper flex items-center justify-center" role="status" aria-label="Loading">
                 <div className="loading-spinner" />
             </div>
         )
     }
 
-    const Choice = ({ role, title, text, done, sticker, w, h }) => (
+    const Choice = ({ role, title, text, done, art, wide }) => (
         <button
             type="button"
             onClick={() => handleSelectRole(role)}
             disabled={loading}
-            className={`w-full flex items-center gap-4 text-left bg-white rounded-3xl p-4 sm:p-5 border-2 shadow-card transition-[border-color,box-shadow] hover:shadow-card-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60 ${selectedRole === role ? 'border-primary' : 'border-transparent hover:border-sage-300'}`}
+            className={`card flex w-full items-center gap-5 text-left font-normal transition-transform hover:-translate-y-0.5 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${selectedRole === role ? '!border-primary' : ''}`}
         >
-            <span className="flex h-20 w-24 shrink-0 items-center justify-center rounded-2xl bg-cream-100">
-                <img src={sticker} alt="" width={w} height={h} className="sticker h-16 w-auto max-w-[5rem] object-contain" />
-            </span>
+            <Art src={art} wide={wide} className="w-20 shrink-0 sm:w-28" />
             <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2">
-                    <span className="font-serif text-2xl text-sage-900">{title}</span>
-                    {done && <Check className="w-5 h-5 shrink-0 text-emerald-600" aria-label="Already set up" />}
-                    {loading && selectedRole === role && <Loader2 className="w-5 h-5 shrink-0 text-primary animate-spin motion-reduce:animate-none" aria-label="Working" />}
+                    <span className="font-serif text-3xl">{title}</span>
+                    {done && <Check className="h-5 w-5 shrink-0 text-emerald-700" aria-label="Already set up" />}
+                    {loading && selectedRole === role && <Loader2 className="h-5 w-5 shrink-0 animate-spin text-primary motion-reduce:animate-none" aria-label="Working" />}
                 </span>
-                <span className="mt-1 block text-base leading-snug text-sage-600 font-normal">{text}</span>
+                <span className="mt-1 block text-ink-2">{text}</span>
             </span>
         </button>
     )
 
     return (
-        <div className="min-h-screen bg-cream-50 flex flex-col px-5 py-4">
-            <header className="h-14 flex items-center justify-between">
-                <span className="inline-flex items-center gap-2">
-                    <img src={logo} alt="" width="48" height="48" className="sticker w-10 h-10 sm:w-12 sm:h-12 object-contain" />
-                    <span className="font-serif text-xl sm:text-2xl leading-none text-sage-900">AgeWell</span>
-                </span>
-                <button type="button" onClick={handleSignOut} disabled={loading} className="text-sage-600 hover:text-sage-900 inline-flex items-center gap-2 text-sm min-h-[44px] px-3 font-normal">
-                    <LogOut className="w-4 h-4" aria-hidden="true" /> Sign out
-                </button>
-            </header>
+        <div className="min-h-screen bg-paper font-sans text-ink">
+            <div className="mx-auto w-full max-w-[1120px] px-4 sm:px-6 lg:px-10">
+                <header className="flex h-16 items-center justify-between">
+                    <span className="inline-flex items-center gap-2">
+                        <img src={logo} alt="" width="48" height="48" className="sticker h-10 w-10 object-contain" />
+                        <span className="font-serif text-2xl leading-none">AgeWell</span>
+                    </span>
+                    <button type="button" onClick={handleSignOut} disabled={loading} className="inline-flex min-h-[44px] items-center gap-2 px-3 font-normal text-ink-2 hover:text-ink">
+                        <LogOut className="h-4 w-4" aria-hidden="true" /> Sign out
+                    </button>
+                </header>
 
-            <main className="flex-1 flex flex-col justify-center max-w-lg mx-auto w-full pb-10">
-                <img src={familyPhoto} alt="" width="1536" height="1024" className="mx-auto w-full max-h-44 sm:max-h-56 object-cover object-top rounded-3xl shadow-soft" />
-                <h1 className="mt-8 font-serif text-3xl sm:text-4xl text-sage-900 text-center">Welcome, {userName}</h1>
-                <p className="mt-2 text-sage-600 text-lg text-center font-normal">How will you use AgeWell?</p>
+                <main className="grid gap-x-14 gap-y-10 py-8 lg:grid-cols-12 lg:items-center lg:py-20">
+                    <div className="lg:col-span-5">
+                        <h1 className="font-serif text-5xl">Welcome, {userName}</h1>
+                        <p className="mt-3 text-lg text-ink-2">How will you use AgeWell?</p>
+                        <button type="button" onClick={() => handleSelectRole('elderly')} disabled={loading} className={`${textBtn} mt-6 disabled:opacity-60`}>
+                            I'm both: use one account
+                        </button>
+                        <p className="mt-1 max-w-sm text-ink-2">
+                            We set up elder mode first. Then you add caregiver mode from the role switcher, protected by a 4-digit PIN.
+                        </p>
+                    </div>
 
-                {error && (
-                    <p role="alert" className="mt-6 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 text-sm font-normal">{error}</p>
-                )}
-
-                <div className="mt-6 grid gap-4">
-                    <Choice role="elderly" title="I'm an elder" text="Medicines, health readings, voice symptom check and an emergency button." done={hasElderRole} sticker={danceSticker} w={287} h={340} />
-                    <Choice role="caregiver" title="I'm a caregiver" text="Follow a loved one's medicines, alerts and health trends. You will need their link code." done={hasCaregiverRole} sticker={chatSticker} w={472} h={340} />
-                </div>
-
-                <button
-                    type="button"
-                    onClick={() => handleSelectRole('elderly')}
-                    disabled={loading}
-                    className="mt-4 mx-auto px-4 text-primary hover:text-primary-dark underline underline-offset-4 min-h-[44px] font-normal disabled:opacity-60"
-                >
-                    I'm both: use one account
-                </button>
-                <p className="text-center text-sm text-sage-600 font-normal">
-                    We set up elder mode first. Then you add caregiver mode from the role switcher, protected by a 4-digit PIN.
-                </p>
-            </main>
+                    <div className="space-y-4 lg:col-span-7">
+                        {error && <Notice>{error}</Notice>}
+                        <Choice role="elderly" title="I'm an elder" text="Medicines, health readings, voice symptom check and an emergency button." done={hasElderRole} art={morning} />
+                        <Choice role="caregiver" title="I'm a caregiver" text="Follow a loved one's medicines, alerts and health trends. You will need their link code." done={hasCaregiverRole} art={together} wide />
+                    </div>
+                </main>
+            </div>
         </div>
     )
 }

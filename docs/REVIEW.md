@@ -24,3 +24,33 @@ Read-only review of backend/, supabase/migrations/, frontend/src and docs/CI. Or
 15. **CI:** `ci.yml` deploy steps exit 0 when secrets are missing (silent green); no frontend tests exist; `backend` job only runs `test_auth.py` (no coverage of the session-id gap in #1).
 16. **PDF export:** `patient_name` is taken from the query string (`diagnosis_routes.py:309`) and rendered unvalidated into the PDF.
 17. **Dead weight:** `prescription/`, `project/`, `stitch_elder_dashboard/`, `frontend/font`, `frontend/assets` pending deletion.
+
+## Security review (pre-production)
+
+OWASP-style pass over backend, Supabase RLS/storage, frontend headers and dependencies. Fixed items are in the working tree (uncommitted); migrations are written, **not applied**.
+
+**Critical / High**
+1. **Elder data readable by any signed-in user (RLS).** `profiles.linked_elderly_id` was writable by its owner with no check, and `can_access_user()` plus `backend/auth.py:can_access` both trust it (`schema.sql:402-403`). Fix: `migrations/20261111000500_rls_hardening.sql` adds a trigger so a client may only point it at an elder it has an active `caregiver_links` row for. Run the audit query in that file for rows that already point at an elder without a link (legacy, revoked or forged). Revoking a link still leaves the pointer, so a revoked caregiver keeps access until the pointer is cleared: no revoke UI exists yet.
+2. **Voice memos in a public bucket with guessable names** (`pages/VoiceMemos.jsx:105-112`, `voice-memo-<Date.now()>.webm` via `getPublicUrl`). Fix: `migrations/20261111000600_voice_memos_private_storage.sql` (private bucket, object policies tied to `voice_memos`), and `lib/supabase.js` now stores the object name and signs URLs on read. Deploy the frontend first or together with the migration.
+3. **Ownership check bypass in `auth.py`.** Ids were only checked when they were a bare UUID, but routes `strip()` them: `" <victim uuid>"` skipped the check and then hit the service-key query. `session_id` and `user_id` sent as multipart form fields (`/upload-image`, `/prescriptions/upload`) were never inspected. Fix: form fields are inspected, and any id key whose value is not a plain UUID string is a 400 (`fullmatch`, so a trailing newline fails too).
+4. **Caregiver could mint link codes for the elder** and so invite anyone into the elder's data (`linking_routes.py` `generate-code`). Now elder-only. Same for replacing provider keys in `/api/settings/keys`.
+5. **Legacy `profiles.pairing_code` join** never expired, was `Math.random()`-generated client-side and never shown to the elder. Removed from `/api/link/join`. Wrong-code counter is now also per client IP and case-insensitive on the caregiver id.
+
+**Medium**
+6. No per-user rate limit on Groq/Gemini/TTS/upload/share/link routes: added in `auth.py` (`RATE_LIMITS`, 429 with `Retry-After` and a plain-language message; in-process, `ponytail:` comment).
+7. Uploads: prescription photos only checked the filename extension and `/diagnosis/upload-image` nothing. New `services/uploads.py`: 8 MB cap, Pillow magic-byte sniff (JPEG/PNG/WEBP only), pixel cap against decompression bombs, filenames never used. JSON bodies over 64 KB are refused (413). Free-text inputs sent to the LLM are length-capped; `patient_name` is normalised once for SMS, email and PDF.
+8. Logs: WhatsApp/push placeholders printed phone numbers and message bodies (PHI); exception text from Supabase/Groq/Gemini (can echo row data) now logs the exception type only.
+9. Vulnerable dependencies. Backend bumped: Flask 3.1.3, Werkzeug 3.1.9, Flask-CORS 6.0.0, requests 2.33.0, python-dotenv 1.2.2 (`pip-audit`: 0 known). Frontend `npm audit fix`: react-router 7.18.5 and ws 8.22.2; production audit is clean.
+10. `handle_new_user` lacked `set search_path`; helper functions were executable by `anon`; `voice_memos` allowed inserting a memo addressed to any user: all in migration `...000500`.
+
+**Headers / transport**: `frontend/vercel.json` now sends CSP (default-src 'self', script-src 'self', no inline scripts in `dist/index.html`), HSTS, nosniff, X-Frame-Options DENY, Referrer-Policy, Permissions-Policy (microphone=(self)). The Supabase origin is also in `media-src` for signed voice-memo URLs. The API sends nosniff, `Cache-Control: no-store` on `/api`, `frame-ancestors 'none'`, HSTS. `app.run` never binds beyond localhost in debug.
+
+**Verified OK**: all `/api` routes go through `before_request`; no committed secrets (`git log -G` for gsk_, AIza, sb_secret, JWTs, sk-, Twilio: none; `.env*` ignored); only `VITE_` vars reach the bundle; no `dangerouslySetInnerHTML`, no `target=_blank`, no open redirect (`redirectTo` is `window.location.origin`); PostgREST filters use params dicts or supabase-py builders; PDF/email text is escaped; the PIN RPCs are `security definer` with pinned `search_path`, lock after 5 tries for 15 minutes (verify, change and reset all honour it) and have no direct table access.
+
+**Still needs the owner**
+- Apply `20261111000400`, `000500`, `000600` in order (000500/000600 are new here), then run the audit query.
+- Supabase Auth: set Site URL and the redirect allow-list to the Vercel domain only; enable leaked-password protection, email confirmation and a captcha/rate limits on sign-up and sign-in; consider `flowType: 'pkce'` in `lib/supabase.js` (needs a check of `AuthCallback.jsx`).
+- Render: `CORS_ORIGINS` for any extra origin, `SECRET_KEY` set, `REQUIRE_AUTH` and `FLASK_DEBUG` unset, start command `gunicorn`. Provider keys saved in `app_settings` are plaintext; prefer server-side env keys only.
+- Remaining dev-only npm advisories (vite/esbuild, @babel/core, browserslist) need a vite major bump.
+- Pages (not touched in this pass): `VoiceMemos.jsx:105-112` should upload to `<user id>/<uuid>.webm` and stop calling `getPublicUrl`; `ElderlyOnboarding.jsx:89` generates a `Math.random()` pairing code that is now unused; `CaregiverOnboarding.jsx:118` writes `linked_elderly_id` from the client (now trigger-guarded, redundant with the backend join).
+- The caregiver PIN stays a screen gate (sessionStorage flag), not a data boundary.

@@ -26,36 +26,36 @@ export default function ElderSummary() {
   const lastMood = checkins?.[0]?.mood
 
   return (
-    <ElderPage title={first ? `Your day, ${first}` : 'Your day'} backTo="/elder/dashboard">
+    <ElderPage title={first ? `Your day, ${first}` : 'Your day'} art="morning" backTo="/elder/dashboard">
       {loading || checkins === null ? (
         <Loading />
       ) : error ? (
         <ErrorNote onRetry={() => refresh()}>We could not load your day. Check your connection and try again.</ErrorNote>
       ) : (
-        <ul className="space-y-3">
-          <li className="card !p-5">
-            <p className="text-lg text-sage-600">Medicines</p>
-            <p className="text-2xl font-bold">
+        <ul className="list max-w-2xl">
+          <li className="py-5">
+            <p className="text-base text-sage-600">Medicines</p>
+            <p className="text-2xl">
               {schedule.length === 0
                 ? 'None scheduled today'
                 : `You took ${completedMeds.length} of ${schedule.length}${missedMeds.length ? `, skipped ${missedMeds.length}` : ''}`}
             </p>
           </li>
-          <li className="card !p-5">
-            <p className="text-lg text-sage-600">Check-ins</p>
-            <p className="text-2xl font-bold">
+          <li className="py-5">
+            <p className="text-base text-sage-600">Check-ins</p>
+            <p className="text-2xl">
               {checkins.length === 0 ? 'You have not checked in today' : `Checked in ${checkins.length} time${checkins.length > 1 ? 's' : ''}`}
             </p>
           </li>
           {lastMood && (
-            <li className="card !p-5">
-              <p className="text-lg text-sage-600">Last time you said you felt</p>
-              <p className="text-2xl font-bold">{MOOD[lastMood] || lastMood}</p>
+            <li className="py-5">
+              <p className="text-base text-sage-600">Last time you said you felt</p>
+              <p className="text-2xl">{MOOD[lastMood] || lastMood}</p>
             </li>
           )}
         </ul>
       )}
-      <button type="button" onClick={() => navigate('/elder/dashboard')} className="btn-primary w-full">Back to home</button>
+      <button type="button" onClick={() => navigate('/elder/dashboard')} className="btn-primary w-full sm:w-auto">Back to home</button>
     </ElderPage>
   )
 }

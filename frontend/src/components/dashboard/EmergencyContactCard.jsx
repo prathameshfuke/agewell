@@ -1,56 +1,39 @@
-import { Phone, MessageCircle, AlertTriangle } from 'lucide-react'
-
-const iconBtn =
-  'w-11 h-11 rounded-full flex items-center justify-center border border-sage-300 text-sage-700 hover:bg-sage-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary'
+import { Phone } from 'lucide-react'
+import { lone } from '../family/FamilyPage'
 
 /**
  * EmergencyContactCard - real contacts only.
  * contacts: [{ id, name, role, phone }]. onAddContact is shown in the empty state.
  */
-export default function EmergencyContactCard({ contacts = [], onCall, onMessage, onEmergency, onAddContact, className = '' }) {
+export default function EmergencyContactCard({ contacts = [], onCall, onEmergency, onAddContact }) {
   return (
-    <section className={`rounded-2xl border border-sage-200 bg-white p-5 ${className}`} aria-labelledby="contacts-title">
-      <h2 id="contacts-title" className="font-serif text-lg text-sage-900">Contacts</h2>
+    <section aria-labelledby="contacts-title">
+      <h2 id="contacts-title" className="font-serif text-2xl">Contacts</h2>
 
       {contacts.length === 0 ? (
-        <div className="py-4">
-          <p className="text-sage-800 font-semibold">No contacts saved</p>
-          <p className="text-sm text-sage-500 mt-1">Add an emergency contact so you can reach someone quickly.</p>
-          {onAddContact && (
-            <button type="button" onClick={onAddContact} className="btn-secondary mt-3 btn-sm">
-              Add a contact
-            </button>
-          )}
-        </div>
+        <>
+          <p className="mt-2 text-ink-2">No contacts saved. Add an emergency contact so you can reach someone quickly.</p>
+          {onAddContact && <button type="button" onClick={onAddContact} className={`btn-secondary btn-sm mt-4 ${lone}`}>Add a contact</button>}
+        </>
       ) : (
-        <ul className="divide-y divide-sage-100">
+        <ul className="mt-2 divide-y divide-line">
           {contacts.map((c, i) => (
             <li key={c.id || i} className="flex items-center gap-3 py-3">
-              <div className="flex-1 min-w-0">
-                <div className="text-sage-900 truncate">{c.name}</div>
-                <div className="text-sm text-sage-500 truncate">{c.role}{c.phone ? ` · ${c.phone}` : ''}</div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate">{c.name}</div>
+                <div className="truncate text-sm text-ink-2">{c.role}{c.phone ? ` · ${c.phone}` : ''}</div>
               </div>
-              <button type="button" onClick={() => onCall?.(c)} className={iconBtn} aria-label={`Call ${c.name}`}>
-                <Phone className="w-4 h-4" />
+              <button type="button" onClick={() => onCall?.(c)} className="btn-icon-ghost" aria-label={`Call ${c.name}`}>
+                <Phone className="h-5 w-5" aria-hidden="true" />
               </button>
-              {onMessage && (
-                <button type="button" onClick={() => onMessage(c)} className={iconBtn} aria-label={`Message ${c.name}`}>
-                  <MessageCircle className="w-4 h-4" />
-                </button>
-              )}
             </li>
           ))}
         </ul>
       )}
 
       {onEmergency && (
-        <button
-          type="button"
-          onClick={onEmergency}
-          className="mt-3 w-full min-h-[44px] rounded-full border border-rose-200 text-rose-700 font-semibold flex items-center justify-center gap-2 hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-600"
-        >
-          <AlertTriangle className="w-4 h-4" aria-hidden="true" />
-          Emergency support
+        <button type="button" onClick={onEmergency} className={`mt-4 min-h-[48px] font-bold text-rose-700 underline underline-offset-4 ${lone}`}>
+          Open emergency support
         </button>
       )}
     </section>

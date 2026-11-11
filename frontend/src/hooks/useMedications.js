@@ -18,7 +18,11 @@ export function useMedications(userId) {
         const request = ++latest.current;
         try {
             if (!options.silent) setLoading(true);
-            const result = await api.getSchedule(userId, date);
+            // Time-boxed: a hung network call must end in an error state with a retry, never a spinner.
+            const result = await Promise.race([
+                api.getSchedule(userId, date),
+                new Promise((resolve) => setTimeout(() => resolve({ success: false, error: 'timeout' }), 8000)),
+            ]);
             if (request !== latest.current) return;
             if (result.success) {
                 setSchedule(result.schedule || []);

@@ -35,6 +35,17 @@ const normalizeMedication = (medication = {}) => ({
     schedule_times: Array.isArray(medication.schedule_times) ? medication.schedule_times : ['08:00'],
 })
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const VOICE_BUCKET = 'voice-memos'
+// Object name inside the voice-memos bucket, from a bare name or a (legacy public / signed) storage URL.
+const voiceMemoPath = (value) => {
+    const text = String(value || '')
+    if (!text) return null
+    if (!/^https?:/i.test(text)) return text
+    const match = text.match(/\/object\/(?:public|sign|authenticated)\/voice-memos\/([^?#]+)/)
+    return match ? decodeURIComponent(match[1]) : null
+}
+
 const stripUndefined = (payload) => Object.fromEntries(
     Object.entries(payload).filter(([, value]) => value !== undefined)
 )
@@ -405,19 +416,29 @@ export const db = {
     voiceMemos: {
         list: async (userId) => {
             if (!supabase) return []
+            // The id goes into a PostgREST filter string: only ever interpolate a plain uuid.
+            if (!UUID_RE.test(String(userId))) throw new Error('Invalid user id')
             const { data, error } = await supabase
                 .from('voice_memos')
                 .select('*')
                 .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`)
                 .order('created_at', { ascending: false })
             if (error) throw error
-            return data || []
+            const memos = data || []
+            // The bucket is private: swap each stored object name (or legacy public URL) for a short-lived signed URL.
+            const paths = [...new Set(memos.map((memo) => voiceMemoPath(memo.audio_url)).filter(Boolean))]
+            if (!paths.length) return memos
+            const { data: signed } = await supabase.storage.from(VOICE_BUCKET).createSignedUrls(paths, 3600)
+            const urls = Object.fromEntries((signed || []).filter((row) => row.signedUrl).map((row) => [row.path, row.signedUrl]))
+            return memos.map((memo) => ({ ...memo, audio_url: urls[voiceMemoPath(memo.audio_url)] || memo.audio_url }))
         },
         create: async (memo) => {
             if (!supabase) throw new Error('Supabase not configured')
+            // Store the object name, never a URL: a URL in the table would outlive the private bucket's protection.
+            const row = { ...memo, audio_url: voiceMemoPath(memo.audio_url) || memo.audio_url }
             const { data, error } = await supabase
                 .from('voice_memos')
-                .insert(memo)
+                .insert(row)
                 .select()
                 .single()
             if (error) throw error

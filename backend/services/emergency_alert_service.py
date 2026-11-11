@@ -205,7 +205,7 @@ def send_emergency_email(contact: Dict[str, Any], patient_name: str, urgency_rea
 
         return True
     except Exception as exc:
-        print(f"Email failed for {contact.get('email')}: {exc}")
+        print(f"Email failed for caregiver {contact.get('id')}: {type(exc).__name__}")
         return False
 
 
@@ -231,7 +231,7 @@ def send_emergency_sms(contact: Dict[str, Any], patient_name: str, urgency_reaso
         client.messages.create(body=message, from_=from_number, to=contact["phone"])
         return True
     except Exception as exc:
-        print(f"SMS failed for {contact.get('phone')}: {exc}")
+        print(f"SMS failed for caregiver {contact.get('id')}: {type(exc).__name__}")
         return False
 
 
@@ -259,7 +259,7 @@ def _insert_in_app_alerts(patient_id: str, urgency_level: str, urgency_reason: s
             ).execute()
             inserted = True
         except Exception as exc:
-            print(f"In-app alert insert failed for {target_id}: {exc}")
+            print(f"In-app alert insert failed for {target_id}: {type(exc).__name__}")
 
     return inserted
 
@@ -320,12 +320,12 @@ def trigger_emergency_alerts(
             }
         ).execute()
     except Exception as exc:
-        print(f"Diagnosis alert log insert failed: {exc}")
+        print(f"Diagnosis alert log insert failed: {type(exc).__name__}")
 
     try:
         _get_client().table("diagnosis_sessions").update({"alert_sent": True}).eq("id", session_id).execute()
     except Exception as exc:
-        print(f"Failed to mark diagnosis session as alert_sent: {exc}")
+        print(f"Failed to mark diagnosis session as alert_sent: {type(exc).__name__}")
 
     return {
         "sent": len(channels_used) > 0,

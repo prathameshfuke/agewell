@@ -1,8 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText } from 'lucide-react'
-import { motion, useReducedMotion } from 'framer-motion'
-import { familyPhoto, chatSticker } from '../assets/images'
+import { done } from '../assets/images/gen'
 import { api } from '../api/client'
 import { supabase } from '../lib/supabase'
 import { useActivity } from '../hooks/useActivity'
@@ -11,6 +9,7 @@ import { useVitals } from '../hooks/useVitals'
 import { useMedications } from '../hooks/useMedications'
 import { useAuth } from '../contexts/AuthContext'
 import ProfileDropdown from '../components/ProfileDropdown'
+import FamilyPage, { Art, Notice, NotLinked, textBtn } from '../components/family/FamilyPage'
 import CalendarHeatmap from '../components/ui/CalendarHeatmap'
 import {
     ActivityTimeline,
@@ -54,17 +53,9 @@ const buildCalendarData = (logs) => {
 
 const URGENCY_RANK = { GO_NOW: 0, CONSULT_SOON: 1, ROUTINE: 2 }
 const URGENCY_LABEL = { GO_NOW: 'Go now', CONSULT_SOON: 'See a doctor soon', ROUTINE: 'Routine' }
-const urgencyClass = (u) =>
-    u === 'GO_NOW'
-        ? 'bg-rose-50 text-rose-700 border-rose-200'
-        : u === 'CONSULT_SOON'
-            ? 'bg-amber-50 text-amber-800 border-amber-200'
-            : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-
-const focusRing = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
+const urgencyClass = (u) => (u === 'GO_NOW' ? 'text-rose-700' : u === 'CONSULT_SOON' ? 'text-clay-600' : 'text-emerald-700')
 
 export default function FamilyDashboard() {
-    const reduce = useReducedMotion()
     const navigate = useNavigate()
     const { user, profile, logout, roles, setActiveRole, linkedElderId } = useAuth()
     const hasElderRole = roles?.includes('elderly')
@@ -76,7 +67,6 @@ export default function FamilyDashboard() {
     const [caregivers, setCaregivers] = useState([])
     const [loading, setLoading] = useState(true)
     const [failed, setFailed] = useState([])
-    const [tab, setTab] = useState('overview')
 
     const { activities, loading: activityLoading, error: activityError, refresh: refreshActivity } = useActivity(linkedElderId)
     const { notifications, acknowledgeNotification } = useNotifications(linkedElderId)
@@ -182,13 +172,13 @@ export default function FamilyDashboard() {
     let tone
     if (concerns.length) {
         headline = 'Needs attention'
-        tone = 'text-amber-800'
+        tone = 'text-clay-600'
     } else if (hasRecentActivity || connected || schedule.length > 0) {
         headline = 'Nothing needs attention'
-        tone = 'text-sage-900'
+        tone = 'text-ink'
     } else {
         headline = 'No recent data'
-        tone = 'text-sage-500'
+        tone = 'text-ink-2'
     }
 
     const sortedDiagnosis = useMemo(
@@ -226,276 +216,225 @@ export default function FamilyDashboard() {
     }, [caregivers, user?.id, linkedElderId, profile?.full_name])
 
     const unlinked = !linkedElderId
+    const muted = 'text-ink-2'
+    const row = 'py-3 sm:flex sm:gap-6'
+
+    const profileMenu = (
+        <ProfileDropdown
+            user={user}
+            profile={profile}
+            onLogout={logout}
+            hasElderRole={hasElderRole}
+            onSwitchRole={setActiveRole}
+            currentRole="caregiver"
+            triggerContent={
+                <div className="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-paper-2 font-bold text-ink-2">
+                    {(profile?.full_name || 'Me')[0].toUpperCase()}
+                </div>
+            }
+        />
+    )
+
+    if (unlinked) {
+        return (
+            <FamilyPage title="Home" sub="Caregiver" action={profileMenu}>
+                <NotLinked text="Ask them for their 6-character pairing code, then enter it here." />
+            </FamilyPage>
+        )
+    }
 
     return (
-        <div className="min-h-screen bg-cream-50 font-sans pb-24 md:pb-8">
-            <header className="px-5 md:px-6 min-h-[72px] py-3 flex items-center justify-between gap-3 border-b border-sage-200 bg-cream-50 sticky top-0 z-20">
-                <div className="min-w-0">
-                    <p className="text-sm text-sage-500">{unlinked ? 'Caregiver' : 'Caring for'}</p>
-                    <h1 className="font-serif text-2xl text-sage-900 truncate">
-                        {unlinked ? 'Home' : elderName || (loading ? 'Loading...' : 'Your elder')}
-                    </h1>
-                </div>
-                <ProfileDropdown
-                    user={user}
-                    profile={profile}
-                    onLogout={logout}
-                    hasElderRole={hasElderRole}
-                    onSwitchRole={setActiveRole}
-                    currentRole="caregiver"
-                    triggerContent={
-                        <div className="w-11 h-11 rounded-full border border-sage-300 bg-white flex items-center justify-center text-sage-700 font-semibold">
-                            {(profile?.full_name || 'Me')[0].toUpperCase()}
-                        </div>
-                    }
-                />
-            </header>
+        <FamilyPage
+            title={elderName || (loading ? 'Loading...' : 'Your elder')}
+            sub="Caring for"
+            action={profileMenu}
+            aside={
+                <>
+                    <ActivityTimeline activities={recentActivities} maxItems={5} onViewAll={() => navigate('/family/day-replay')} />
+                    <CareTeamCard members={teamMembers} loading={loading} />
+                    <EmergencyContactCard
+                        contacts={contacts}
+                        onCall={(c) => { window.location.href = `tel:${c.phone}` }}
+                        onEmergency={() => navigate('/elder/emergency')}
+                        onAddContact={() => navigate('/family/settings')}
+                    />
+                </>
+            }
+        >
+            {failed.length > 0 && !loading && (
+                <Notice tone="warn" onRetry={() => { setLoading(true); loadData() }}>
+                    Could not load {failed.join(', ')}. Check your connection and try again.
+                </Notice>
+            )}
 
-            <main className="px-5 md:px-6 py-6 space-y-5 max-w-3xl mx-auto">
-                {unlinked ? (
-                    <section className="overflow-hidden rounded-3xl border border-sage-200/70 bg-white shadow-card">
-                        <img src={familyPhoto} alt="" width="1536" height="1024" className="h-40 w-full object-cover object-top sm:h-56" />
-                        <div className="p-6">
-                        <h2 className="font-serif text-2xl text-sage-900">Connect to someone you care for</h2>
-                        <p className="text-sage-600 mt-1">You are not linked to anyone yet. Ask them for their 6-character pairing code.</p>
-                        <button type="button" onClick={() => navigate('/link')} className="btn-primary mt-4 btn-sm">
-                            Enter a pairing code
-                        </button>
+            {openAlerts.length > 0 && (
+                <section aria-label="Alerts" className="space-y-4">
+                    {openAlerts.map((a) => (
+                        <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 border-l-4 border-status-danger py-1 pl-4">
+                            <div className="min-w-0">
+                                <p className="font-bold text-rose-700">{a.title || 'Alert'}</p>
+                                {a.message && <p className="break-words text-ink-2">{a.message}</p>}
+                            </div>
+                            <button type="button" onClick={() => acknowledgeNotification(a.id)} className="btn-secondary btn-sm">Mark as seen</button>
                         </div>
-                    </section>
+                    ))}
+                </section>
+            )}
+
+            {/* The one focal element: how is today going */}
+            <section aria-labelledby="today-title">
+                <div className="flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                        <p className={muted}>Today</p>
+                        <h2 id="today-title" className={`font-serif text-5xl ${tone}`}>{headline}</h2>
+                    </div>
+                    {tone === 'text-ink' && <Art src={done} className="hidden w-24 shrink-0 sm:block" />}
+                </div>
+                {concerns.length > 0 && <p className="mt-2 text-lg">{concerns.join(', ')}.</p>}
+
+                <dl className="mt-6 divide-y divide-line border-y border-line">
+                    <div className={row}>
+                        <dt className={`sm:w-36 ${muted}`}>Medications</dt>
+                        <dd className="flex-1">
+                            {medsLoading ? (
+                                <span className={muted}>Loading...</span>
+                            ) : medsError ? (
+                                <span className="text-rose-700">Could not load today's doses.</span>
+                            ) : schedule.length === 0 ? (
+                                <span className={muted}>No doses scheduled today.{' '}
+                                    <button type="button" onClick={() => navigate('/family/meds')} className="font-bold text-primary underline underline-offset-4">View medications</button>
+                                </span>
+                            ) : (
+                                <>
+                                    {completedMeds.length} of {schedule.length} taken
+                                    {overdue.length > 0 && <span className="text-clay-600">, {overdue.length} overdue</span>}
+                                    {upcoming[0] && (
+                                        <span className={`block text-sm ${muted}`}>
+                                            Next: {upcoming[0].medication?.name || 'Medication'} at {timeOf(upcoming[0].scheduled_time)}
+                                        </span>
+                                    )}
+                                </>
+                            )}
+                        </dd>
+                    </div>
+                    <div className={row}>
+                        <dt className={`sm:w-36 ${muted}`}>Vitals</dt>
+                        <dd className="flex-1">
+                            {hasVitals ? (
+                                <>
+                                    {[
+                                        hr != null && `${hr} bpm`,
+                                        readings.spo2 != null && `SpO2 ${readings.spo2}%`,
+                                        readings.temperature != null && `${readings.temperature}°F`,
+                                    ].filter(Boolean).join(' · ')}
+                                    <span className={`block text-sm ${connected ? muted : 'text-clay-600'}`}>
+                                        {connected ? `Updated ${lastUpdated}` : `Device offline, last reading at ${lastUpdated}`}
+                                    </span>
+                                </>
+                            ) : (
+                                <span className={muted}>No readings yet. Vitals appear once the wearable syncs.</span>
+                            )}
+                        </dd>
+                    </div>
+                    <div className={row}>
+                        <dt className={`sm:w-36 ${muted}`}>Last activity</dt>
+                        <dd className="flex-1">
+                            {activityLoading ? (
+                                <span className={muted}>Loading...</span>
+                            ) : activityError ? (
+                                <span className="text-rose-700">Could not load activity.{' '}
+                                    <button type="button" onClick={refreshActivity} className="font-bold underline underline-offset-4">Retry</button>
+                                </span>
+                            ) : lastActivity ? (
+                                <>
+                                    {lastActivity.title}
+                                    <span className={`block text-sm ${muted}`}>{ago(lastActivity.timestamp) || lastActivity.time}</span>
+                                </>
+                            ) : (
+                                <span className={muted}>Nothing recorded today.</span>
+                            )}
+                        </dd>
+                    </div>
+                </dl>
+
+                <div className="btn-row mt-6 sm:max-w-md">
+                    <button type="button" onClick={() => navigate('/family/meds')} className="btn-primary btn-sm">Manage medications</button>
+                    <button type="button" onClick={() => navigate('/family/health')} className="btn-secondary btn-sm">Health monitor</button>
+                </div>
+            </section>
+
+            <WeeklyHealthSummary
+                healthData={healthStats?.weekly || []}
+                averageHeartRate={healthStats?.avgHeartRate ?? null}
+                averageSteps={healthStats?.avgSteps ?? null}
+                trend={healthStats?.trend || 'stable'}
+            />
+
+            <section aria-labelledby="adherence-title">
+                <h2 id="adherence-title" className="font-serif text-2xl">Medication adherence</h2>
+                {loading ? (
+                    <p className={`mt-2 ${muted}`}>Loading...</p>
+                ) : adherence.rate == null ? (
+                    <p className={`mt-2 ${muted}`}>No doses logged in the last 7 days.</p>
                 ) : (
                     <>
-                        {failed.length > 0 && !loading && (
-                            <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex flex-wrap items-center justify-between gap-3">
-                                <p className="text-sm text-amber-900">
-                                    Could not load {failed.join(', ')}. Check your connection and try again.
-                                </p>
-                                <button type="button" onClick={() => { setLoading(true); loadData() }} className={`min-h-[44px] px-4 rounded-full border border-amber-300 text-sm font-semibold text-amber-900 hover:bg-amber-100 ${focusRing}`}>
-                                    Try again
-                                </button>
-                            </div>
-                        )}
-
-                        {openAlerts.length > 0 && (
-                            <section aria-label="Alerts" className="space-y-2">
-                                {openAlerts.map((a) => (
-                                    <div key={a.id} className="rounded-2xl border border-rose-200 bg-rose-50 p-4 flex items-start justify-between gap-3">
-                                        <div className="min-w-0">
-                                            <p className="font-semibold text-rose-900">{a.title || 'Alert'}</p>
-                                            {a.message && <p className="text-sm text-rose-800 mt-0.5 break-words">{a.message}</p>}
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => acknowledgeNotification(a.id)}
-                                            className={`min-h-[44px] px-4 rounded-full border border-rose-300 text-sm font-semibold text-rose-800 hover:bg-rose-100 flex-shrink-0 ${focusRing}`}
-                                        >
-                                            Mark as seen
-                                        </button>
-                                    </div>
-                                ))}
-                            </section>
-                        )}
-
-                        {/* The one focal element: how is today going */}
-                        <section className="rounded-3xl border border-sage-200/70 bg-white p-6 shadow-card" aria-labelledby="today-title">
-                            <div className="flex items-center justify-between gap-4">
-                                <div className="min-w-0">
-                                    <p className="text-sm text-sage-500">Today</p>
-                                    <h2 id="today-title" className={`font-serif text-2xl ${tone}`}>{headline}</h2>
-                                </div>
-                                <img src={chatSticker} alt="" width="472" height="340" className="sticker h-14 w-auto shrink-0" />
-                            </div>
-                            {concerns.length > 0 && <p className="text-sage-700 mt-1">{concerns.join(', ')}.</p>}
-
-                            <dl className="mt-5 divide-y divide-sage-100">
-                                <div className="py-3 sm:flex sm:gap-6">
-                                    <dt className="sm:w-36 text-sm text-sage-500">Medications</dt>
-                                    <dd className="text-sage-900 flex-1">
-                                        {medsLoading ? (
-                                            <span className="text-sage-500">Loading...</span>
-                                        ) : medsError ? (
-                                            <span className="text-rose-700">Could not load today's doses.</span>
-                                        ) : schedule.length === 0 ? (
-                                            <span className="text-sage-500">No doses scheduled today.{' '}
-                                                <button type="button" onClick={() => navigate('/family/meds')} className="font-semibold text-primary underline underline-offset-2">View medications</button>
-                                            </span>
-                                        ) : (
-                                            <>
-                                                {completedMeds.length} of {schedule.length} taken
-                                                {overdue.length > 0 && <span className="text-amber-800">, {overdue.length} overdue</span>}
-                                                {upcoming[0] && (
-                                                    <span className="block text-sm text-sage-500">
-                                                        Next: {upcoming[0].medication?.name || 'Medication'} at {timeOf(upcoming[0].scheduled_time)}
-                                                    </span>
-                                                )}
-                                            </>
-                                        )}
-                                    </dd>
-                                </div>
-                                <div className="py-3 sm:flex sm:gap-6">
-                                    <dt className="sm:w-36 text-sm text-sage-500">Vitals</dt>
-                                    <dd className="text-sage-900 flex-1">
-                                        {hasVitals ? (
-                                            <>
-                                                {[
-                                                    hr != null && `${hr} bpm`,
-                                                    readings.spo2 != null && `SpO2 ${readings.spo2}%`,
-                                                    readings.temperature != null && `${readings.temperature}°F`,
-                                                ].filter(Boolean).join(' · ')}
-                                                <span className={`block text-sm ${connected ? 'text-sage-500' : 'text-amber-800'}`}>
-                                                    {connected
-                                                        ? `Updated ${lastUpdated}`
-                                                        : `Device offline, last reading at ${lastUpdated}`}
-                                                </span>
-                                            </>
-                                        ) : (
-                                            <span className="text-sage-500">No readings yet. Vitals appear once the wearable syncs.</span>
-                                        )}
-                                    </dd>
-                                </div>
-                                <div className="py-3 sm:flex sm:gap-6">
-                                    <dt className="sm:w-36 text-sm text-sage-500">Last activity</dt>
-                                    <dd className="text-sage-900 flex-1">
-                                        {activityLoading ? (
-                                            <span className="text-sage-500">Loading...</span>
-                                        ) : activityError ? (
-                                            <span className="text-rose-700">Could not load activity.{' '}
-                                                <button type="button" onClick={refreshActivity} className="font-semibold underline underline-offset-2">Retry</button>
-                                            </span>
-                                        ) : lastActivity ? (
-                                            <>
-                                                {lastActivity.title}
-                                                <span className="block text-sm text-sage-500">{ago(lastActivity.timestamp) || lastActivity.time}</span>
-                                            </>
-                                        ) : (
-                                            <span className="text-sage-500">Nothing recorded today.</span>
-                                        )}
-                                    </dd>
-                                </div>
-                            </dl>
-                        </section>
-
-                        <div role="tablist" aria-label="Dashboard sections" className="flex gap-1 rounded-full border border-sage-200 bg-white p-1 shadow-soft">
-                            {[['overview', 'Overview'], ['symptom_reports', 'Symptom reports']].map(([key, label]) => (
-                                <button
-                                    key={key}
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={tab === key}
-                                    onClick={() => setTab(key)}
-                                    className={`relative flex-1 min-h-[44px] rounded-full px-4 text-base whitespace-nowrap transition-colors ${focusRing} ${tab === key ? 'text-white' : 'text-sage-700 hover:text-sage-900'}`}
-                                >
-                                    {tab === key && <motion.span layoutId="family-tab" transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 34 }} className="absolute inset-0 rounded-full bg-sage-900" />}
-                                    <span className="relative">{label}</span>
-                                </button>
-                            ))}
+                        <p className="mt-1">
+                            <span className="font-serif text-4xl">{adherence.rate}%</span> of doses taken in the last 7 days
+                            {adherence.missed > 0 && <span className="text-rose-700">, {adherence.missed} missed</span>}
+                        </p>
+                        <div className="mt-4 max-w-md">
+                            <CalendarHeatmap
+                                data={adherence.calendar}
+                                month={new Date().toLocaleString('en-US', { month: 'long' })}
+                                year={new Date().getFullYear()}
+                            />
                         </div>
-
-                        {tab === 'overview' && (
-                            <>
-                                <WeeklyHealthSummary
-                                    healthData={healthStats?.weekly || []}
-                                    averageHeartRate={healthStats?.avgHeartRate ?? null}
-                                    averageSteps={healthStats?.avgSteps ?? null}
-                                    trend={healthStats?.trend || 'stable'}
-                                />
-
-                                <section className="rounded-2xl border border-sage-200 bg-white p-5" aria-labelledby="adherence-title">
-                                    <h2 id="adherence-title" className="font-serif text-lg text-sage-900">Medication adherence</h2>
-                                    {loading ? (
-                                        <p className="text-sm text-sage-500 mt-2">Loading...</p>
-                                    ) : adherence.rate == null ? (
-                                        <p className="text-sm text-sage-500 mt-2">No doses logged in the last 7 days.</p>
-                                    ) : (
-                                        <>
-                                            <p className="text-sage-700 mt-1">
-                                                <span className="text-2xl text-sage-900">{adherence.rate}%</span> of doses taken in the last 7 days
-                                                {adherence.missed > 0 && <span className="text-rose-700">, {adherence.missed} missed</span>}
-                                            </p>
-                                            <div className="mt-4">
-                                                <CalendarHeatmap
-                                                    data={adherence.calendar}
-                                                    month={new Date().toLocaleString('en-US', { month: 'long' })}
-                                                    year={new Date().getFullYear()}
-                                                />
-                                            </div>
-                                        </>
-                                    )}
-                                </section>
-
-                                <ActivityTimeline activities={recentActivities} maxItems={5} onViewAll={() => navigate('/family/day-replay')} />
-
-                                <CareTeamCard members={teamMembers} loading={loading} />
-
-                                <EmergencyContactCard
-                                    contacts={contacts}
-                                    onCall={(c) => { window.location.href = `tel:${c.phone}` }}
-                                    onEmergency={() => navigate('/elder/emergency')}
-                                    onAddContact={() => navigate('/family/settings')}
-                                />
-
-                                <div className="btn-row">
-                                    <button type="button" onClick={() => navigate('/family/meds')} className="btn-primary btn-sm">Manage medications</button>
-                                    <button type="button" onClick={() => navigate('/family/health')} className="btn-secondary btn-sm">Health monitor</button>
-                                </div>
-                            </>
-                        )}
-
-                        {tab === 'symptom_reports' && (
-                            <section className="rounded-2xl border border-sage-200 bg-white p-5">
-                                <div className="flex items-center justify-between gap-3">
-                                    <h2 className="font-serif text-lg text-sage-900">Symptom reports</h2>
-                                    <button type="button" onClick={() => navigate('/diagnosis/history')} className={`min-h-[44px] px-3 text-sm font-semibold text-primary rounded-full ${focusRing}`}>
-                                        View all
-                                    </button>
-                                </div>
-                                {loading ? (
-                                    <p className="text-sm text-sage-500 mt-2">Loading...</p>
-                                ) : sortedDiagnosis.length === 0 ? (
-                                    <div className="py-6 text-center">
-                                        <FileText className="w-6 h-6 mx-auto text-sage-400 mb-2" aria-hidden="true" />
-                                        <p className="text-sage-800 font-semibold">No symptom reports yet</p>
-                                        <p className="text-sm text-sage-500 mt-1">Reports appear here after {firstName || 'they'} checks symptoms.</p>
-                                    </div>
-                                ) : (
-                                    <ul className="mt-3 space-y-2">
-                                        {sortedDiagnosis.map((s) => (
-                                            <li key={s.session_id}>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        s.report_json
-                                                            ? navigate('/diagnosis/report', {
-                                                                state: {
-                                                                    report: s.report_json,
-                                                                    session_id: s.session_id,
-                                                                    urgency_level: s.urgency_level,
-                                                                    patient_name: elderName || 'Patient',
-                                                                },
-                                                            })
-                                                            : navigate('/diagnosis/history')
-                                                    }
-                                                    className={`w-full text-left rounded-2xl border p-4 min-h-[44px] hover:bg-sage-50 ${focusRing} ${s.urgency_level === 'GO_NOW' ? 'border-rose-300' : 'border-sage-200'}`}
-                                                >
-                                                    <div className="flex items-start justify-between gap-3">
-                                                        <div className="min-w-0">
-                                                            <p className="text-sage-900 break-words">{s.raw_complaint}</p>
-                                                            <p className="text-sm text-sage-500 mt-1">{new Date(s.created_at).toLocaleString()}</p>
-                                                        </div>
-                                                        <span className={`px-3 py-1 rounded-full border text-xs font-semibold flex-shrink-0 ${urgencyClass(s.urgency_level)}`}>
-                                                            {URGENCY_LABEL[s.urgency_level] || 'Routine'}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                            </section>
-                        )}
                     </>
                 )}
-            </main>
-        </div>
+            </section>
+
+            <section aria-labelledby="reports-title">
+                <div className="flex items-center justify-between gap-3">
+                    <h2 id="reports-title" className="font-serif text-2xl">Symptom reports</h2>
+                    <button type="button" onClick={() => navigate('/diagnosis/history')} className={textBtn}>View all</button>
+                </div>
+                {loading ? (
+                    <p className={`mt-2 ${muted}`}>Loading...</p>
+                ) : sortedDiagnosis.length === 0 ? (
+                    <p className={`mt-2 ${muted}`}>No reports yet. They appear here after {firstName || 'they'} checks symptoms.</p>
+                ) : (
+                    <ul className="mt-2 divide-y divide-line">
+                        {sortedDiagnosis.slice(0, 5).map((s) => (
+                            <li key={s.session_id}>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        s.report_json
+                                            ? navigate('/diagnosis/report', {
+                                                state: {
+                                                    report: s.report_json,
+                                                    session_id: s.session_id,
+                                                    urgency_level: s.urgency_level,
+                                                    patient_name: elderName || 'Patient',
+                                                },
+                                            })
+                                            : navigate('/diagnosis/history')
+                                    }
+                                    className="flex min-h-[56px] w-full items-start justify-between gap-4 py-3 text-left font-normal hover:bg-primary-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                                >
+                                    <span className="min-w-0">
+                                        <span className="block break-words">{s.raw_complaint}</span>
+                                        <span className="block text-sm text-ink-2">{new Date(s.created_at).toLocaleString()}</span>
+                                    </span>
+                                    <span className={`shrink-0 text-sm font-bold ${urgencyClass(s.urgency_level)}`}>
+                                        {URGENCY_LABEL[s.urgency_level] || 'Routine'}
+                                    </span>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </section>
+        </FamilyPage>
     )
 }

@@ -97,8 +97,7 @@ class NotificationService:
             # For development/testing, just log the message
             print(f"\n{'='*60}")
             print(f"WhatsApp Notification [{priority.upper()}]")
-            print(f"To: {phone}")
-            print(f"Message: {message}")
+            print(f"To: ***{str(phone)[-4:]}")  # message bodies hold health details: never log them
             print(f"Timestamp: {datetime.utcnow().isoformat()}")
             print(f"{'='*60}\n")
             
@@ -141,11 +140,7 @@ class NotificationService:
         try:
             print(f"\n{'='*60}")
             print(f"Push Notification")
-            print(f"Device: {device_token}")
-            print(f"Title: {title}")
-            print(f"Body: {body}")
-            if data:
-                print(f"Data: {data}")
+            print("Device: ***")
             print(f"{'='*60}\n")
             
             # In production, integrate with FCM or similar:

@@ -1,11 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, ArrowRight, Check, User, Phone, Heart, Shield, Loader2 } from 'lucide-react'
+import { morning, call, shield } from '../assets/images/gen'
 import { useAuth } from '../contexts/AuthContext'
-import { Card, Button } from '../components/ui'
-
-import oneSticker from '../assets/images/stickers/one.jpeg'
+import OnboardingShell, { Field, Consent } from '../components/family/OnboardingShell'
 
 /**
  * Elderly Onboarding - Step-by-step setup
@@ -108,176 +105,50 @@ export default function ElderlyOnboarding() {
 
     if (!initialized || authLoading) {
         return (
-            <div className="min-h-screen bg-cream-50 flex items-center justify-center">
+            <div className="min-h-screen bg-paper flex items-center justify-center">
                 <div className="loading-spinner" role="status" aria-label="Loading" />
             </div>
         )
     }
 
+    const STEPS = {
+        1: { art: morning, title: "Let's get to know you", lead: 'What should we call you?' },
+        2: { art: call, title: 'Emergency contact', lead: 'Who should we contact in an emergency?' },
+        3: { art: shield, title: 'Almost done', lead: 'One last thing before you start.' },
+    }
+
     return (
-        <div className="min-h-screen bg-cream-50 flex flex-col p-6">
-            {/* Header with Progress */}
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-8 w-full max-w-md mx-auto">
-                <button
-                    onClick={handleBack}
-                    className="justify-self-start inline-flex items-center gap-2 min-h-[44px] pr-3 text-sage-600 hover:text-sage-900 text-base font-bold"
-                >
-                    <ArrowLeft className="w-5 h-5" /> Back
-                </button>
-                <div className="flex items-center gap-2" aria-hidden="true">
-                    {[1, 2, 3].map(s => (
-                        <div key={s} className={`h-2.5 rounded-full transition-all duration-300 ${s === step ? 'w-8 bg-primary' : s < step ? 'w-2.5 bg-primary/40' : 'w-2.5 bg-sage-200'}`} />
-                    ))}
-                </div>
-                <span aria-hidden="true" />
-            </div>
+        <OnboardingShell
+            step={step}
+            {...STEPS[step]}
+            error={error}
+            onBack={handleBack}
+            onNext={step < 3 ? handleNext : handleComplete}
+            last={step === 3}
+            loading={loading}
+        >
+            {step === 1 && (
+                <>
+                    <Field id="full-name" label="Your name" type="text" value={formData.full_name} onChange={(e) => handleChange('full_name', e.target.value)} placeholder="Enter your full name" autoComplete="name" />
+                    <Field id="dob" label="Date of birth (optional)" type="date" value={formData.date_of_birth} onChange={(e) => handleChange('date_of_birth', e.target.value)} />
+                </>
+            )}
 
-            <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
-                <motion.img 
-                    src={oneSticker} 
-                    alt="" 
-                    width="736" height="601" className="sticker h-28 w-auto mb-6"
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                />
+            {step === 2 && (
+                <>
+                    <Field id="ec-name" label="Contact name" type="text" value={formData.emergency_contact_name} onChange={(e) => handleChange('emergency_contact_name', e.target.value)} placeholder="e.g. John (Son)" />
+                    <Field id="ec-phone" label="Phone number" type="tel" value={formData.emergency_contact_phone} onChange={(e) => handleChange('emergency_contact_phone', e.target.value)} placeholder="+91 98765 43210" autoComplete="tel" />
+                </>
+            )}
 
-                <AnimatePresence mode="wait">
-                    {step === 1 && (
-                        <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full text-center">
-                            <h1 className="text-2xl font-serif font-bold text-sage-900 mb-2">Let's get to know you</h1>
-                            <p className="text-sage-600 mb-8">What should we call you?</p>
-                            <Card>
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-10 h-10 bg-sage-100 rounded-xl flex items-center justify-center">
-                                        <User className="w-5 h-5 text-sage-600" />
-                                    </div>
-                                    <span className="text-sage-700 font-bold">Your Name</span>
-                                </div>
-                                <input aria-label="Full name"
-                                    type="text"
-                                    value={formData.full_name}
-                                    onChange={(e) => handleChange('full_name', e.target.value)}
-                                    placeholder="Enter your full name"
-                                    className="input mb-4"
-                                />
-                                <div>
-                                    <label htmlFor="dob" className="block text-sage-600 text-sm font-medium mb-2">Date of birth (optional)</label>
-                                    <input id="dob"
-                                        type="date"
-                                        value={formData.date_of_birth}
-                                        onChange={(e) => handleChange('date_of_birth', e.target.value)}
-                                        className="input"
-                                    />
-                                </div>
-                            </Card>
-                        </motion.div>
-                    )}
-
-                    {step === 2 && (
-                        <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full text-center">
-                            <h1 className="text-2xl font-serif font-bold text-sage-900 mb-2">Emergency Contact</h1>
-                            <p className="text-sage-600 mb-8">Who should we contact in case of emergency?</p>
-                            <Card className="space-y-4">
-                                <div>
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
-                                            <Heart className="w-5 h-5 text-rose-600" />
-                                        </div>
-                                        <span className="text-sage-700 font-bold">Contact Name</span>
-                                    </div>
-                                    <input aria-label="Emergency contact name"
-                                        type="text"
-                                        value={formData.emergency_contact_name}
-                                        onChange={(e) => handleChange('emergency_contact_name', e.target.value)}
-                                        placeholder="e.g. John (Son)"
-                                        className="input"
-                                    />
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="w-10 h-10 bg-sage-100 rounded-xl flex items-center justify-center">
-                                            <Phone className="w-5 h-5 text-sage-600" />
-                                        </div>
-                                        <span className="text-sage-700 font-bold">Phone Number</span>
-                                    </div>
-                                    <input aria-label="Emergency contact phone"
-                                        type="tel"
-                                        value={formData.emergency_contact_phone}
-                                        onChange={(e) => handleChange('emergency_contact_phone', e.target.value)}
-                                        placeholder="+91 98765 43210"
-                                        className="input"
-                                    />
-                                </div>
-                            </Card>
-                        </motion.div>
-                    )}
-
-                    {step === 3 && (
-                        <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full text-center">
-                            <h1 className="text-2xl font-serif font-bold text-sage-900 mb-2">Almost done!</h1>
-                            <p className="text-sage-600 mb-8">Just one more thing</p>
-                            <Card>
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-10 h-10 bg-sage-100 rounded-xl flex items-center justify-center">
-                                        <Shield className="w-5 h-5 text-sage-600" />
-                                    </div>
-                                    <span className="text-sage-700 font-bold">Privacy & Safety</span>
-                                </div>
-                                <p className="text-sage-600 text-sm text-left mb-4">
-                                    AgeWell helps you manage medications and connect with caregivers. Your information is private and secure.
-                                </p>
-                                <label className="flex items-start gap-3 cursor-pointer bg-sage-50 p-4 rounded-xl border border-sage-200 hover:border-sage-400 transition-colors">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.consent_acknowledged}
-                                        onChange={(e) => handleChange('consent_acknowledged', e.target.checked)}
-                                        className="w-5 h-5 mt-0.5 accent-sage-500"
-                                    />
-                                    <span className="text-sage-700 text-sm text-left">
-                                        I agree to share my health info with my designated caregivers
-                                    </span>
-                                </label>
-                            </Card>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {error && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="w-full bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-2xl text-sm mt-4 font-medium"
-                    >
-                        {error}
-                    </motion.div>
-                )}
-
-                <div className="w-full mt-8">
-                    {step < 3 ? (
-                        <Button
-                            variant="primary"
-                            fullWidth
-                            icon={ArrowRight}
-                            iconPosition="right"
-                            onClick={handleNext}
-                        >
-                            Continue
-                        </Button>
-                    ) : (
-                        <Button
-                            variant="primary"
-                            fullWidth
-                            icon={Check}
-                            loading={loading}
-                            onClick={handleComplete}
-                        >
-                            Complete Setup
-                        </Button>
-                    )}
-                </div>
-
-                <p className="text-sage-500 text-sm mt-4 font-medium">Step {step} of 3</p>
-            </div>
-        </div>
+            {step === 3 && (
+                <>
+                    <p className="text-ink-2">AgeWell helps you manage medicines and connect with caregivers. Your information is private and secure.</p>
+                    <Consent checked={formData.consent_acknowledged} onChange={(e) => handleChange('consent_acknowledged', e.target.checked)}>
+                        I agree to share my health info with my designated caregivers
+                    </Consent>
+                </>
+            )}
+        </OnboardingShell>
     )
 }

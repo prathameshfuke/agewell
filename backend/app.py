@@ -38,10 +38,22 @@ def too_large(_):
 
 
 @app.after_request
+def security_headers(response):
+    response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+    response.headers.setdefault('Referrer-Policy', 'no-referrer')
+    response.headers.setdefault('X-Frame-Options', 'DENY')
+    response.headers.setdefault('Strict-Transport-Security', 'max-age=63072000; includeSubDomains')
+    if request.path.startswith('/api'):
+        response.headers['Cache-Control'] = 'no-store'  # responses hold health data: never cache in browsers or proxies
+        response.headers.setdefault('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'")
+    return response
+
+
+@app.after_request
 def hide_server_errors(response):
     """Routes return str(e) on failure; log it, but never send DB/provider internals to clients."""
     if response.status_code >= 500 and response.is_json:
-        app.logger.error('500 %s %s: %s', request.method, request.path, response.get_data(as_text=True)[:500])
+        app.logger.error('500 %s %s: %s', request.method, request.path, response.get_data(as_text=True)[:200])
         response.set_data(jsonify({'error': 'Something went wrong on our side. Please try again.'}).get_data())
     return response
 
@@ -91,4 +103,6 @@ def index():
     })
 
 if __name__ == '__main__':
-    app.run(debug=os.getenv('FLASK_DEBUG', '0') == '1', host='0.0.0.0', port=5001)
+    # Render runs gunicorn; this is for local dev. The Werkzeug debugger executes code, so debug never leaves localhost.
+    debug = os.getenv('FLASK_DEBUG', '0') == '1'
+    app.run(debug=debug, host='127.0.0.1' if debug else '0.0.0.0', port=int(os.getenv('PORT', '5001')))

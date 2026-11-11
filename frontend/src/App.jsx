@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import FullScreenLoader from './components/FullScreenLoader'
-import BottomNav from './components/BottomNav'
+import AppShell from './components/shell/AppShell'
 import AppErrorBoundary from './components/AppErrorBoundary'
 import PinGate from './components/PinGate'
 
@@ -346,8 +346,9 @@ function App() {
         <AuthProvider>
             <AppErrorBoundary>
                 <BrowserRouter>
-                    <BottomNav />
-                    <AppRoutes />
+                    <AppShell>
+                        <AppRoutes />
+                    </AppShell>
                 </BrowserRouter>
             </AppErrorBoundary>
         </AuthProvider>

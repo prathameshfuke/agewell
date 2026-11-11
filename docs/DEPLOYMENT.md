@@ -40,6 +40,17 @@ Files in `supabase/migrations/` are additive and safe to re-run. Apply them in o
 
 An account can hold both roles. Caregiver mode then needs a 4-digit PIN, stored hashed in `caregiver_pins` and checked by `verify_caregiver_pin()`; five wrong tries lock it for 15 minutes. The PIN protects the screen on a shared device. It is not a data boundary: the same signed-in user can read both modes' data, so use separate accounts when the elder and the caregiver are different people.
 
+## Phone sign-in
+
+The app already has the SMS code screen on `/auth`. Until the provider is on, it shows "Phone sign-in isn't turned on yet. Use Google for now."
+
+1. Supabase Dashboard, Authentication, Sign In / Providers, Phone: enable it and choose Twilio.
+2. Enter the Twilio Account SID, Auth Token and a Messaging Service SID (or use Twilio Verify). Set OTP length to 6 and expiry to 600 seconds.
+3. Twilio trial accounts can only text numbers verified in the Twilio console. SMS to India numbers needs a registered DLT sender and template, so test with a verified number first.
+4. For emergency SMS alerts, add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_PHONE_NUMBER` to Render. Never commit these values.
+
+Phone-only accounts have no email. The app shows the masked number (`+91 ******1234`) where an email would appear, and onboarding asks for the name.
+
 ## Local development
 
 ```bash

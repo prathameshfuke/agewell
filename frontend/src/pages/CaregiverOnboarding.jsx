@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Check, ArrowLeft, ArrowRight, User, Users, Bell, Loader2 } from 'lucide-react'
-import { Card, Button } from '../components/ui'
 import { api } from '../api/client'
-
-import twoSticker from '../assets/images/stickers/two.jpeg'
+import { together, call, shield } from '../assets/images/gen'
+import OnboardingShell, { Field, Consent } from '../components/family/OnboardingShell'
 
 /**
  * Caregiver Onboarding - Step-by-step setup
@@ -130,170 +127,58 @@ export default function CaregiverOnboarding() {
 
     if (!initialized || authLoading) {
         return (
-            <div className="min-h-screen bg-cream-50 flex items-center justify-center">
+            <div className="min-h-screen bg-paper flex items-center justify-center">
                 <div className="loading-spinner" role="status" aria-label="Loading" />
             </div>
         )
     }
 
+    const STEPS = {
+        1: { art: together, wide: true, title: 'Welcome, caregiver', lead: "Let's set up your account." },
+        2: isSelf
+            ? { art: call, title: 'Your own account', lead: 'Caregiver mode will show the health and medicine data of this account. You will create a 4-digit PIN next, so only you can open it.' }
+            : { art: call, title: 'Connect to an elder', lead: 'Enter the pairing code from their device.' },
+        3: { art: shield, title: 'Ready to start', lead: 'One last step.' },
+    }
+
     return (
-        <div className="min-h-screen bg-cream-50 flex flex-col p-6">
-            {/* Header with Progress */}
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-8 w-full max-w-md mx-auto">
-                <button
-                    onClick={handleBack}
-                    className="justify-self-start inline-flex items-center gap-2 min-h-[44px] pr-3 text-sage-600 hover:text-sage-900 text-base font-bold"
-                >
-                    <ArrowLeft className="w-5 h-5" /> Back
-                </button>
-                <div className="flex items-center gap-2" aria-hidden="true">
-                    {[1, 2, 3].map(s => (
-                        <div key={s} className={`h-2.5 rounded-full transition-all duration-300 ${s === step ? 'w-8 bg-primary' : s < step ? 'w-2.5 bg-primary/40' : 'w-2.5 bg-sage-200'}`} />
-                    ))}
-                </div>
-                <span aria-hidden="true" />
-            </div>
+        <OnboardingShell
+            step={step}
+            {...STEPS[step]}
+            error={error}
+            onBack={handleBack}
+            onNext={step < 3 ? handleNext : handleComplete}
+            last={step === 3}
+            loading={loading}
+        >
+            {step === 1 && (
+                <Field id="full-name" label="Your name" type="text" value={formData.full_name} onChange={(e) => handleChange('full_name', e.target.value)} placeholder="Enter your full name" autoComplete="name" />
+            )}
 
-            <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
-                <motion.img
-                    src={twoSticker}
-                    alt=""
-                    width="472" height="340" className="sticker h-28 w-auto mb-6"
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                />
+            {step === 2 && !isSelf && (
+                <>
+                    <Field
+                        id="pairing-code"
+                        label="Pairing code"
+                        type="text"
+                        maxLength={6}
+                        value={formData.pairing_code}
+                        onChange={(e) => handleChange('pairing_code', e.target.value.replace(/[^A-Z0-9]/gi, '').toUpperCase())}
+                        placeholder="e.g. A7B2C9"
+                        autoComplete="off"
+                    />
+                    <Field id="relationship" label="Your relationship to them" type="text" value={formData.relationship} onChange={(e) => handleChange('relationship', e.target.value)} placeholder="e.g. Son, Daughter" />
+                </>
+            )}
 
-                <AnimatePresence mode="wait">
-                    {step === 1 && (
-                        <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full text-center">
-                            <h1 className="text-2xl font-serif font-bold text-sage-900 mb-2">Welcome, Caregiver!</h1>
-                            <p className="text-sage-600 mb-8">Let's set up your account</p>
-                            <Card>
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-10 h-10 bg-cream-100 rounded-xl flex items-center justify-center">
-                                        <User className="w-5 h-5 text-cream-700" />
-                                    </div>
-                                    <span className="text-sage-700 font-bold">Your Name</span>
-                                </div>
-                                <input aria-label="Full name"
-                                    type="text"
-                                    value={formData.full_name}
-                                    onChange={(e) => handleChange('full_name', e.target.value)}
-                                    placeholder="Enter your full name"
-                                    className="input focus:border-cream-500"
-                                />
-                            </Card>
-                        </motion.div>
-                    )}
-
-                    {step === 2 && isSelf && (
-                        <motion.div key="step2-self" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full text-center">
-                            <h1 className="text-2xl font-serif font-bold text-sage-900 mb-2">Your own account</h1>
-                            <p className="text-sage-600 mb-8">Caregiver mode will show the health and medication data of this account. You will create a 4-digit PIN next, so only you can open it.</p>
-                        </motion.div>
-                    )}
-
-                    {step === 2 && !isSelf && (
-                        <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full text-center">
-                            <h1 className="text-2xl font-serif font-bold text-sage-900 mb-2">Connect to Elder</h1>
-                            <p className="text-sage-600 mb-8">Enter the pairing code from their device</p>
-                            <Card className="space-y-4">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-10 h-10 bg-cream-100 rounded-xl flex items-center justify-center">
-                                        <Users className="w-5 h-5 text-cream-700" />
-                                    </div>
-                                    <span className="text-sage-700 font-bold">Pairing Code</span>
-                                </div>
-                                <input aria-label="Pairing code"
-                                    type="text"
-                                    maxLength={6}
-                                    value={formData.pairing_code}
-                                    onChange={(e) => {
-                                        const val = e.target.value.replace(/[^A-Z0-9]/gi, '').toUpperCase()
-                                        handleChange('pairing_code', val)
-                                    }}
-                                    placeholder="e.g. A7B2C9"
-                                    className="input focus:border-cream-500 text-center text-2xl tracking-widest uppercase font-mono"
-                                />
-                                <div className="pt-2">
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="w-10 h-10 bg-cream-100 rounded-xl flex items-center justify-center">
-                                            <Users className="w-5 h-5 text-cream-700" />
-                                        </div>
-                                        <span className="text-sage-700 font-bold">Relationship</span>
-                                    </div>
-                                    <input aria-label="Your relationship to them"
-                                        type="text"
-                                        value={formData.relationship}
-                                        onChange={(e) => handleChange('relationship', e.target.value)}
-                                        placeholder="e.g. Son, Daughter"
-                                        className="input focus:border-cream-500"
-                                    />
-                                </div>
-                            </Card>
-                        </motion.div>
-                    )}
-
-                    {step === 3 && (
-                        <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full text-center">
-                            <h1 className="text-2xl font-serif font-bold text-sage-900 mb-2">Ready to start!</h1>
-                            <p className="text-sage-600 mb-8">One last step</p>
-                            <Card>
-                                <p className="text-sage-600 text-sm text-left mb-4">
-                                    As a caregiver, you'll be able to monitor your loved one's medication schedule, health stats, and receive important alerts.
-                                </p>
-                                <label className="flex items-start gap-3 cursor-pointer bg-cream-50 p-4 rounded-xl border border-sage-200 hover:border-sage-400 transition-colors">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.consent_acknowledged}
-                                        onChange={(e) => handleChange('consent_acknowledged', e.target.checked)}
-                                        className="w-5 h-5 mt-0.5 accent-cream-500"
-                                    />
-                                    <span className="text-sage-700 text-sm text-left">
-                                        I understand I will have access to my loved one's health information
-                                    </span>
-                                </label>
-                            </Card>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {error && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="w-full bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-2xl text-sm mt-4 font-medium"
-                    >
-                        {error}
-                    </motion.div>
-                )}
-
-                <div className="w-full mt-8">
-                    {step < 3 ? (
-                        <Button
-                            variant="cream"
-                            fullWidth
-                            icon={ArrowRight}
-                            iconPosition="right"
-                            onClick={handleNext}
-                        >
-                            Continue
-                        </Button>
-                    ) : (
-                        <Button
-                            variant="cream"
-                            fullWidth
-                            icon={Check}
-                            loading={loading}
-                            onClick={handleComplete}
-                        >
-                            Complete Setup
-                        </Button>
-                    )}
-                </div>
-            </div>
-
-            <p className="text-sage-500 text-sm mt-4 font-medium">Step {step} of 3</p>
-        </div>
+            {step === 3 && (
+                <>
+                    <p className="text-ink-2">As a caregiver you can follow your loved one's medicine schedule and health readings, and receive important alerts.</p>
+                    <Consent checked={formData.consent_acknowledged} onChange={(e) => handleChange('consent_acknowledged', e.target.checked)}>
+                        I understand I will have access to my loved one's health information
+                    </Consent>
+                </>
+            )}
+        </OnboardingShell>
     )
 }

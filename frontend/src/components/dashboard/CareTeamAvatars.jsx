@@ -12,7 +12,7 @@ export default function CareTeamAvatars({ members = [], size = 'default', maxDis
   const shown = members.slice(0, maxDisplay)
   const extra = members.length - shown.length
   const dim = SIZES[size] || SIZES.default
-  const ring = `${dim} rounded-full border-2 border-white flex items-center justify-center font-semibold`
+  const ring = `${dim} rounded-full border-2 border-paper flex items-center justify-center font-semibold`
 
   return (
     <div className={`flex items-center ${className}`} role="list" aria-label="Care team">
@@ -21,12 +21,12 @@ export default function CareTeamAvatars({ members = [], size = 'default', maxDis
           key={m.id || i}
           role="listitem"
           title={m.role ? `${m.name} (${m.role})` : m.name}
-          className={`${ring} bg-sage-100 text-sage-700 overflow-hidden ${i > 0 ? '-ml-3' : ''}`}
+          className={`${ring} bg-primary-100 text-primary-700 overflow-hidden ${i > 0 ? '-ml-3' : ''}`}
         >
           {m.avatar ? <img src={m.avatar} alt={m.name} className="w-full h-full object-cover" /> : initials(m.name)}
         </div>
       ))}
-      {extra > 0 && <div className={`${ring} -ml-3 bg-sage-50 text-sage-600`}>+{extra}</div>}
+      {extra > 0 && <div className={`${ring} -ml-3 bg-paper-2 text-ink-2`}>+{extra}</div>}
     </div>
   )
 }

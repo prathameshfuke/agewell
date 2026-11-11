@@ -84,5 +84,5 @@ Return ONLY valid JSON:
             "flagged_urgent": bool(parsed.get("flagged_urgent", False))
         }
     except Exception as e:
-        logger.error("Gemini call failed in analyze_medical_image: %s", e)
+        logger.error("Gemini call failed in analyze_medical_image: %s", type(e).__name__)
         return _fallback_observation(image_bytes)

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { AlertTriangle, ArrowLeft, ArrowRight, History, Stethoscope } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowRight, History } from 'lucide-react'
 
 import { api } from '../../api/client'
 import { useAuth } from '../../contexts/AuthContext'
+import Art from '../../components/shared/Art'
 import ElderNav from '../../components/ElderNav'
 import FamilyNav from '../../components/FamilyNav'
 import { Card, Button } from '../../components/ui'
@@ -64,34 +65,30 @@ export default function DiagnosisHome() {
                             <ArrowLeft className="w-6 h-6" />
                         </motion.button>
                         <div>
-                            <div className="text-sage-500 text-sm font-bold mb-1">Assistive Diagnosis</div>
-                            <h1 className="text-3xl font-serif font-bold text-sage-900">Check My Symptoms</h1>
+                            <h1 className="text-3xl font-serif text-sage-900">Check my symptoms</h1>
                             <p className="text-sage-500 text-lg mt-1">Answer a few simple questions for a doctor-ready summary.</p>
                         </div>
                     </div>
                 </PageHeader>
             }
             nav={activeRole === 'caregiver' ? <FamilyNav /> : <ElderNav onImOk={() => { }} />}
-            background="gradient"
+            
         >
             <PageMain>
                 <PageSection>
-                    <Card className="border-2 border-sage-200">
+                    <Card>
                         <div className="flex items-start gap-4">
-                            <div className="w-14 h-14 rounded-2xl bg-sage-100 flex items-center justify-center flex-shrink-0">
-                                <Stethoscope className="w-7 h-7 text-sage-600" />
-                            </div>
+                            <Art name="voice" className="h-20 flex-shrink-0" />
                             <div className="flex-1 min-w-0">
-                                <h2 className="text-2xl font-bold text-sage-800">Symptom Intake</h2>
+                                <h2 className="text-2xl font-bold text-sage-800">Tell us how you feel</h2>
                                 <p className="text-sage-600 text-lg mt-1">Describe what you feel. We will ask simple yes/no questions and generate a printable summary.</p>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
+                        <div className="btn-row mt-5">
                             <Button
                                 variant="primary"
                                 size="lg"
-                                fullWidth
                                 icon={ArrowRight}
                                 iconPosition="right"
                                 onClick={() => navigate('/diagnosis/input')}
@@ -101,7 +98,6 @@ export default function DiagnosisHome() {
                             <Button
                                 variant="secondary"
                                 size="lg"
-                                fullWidth
                                 icon={History}
                                 onClick={() => navigate('/diagnosis/history')}
                             >
@@ -114,7 +110,7 @@ export default function DiagnosisHome() {
                 <PageSection delay={0.05}>
                     <Card>
                         <div className="flex items-center justify-between gap-3 mb-3">
-                            <h3 className="text-xl font-bold text-sage-800">Latest Session</h3>
+                            <h3 className="text-xl font-bold text-sage-800">Latest check</h3>
                             {lastSession?.urgency_level && (
                                 <span className={`px-3 py-1.5 rounded-xl border text-sm font-bold ${urgencyStyles[lastSession.urgency_level] || urgencyStyles.ROUTINE}`}>
                                     {lastSession.urgency_level}

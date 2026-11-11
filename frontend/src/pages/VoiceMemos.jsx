@@ -1,18 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { notify } from '../lib/notify'
-import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Mic, Square, Play, Pause, Trash2, Send, Clock, User } from 'lucide-react'
+import { Mic, Square, Play, Pause, Trash2, Send } from 'lucide-react'
+import { voice } from '../assets/images/gen'
 import { api } from '../api/client'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-
-// Import stickers
-import twoSticker from '../assets/images/stickers/two.jpeg'
-import goodmoodSticker from '../assets/images/stickers/goodmood.jpeg'
+import FamilyPage, { Art, lone } from '../components/family/FamilyPage'
 
 export default function VoiceMemos() {
-    const navigate = useNavigate()
     const { user, profile, linkedElderId } = useAuth()
     const [memos, setMemos] = useState([])
     const [loading, setLoading] = useState(true)
@@ -102,18 +97,15 @@ export default function VoiceMemos() {
             let uploadedUrl = audioUrl
 
             if (supabase) {
-                const filename = `voice-memo-${Date.now()}.webm`
-                const { data, error } = await supabase.storage
+                // Private bucket: store the unguessable object name; readers get a short-lived signed URL.
+                const filename = `${userId}/${crypto.randomUUID()}.webm`
+                const { error } = await supabase.storage
                     .from('voice-memos')
-                    .upload(filename, audioBlob)
+                    .upload(filename, audioBlob, { contentType: 'audio/webm' })
 
                 if (error) throw error
 
-                const { data: { publicUrl } } = supabase.storage
-                    .from('voice-memos')
-                    .getPublicUrl(filename)
-
-                uploadedUrl = publicUrl
+                uploadedUrl = filename
             }
 
             // Create memo record
@@ -169,213 +161,81 @@ export default function VoiceMemos() {
     }
 
     return (
-        <div className="min-h-screen bg-cream-50 font-sans pb-24 md:pb-0">
-            {/* Hidden audio element for playback */}
-            <audio
-                ref={audioRef}
-                onEnded={() => setPlayingId(null)}
-                className="hidden"
-            />
-
-            {/* Header */}
-            <header className="px-6 py-5 flex items-center gap-4 bg-cream-50 sticky top-0 z-10">
-                <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate(-1)}
-                    className="btn-icon-ghost"
-                >
-                    <ArrowLeft className="w-6 h-6" />
-                </motion.button>
-                <div className="flex-1">
-                    <h1 className="text-2xl font-serif font-bold text-sage-900">Voice Memos</h1>
-                    <p className="text-sage-500">
-                        {isCaregiver ? 'Send loving messages' : 'Messages from family'}
-                    </p>
-                </div>
-            </header>
-
-            <main className="px-6 space-y-6">
-                {/* Recording Section (Caregiver Only) */}
-                {isCaregiver && (
-                    <section>
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-white rounded-3xl p-6 border-2 border-sage-100"
-                        >
-                            <h2 className="text-lg font-bold text-sage-800 mb-4">Record a Message</h2>
-                            <p className="text-sage-500 mb-6">
-                                Record a voice memo to be played during your loved one's medication time.
-                            </p>
-
-                            {!audioUrl ? (
-                                <div className="text-center">
-                                    {!isRecording ? (
-                                        <motion.button
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={startRecording}
-                                            className="w-24 h-24 rounded-full bg-sage-500 text-white flex items-center justify-center mx-auto shadow-lg"
-                                        >
-                                            <Mic className="w-10 h-10" />
-                                        </motion.button>
-                                    ) : (
-                                        <div>
-                                            <motion.button
-                                                whileTap={{ scale: 0.95 }}
-                                                onClick={stopRecording}
-                                                animate={{ scale: [1, 1.1, 1] }}
-                                                transition={{ repeat: Infinity, duration: 1 }}
-                                                className="w-24 h-24 rounded-full bg-rose-500 text-white flex items-center justify-center mx-auto shadow-lg"
-                                            >
-                                                <Square className="w-8 h-8" />
-                                            </motion.button>
-                                            <div className="mt-4 text-2xl font-bold text-sage-800">
-                                                {formatTime(recordingTime)}
-                                            </div>
-                                            <p className="text-sage-500">Recording...</p>
-                                        </div>
-                                    )}
-                                    <p className="text-sage-400 mt-4 text-sm">
-                                        {isRecording ? 'Tap to stop' : 'Tap to start recording'}
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {/* Preview */}
-                                    <div className="bg-sage-50 rounded-2xl p-4 flex items-center gap-4">
-                                        <motion.button
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={() => {
-                                                const audio = new Audio(audioUrl)
-                                                audio.play()
-                                            }}
-                                            className="w-12 h-12 rounded-full bg-sage-500 text-white flex items-center justify-center"
-                                        >
-                                            <Play className="w-6 h-6" />
-                                        </motion.button>
-                                        <div className="flex-1">
-                                            <div className="font-bold text-sage-800">Voice Memo</div>
-                                            <div className="text-sage-500">{formatTime(recordingTime)}</div>
-                                        </div>
-                                    </div>
-
-                                    {/* Actions */}
-                                    <div className="flex gap-3">
-                                        <motion.button
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={cancelRecording}
-                                            className="flex-1 py-3 border-2 border-sage-200 text-sage-600 rounded-xl font-bold flex items-center justify-center gap-2"
-                                        >
-                                            <Trash2 className="w-5 h-5" />
-                                            Discard
-                                        </motion.button>
-                                        <motion.button
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={sendMemo}
-                                            className="flex-1 py-3 bg-sage-500 text-white rounded-xl font-bold flex items-center justify-center gap-2"
-                                        >
-                                            <Send className="w-5 h-5" />
-                                            Send
-                                        </motion.button>
-                                    </div>
-                                </div>
-                            )}
-                        </motion.div>
-                    </section>
-                )}
-
-                {/* Memos List */}
+        <FamilyPage
+            title="Voice memos"
+            sub={isCaregiver ? 'Send a message to play at medicine time' : 'Messages from family'}
+            back
+            art={voice}
+            aside={isCaregiver && (
                 <section>
-                    <h2 className="text-lg font-bold text-sage-800 mb-4">
-                        {isCaregiver ? 'Sent Messages' : 'Messages from Family'}
-                    </h2>
+                    <h2 className="font-serif text-2xl">Why voice</h2>
+                    <p className="mt-2 text-ink-2">A familiar voice at medicine time makes the routine feel less clinical. Messages play when a dose is due.</p>
+                </section>
+            )}
+        >
+            {/* Hidden audio element for playback */}
+            <audio ref={audioRef} onEnded={() => setPlayingId(null)} className="hidden" />
 
-                    {loading ? (
-                        <div className="bg-white rounded-2xl p-8 border-2 border-sage-100 text-center">
-                            <p className="text-sage-500">Loading messages...</p>
+            {isCaregiver && (
+                <section>
+                    <h2 className="font-serif text-2xl">Record a message</h2>
+                    {!audioUrl ? (
+                        <div className="mt-3 space-y-4">
+                            {isRecording ? (
+                                <>
+                                    <p role="status" className="flex items-center gap-3 text-xl">
+                                        <span aria-hidden="true" className="h-3 w-3 animate-pulse rounded-full bg-status-danger motion-reduce:animate-none" />
+                                        Recording {formatTime(recordingTime)}
+                                    </p>
+                                    <button type="button" onClick={stopRecording} className={`btn-primary btn-sm ${lone}`}><Square aria-hidden="true" /> Stop recording</button>
+                                </>
+                            ) : (
+                                <button type="button" onClick={startRecording} className={`btn-primary btn-sm ${lone}`}><Mic aria-hidden="true" /> Start recording</button>
+                            )}
                         </div>
-                    ) : memos.length === 0 ? (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-white rounded-2xl p-8 border-2 border-sage-100 text-center"
-                        >
-                            <img
-                                src={isCaregiver ? twoSticker : goodmoodSticker}
-                                alt="No messages"
-                                className="w-24 h-24 mx-auto mb-4 rounded-2xl"
-                            />
-                            <h3 className="text-xl font-bold text-sage-800 mb-2">No Messages Yet</h3>
-                            <p className="text-sage-500">
-                                {isCaregiver
-                                    ? 'Record a voice memo to send to your loved one'
-                                    : 'Your family hasn\'t sent any voice memos yet'}
-                            </p>
-                        </motion.div>
                     ) : (
-                        <div className="space-y-3">
-                            {memos.map((memo, index) => (
-                                <motion.div
-                                    key={memo.id}
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: index * 0.05 }}
-                                    className={`bg-white rounded-2xl p-4 border-2 ${!memo.is_played && !isCaregiver ? 'border-sage-300 bg-sage-50' : 'border-sage-100'
-                                        }`}
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <motion.button
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={() => playMemo(memo)}
-                                            className={`w-14 h-14 rounded-full flex items-center justify-center ${playingId === memo.id
-                                                ? 'bg-sage-600 text-white'
-                                                : 'bg-sage-100 text-sage-600'
-                                                }`}
-                                        >
-                                            {playingId === memo.id ? (
-                                                <Pause className="w-6 h-6" />
-                                            ) : (
-                                                <Play className="w-6 h-6 ml-1" />
-                                            )}
-                                        </motion.button>
-
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <User className="w-4 h-4 text-sage-400" />
-                                                <span className="font-bold text-sage-800">
-                                                    {memo.from_user?.full_name || 'Family Member'}
-                                                </span>
-                                                {!memo.is_played && !isCaregiver && (
-                                                    <span className="px-2 py-0.5 bg-sage-500 text-white text-xs rounded-full font-bold">
-                                                        NEW
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-3 text-sage-500 text-sm mt-1">
-                                                <span className="flex items-center gap-1">
-                                                    <Clock className="w-3 h-3" />
-                                                    {formatTime(memo.duration_seconds || 0)}
-                                                </span>
-                                                <span>{formatDate(memo.created_at)}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            ))}
+                        <div className="mt-3 space-y-4">
+                            <p className="text-lg">Voice memo, {formatTime(recordingTime)}</p>
+                            <div className="btn-row sm:max-w-xl">
+                                <button type="button" onClick={() => new Audio(audioUrl).play()} className="btn-secondary btn-sm"><Play aria-hidden="true" /> Play</button>
+                                <button type="button" onClick={cancelRecording} className="btn-secondary btn-sm"><Trash2 aria-hidden="true" /> Discard</button>
+                                <button type="button" onClick={sendMemo} className="btn-primary btn-sm"><Send aria-hidden="true" /> Send</button>
+                            </div>
                         </div>
                     )}
                 </section>
+            )}
 
-                {/* Info */}
-                <div className="bg-sage-50 rounded-2xl p-5 border-2 border-sage-100">
-                    <h3 className="font-bold text-sage-800 mb-2">💝 Emotional Wellness</h3>
-                    <p className="text-sage-600 text-sm">
-                        Voice memos help maintain emotional connection between caregivers and loved ones.
-                        Messages are played during medication times to create positive associations with
-                        healthcare routines.
-                    </p>
-                </div>
-            </main>
-        </div>
+            <section>
+                <h2 className="font-serif text-2xl">{isCaregiver ? 'Sent messages' : 'Messages from family'}</h2>
+                {loading ? (
+                    <p className="mt-2 text-ink-2">Loading messages...</p>
+                ) : memos.length === 0 ? (
+                    <div className="mt-2 flex items-center gap-5">
+                        <Art src={voice} className="w-24 shrink-0 lg:hidden" />
+                        <p className="text-ink-2">
+                            {isCaregiver ? 'No messages yet. Record one to send to your loved one.' : 'Your family has not sent any voice memos yet.'}
+                        </p>
+                    </div>
+                ) : (
+                    <ul className="mt-2 divide-y divide-line">
+                        {memos.map((memo) => (
+                            <li key={memo.id} className="flex items-center gap-4 py-3">
+                                <button type="button" onClick={() => playMemo(memo)} aria-label={playingId === memo.id ? 'Pause' : 'Play'} className="btn-secondary btn-sm !px-4">
+                                    {playingId === memo.id ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
+                                </button>
+                                <div className="min-w-0 flex-1">
+                                    <div className="truncate text-lg">
+                                        {memo.from_user?.full_name || 'Family member'}
+                                        {!memo.is_played && !isCaregiver && <span className="ml-2 text-sm font-bold text-primary">New</span>}
+                                    </div>
+                                    <div className="text-ink-2">{formatTime(memo.duration_seconds || 0)} · {formatDate(memo.created_at)}</div>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </section>
+        </FamilyPage>
     )
 }

@@ -247,8 +247,7 @@ export default function QAFlow() {
                             <ArrowLeft className="w-6 h-6" />
                         </motion.button>
                         <div>
-                            <div className="text-sage-500 text-sm font-bold">Assistive Diagnosis</div>
-                            <h1 className="text-2xl font-serif font-bold text-sage-900">Simple Yes/No Questions</h1>
+                            <h1 className="text-2xl font-serif text-sage-900">Simple Yes/No Questions</h1>
                         </div>
                     </div>
                 </PageHeader>
@@ -276,7 +275,7 @@ export default function QAFlow() {
                 {extractedSymptoms.length > 0 && (
                     <PageSection delay={0.03}>
                         <Card>
-                            <h3 className="text-xl font-bold text-sage-800 mb-2">Detected Symptoms</h3>
+                            <h3 className="text-xl font-bold text-sage-800 mb-2">Symptoms we noticed</h3>
                             <div className="flex flex-wrap gap-2">
                                 {extractedSymptoms.map((symptom, idx) => (
                                     <span

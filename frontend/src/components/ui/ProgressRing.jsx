@@ -4,8 +4,8 @@ export default function ProgressRing({
   progress = 0, 
   size = 120, 
   strokeWidth = 8,
-  color = '#2F5BEA',
-  backgroundColor = '#E8F0EB',
+  color = '#1F5F4A',
+  backgroundColor = '#E3EEE7',
   showPercentage = true,
   label,
   animate = true

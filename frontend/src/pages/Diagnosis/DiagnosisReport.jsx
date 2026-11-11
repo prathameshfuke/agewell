@@ -150,7 +150,7 @@ export default function DiagnosisReport() {
                             >
                                 <ArrowLeft className="w-6 h-6" />
                             </motion.button>
-                            <h1 className="text-2xl font-serif font-bold text-sage-900">Diagnosis Report</h1>
+                            <h1 className="text-2xl font-serif text-sage-900">Your report</h1>
                         </div>
                     </PageHeader>
                 }
@@ -187,21 +187,20 @@ export default function DiagnosisReport() {
                             <ArrowLeft className="w-6 h-6" />
                         </motion.button>
                         <div>
-                            <div className="text-sage-500 text-sm font-bold mb-1">Assistive Diagnosis</div>
-                            <h1 className="text-3xl font-serif font-bold text-sage-900">Symptom Summary Report</h1>
+                            <h1 className="text-3xl font-serif text-sage-900">Your symptom summary</h1>
                             <p className="text-sage-500 text-lg mt-1">Prepared for doctor discussion.</p>
                         </div>
                     </div>
                 </PageHeader>
             }
             nav={activeRole === 'caregiver' ? <FamilyNav /> : <ElderNav onImOk={() => { }} />}
-            background="gradient"
+            
         >
             <PageMain>
                 {urgencyLevel === 'GO_NOW' && !dismissed && (
                     <div className="fixed inset-0 bg-rose-600 z-50 flex flex-col items-center justify-center p-8 text-white">
                         <AlertTriangle size={64} className="mb-4 animate-pulse" />
-                        <h1 className="text-3xl font-bold text-center mb-3">Seek Immediate Help</h1>
+                        <h1 className="text-3xl font-bold text-center mb-3">Get help now</h1>
                         <p className="text-xl text-center text-rose-100 mb-8">{urgencyReason}</p>
                         <p className="text-sm text-rose-200 mb-8 text-center">
                             {alertSent
@@ -251,14 +250,14 @@ export default function DiagnosisReport() {
 
                 <PageSection delay={0.05}>
                     <Card>
-                        <h2 className="text-2xl font-bold text-sage-900 mb-2">Symptom Summary</h2>
+                        <h2 className="text-2xl font-bold text-sage-900 mb-2">Summary</h2>
                         <p className="text-sage-700 text-lg leading-relaxed">{report.symptom_summary}</p>
                     </Card>
                 </PageSection>
 
                 <PageSection delay={0.1}>
                     <Card>
-                        <h2 className="text-2xl font-bold text-sage-900 mb-2">Possible Conditions</h2>
+                        <h2 className="text-2xl font-bold text-sage-900 mb-2">Possible conditions</h2>
                         <ul className="space-y-2 text-lg text-sage-700">
                             {(report.possible_conditions || []).map((condition, idx) => (
                                 <li key={`${condition}-${idx}`}>- {condition}</li>
@@ -269,7 +268,7 @@ export default function DiagnosisReport() {
 
                 <PageSection delay={0.15}>
                     <Card>
-                        <h2 className="text-2xl font-bold text-sage-900 mb-2">Medication Flags</h2>
+                        <h2 className="text-2xl font-bold text-sage-900 mb-2">Medicine flags</h2>
                         {(report.medication_flags || []).length > 0 ? (
                             <ul className="space-y-2 text-lg text-sage-700">
                                 {report.medication_flags.map((flag, idx) => (

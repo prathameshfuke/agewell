@@ -1,79 +1,48 @@
 /**
- * PageLayout - Unified page layout for AgeWell+
- * 
- * Provides consistent:
- * - Background gradient
- * - Header styling
- * - Main content area with proper spacing
- * - Bottom navigation padding
+ * Page layout primitives for AgeWell+.
+ * Fluid: full width on phones (16px gutters), 24px at 640, 40px at 1024; content capped at 1120px.
+ * The app shell (components/shell) supplies the bottom bar or sidebar; these only reserve clearance.
  */
-export default function PageLayout({
-  children,
-  header,
-  nav,
-  background = 'default',
-  className = '',
-}) {
-  const backgrounds = {
-    default: 'bg-cream-50',
-    gradient: 'bg-cream-50',
-  }
+const WIDTH = 'mx-auto w-full max-w-[1120px] px-4 sm:px-6 lg:px-10'
 
+export default function PageLayout({ children, header, nav, className = '' }) {
   return (
-    <div className={`min-h-screen font-sans ${backgrounds[background]} ${className}`}>
-      {/* Decorative background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 flex flex-col min-h-screen">
-        {header}
-        {children}
-        {nav}
-      </div>
+    <div className={`flex min-h-dvh flex-col bg-paper font-sans text-sage-900 ${className}`}>
+      {header}
+      {children}
+      {nav}
     </div>
   )
 }
 
-/**
- * PageHeader - Consistent page header styling
- * Mobile-first with safe area insets
- */
+/** Sticky page header; children sit inside the same width as PageMain. */
 export function PageHeader({ children, className = '' }) {
   return (
-    <header className={`px-4 py-3 sm:py-4 md:px-6 md:py-6 bg-cream-50 sticky top-0 z-20 ${className}`}>
-      {children}
+    <header className="sticky top-0 z-20 bg-paper/95 pt-[env(safe-area-inset-top)]">
+      <div className={`${WIDTH} py-3 sm:py-4 ${className}`}>{children}</div>
     </header>
   )
 }
 
-/**
- * PageMain - Main content area with consistent padding
- * Mobile-first with bottom navigation clearance
- */
+/** Main content area with room for the bottom tab bar on <1024px. */
 export function PageMain({ children, className = '' }) {
   return (
-    <main className={`flex-1 px-3 sm:px-4 py-3 sm:py-4 md:px-6 pb-24 md:pb-0 space-y-4 sm:space-y-5 md:space-y-6 ${className}`}>
+    <main className={`${WIDTH} flex-1 space-y-5 pb-28 pt-2 sm:space-y-6 lg:pb-12 ${className}`}>
       {children}
     </main>
   )
 }
 
-/**
- * PageSection - plain wrapper (no per-section entrance animation; the route transition handles it)
- */
+/** Plain wrapper (no per-section entrance animation; the route transition handles it). */
 export function PageSection({ children, className = '' }) {
   return <div className={className}>{children}</div>
 }
 
-/**
- * CenteredLayout - For auth/onboarding pages
- * Mobile-first with proper spacing
- */
+/** For auth/onboarding pages: centered, comfortable on phones, still a narrow form on desktop. */
 export function CenteredLayout({ children, className = '' }) {
   return (
-    <div className={`min-h-screen bg-cream-50 flex flex-col p-3 sm:p-4 md:p-6 ${className}`}>
-      <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
+    <div className={`flex min-h-dvh flex-col bg-paper p-4 sm:p-6 ${className}`}>
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center">
         {children}
       </div>
     </div>

@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, CheckCircle, AlertCircle, Pill, Plus, RefreshCw } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
+import { pills } from '../assets/images/gen'
 import { api } from '../api/client'
 import { useAuth } from '../contexts/AuthContext'
-
-const focusRing = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
+import FamilyPage, { Art, Notice, NotLinked, lone } from '../components/family/FamilyPage'
 
 const localKey = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
 
@@ -56,82 +56,61 @@ export default function FamilyMeds() {
         loadMedications()
     }, [loadMedications])
 
+    const refresh = (
+        <button type="button" onClick={loadMedications} disabled={loading} aria-label="Refresh medications" className="btn-icon-ghost disabled:opacity-50">
+            <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />
+        </button>
+    )
+    const add = () => navigate('/family/prescription/upload')
+
     return (
-        <div className="min-h-screen bg-cream-50 font-sans pb-24 md:pb-8">
-            <header className="px-4 md:px-6 py-4 flex items-center gap-3 border-b border-sage-200 sticky top-0 bg-cream-50 z-20">
-                <button type="button" onClick={() => navigate('/family/dashboard')} aria-label="Back to dashboard" className={`w-11 h-11 rounded-full flex items-center justify-center text-sage-700 hover:bg-sage-100 ${focusRing}`}>
-                    <ArrowLeft className="w-5 h-5" />
-                </button>
-                <div className="flex-1 min-w-0">
-                    <h1 className="font-serif text-2xl text-sage-900">Medications</h1>
-                    <p className="text-sm text-sage-500">Doses taken over the last 7 days</p>
-                </div>
-                <button type="button" onClick={loadMedications} disabled={loading} aria-label="Refresh medications" className={`w-11 h-11 rounded-full border border-sage-300 flex items-center justify-center text-sage-700 hover:bg-sage-50 disabled:opacity-50 ${focusRing}`}>
-                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                </button>
-            </header>
+        <FamilyPage title="Medications" sub="Doses taken over the last 7 days" back="/family/dashboard" art={pills} action={refresh}>
+            {!linkedElderId ? (
+                <NotLinked text="Link an account to see their medications." />
+            ) : (
+                <>
+                    {error && <Notice onRetry={loadMedications}>{error}</Notice>}
 
-            <main className="px-4 md:px-6 py-5 space-y-4 max-w-2xl mx-auto">
-                {!linkedElderId ? (
-                    <section className="rounded-2xl border border-sage-200 bg-white p-6">
-                        <h2 className="font-serif text-xl text-sage-900">You are not linked to anyone yet</h2>
-                        <p className="text-sage-600 mt-1">Link an account to see their medications.</p>
-                        <button type="button" onClick={() => navigate('/link')} className="btn-primary mt-4 btn-sm">Enter a pairing code</button>
-                    </section>
-                ) : (
-                    <>
-                        {error && (
-                            <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
-                                <p className="text-rose-800">{error}</p>
-                                <button type="button" onClick={loadMedications} className={`mt-3 min-h-[44px] px-4 rounded-full border border-rose-300 text-sm font-semibold text-rose-800 hover:bg-rose-100 ${focusRing}`}>Try again</button>
+                    {loading && medications.length === 0 ? (
+                        <p className="text-ink-2">Loading medications...</p>
+                    ) : medications.length === 0 && !error ? (
+                        <section className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
+                            <Art src={pills} className="w-32 shrink-0 lg:hidden" />
+                            <div>
+                                <h2 className="font-serif text-3xl">No medications yet</h2>
+                                <p className="mt-2 max-w-md text-ink-2">Upload a photo of a prescription and we will read the medicines for you to review.</p>
+                                <button type="button" onClick={add} className={`btn-primary btn-sm mt-5 ${lone}`}>Add a prescription</button>
                             </div>
-                        )}
-
-                        {loading && medications.length === 0 ? (
-                            <p className="text-sage-500 text-center py-8">Loading medications...</p>
-                        ) : medications.length === 0 && !error ? (
-                            <section className="rounded-2xl border border-sage-200 bg-white p-8 text-center">
-                                <Pill className="w-6 h-6 mx-auto text-sage-400 mb-2" aria-hidden="true" />
-                                <h2 className="font-serif text-xl text-sage-900">No medications yet</h2>
-                                <p className="text-sage-600 mt-1">Upload a prescription and we will add the medications for you.</p>
-                                <button type="button" onClick={() => navigate('/family/prescription/upload')} className="btn-primary mt-4 btn-sm">
-                                    <Plus className="w-4 h-4" /> Add a prescription
-                                </button>
-                            </section>
-                        ) : (
-                            <>
-                                <ul className="space-y-3">
-                                    {medications.map((med, i) => (
-                                        <li key={med.id || i} className="rounded-2xl border border-sage-200 bg-white p-5">
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="min-w-0">
-                                                    <h2 className="text-sage-900 text-lg break-words">{med.name}</h2>
-                                                    {med.dosage && <div className="text-sm text-sage-500">{med.dosage}</div>}
-                                                </div>
-                                                <span className={`px-3 py-1 rounded-full border text-xs font-semibold flex items-center gap-1.5 flex-shrink-0 ${med.status === 'consistent' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'}`}>
-                                                    {med.status === 'consistent' ? <><CheckCircle className="w-3.5 h-3.5" /> Consistent</> : <><AlertCircle className="w-3.5 h-3.5" /> Needs attention</>}
+                        </section>
+                    ) : medications.length > 0 && (
+                        <section>
+                            <ul className="divide-y divide-line border-y border-line">
+                                {medications.map((med, i) => (
+                                    <li key={med.id || i} className="py-4 sm:flex sm:items-center sm:justify-between sm:gap-6">
+                                        <div className="min-w-0">
+                                            <h2 className="break-words font-sans text-lg font-bold">{med.name}</h2>
+                                            <p className={med.status === 'consistent' ? 'text-emerald-700' : 'text-clay-600'}>
+                                                {med.dosage ? `${med.dosage} · ` : ''}{med.status === 'consistent' ? 'Consistent' : 'Needs attention'}, {med.rate}% this week
+                                            </p>
+                                        </div>
+                                        <div className="mt-3 flex gap-1.5 sm:mt-0" role="img" aria-label={`Taken on ${med.lastWeek.filter(Boolean).length} of the last 7 days`}>
+                                            {med.lastWeek.map((d, j) => (
+                                                <span key={j} aria-hidden="true" className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm ${d ? 'bg-primary-100 text-primary-700' : 'bg-paper-2 text-ink-2'}`}>
+                                                    {d ? '✓' : '–'}
                                                 </span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5 mt-4" role="img" aria-label={`Taken on ${med.lastWeek.filter(Boolean).length} of the last 7 days`}>
-                                                {med.lastWeek.map((d, j) => (
-                                                    <div key={j} className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs ${d ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-sage-50 text-sage-400 border border-sage-200'}`}>
-                                                        {d ? '✓' : '–'}
-                                                    </div>
-                                                ))}
-                                                <span className="text-sm text-sage-500 ml-auto">{med.rate}% this week</span>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                                <button type="button" onClick={() => navigate('/family/prescription/upload')} className="btn-secondary w-full btn-sm">
-                                    <Plus className="w-4 h-4" /> Add a prescription
-                                </button>
-                            </>
-                        )}
-                        <p className="text-center text-sage-500 text-sm pt-2">View only. Medications are added by uploading a prescription.</p>
-                    </>
-                )}
-            </main>
-        </div>
+                                            ))}
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+                                <button type="button" onClick={add} className={`btn-primary btn-sm ${lone}`}>Add a prescription</button>
+                                <p className="text-ink-2">View only. Medications are added from a prescription.</p>
+                            </div>
+                        </section>
+                    )}
+                </>
+            )}
+        </FamilyPage>
     )
 }
