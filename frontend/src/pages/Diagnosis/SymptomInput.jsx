@@ -123,7 +123,7 @@ function mergeComplaintParts(existing, spoken) {
 
 export default function SymptomInput() {
     const navigate = useNavigate()
-    const { user, profile, activeRole } = useAuth()
+    const { user, profile, activeRole, linkedElderId } = useAuth()
 
     const [complaint, setComplaint] = useState(() => {
         try {
@@ -141,7 +141,7 @@ export default function SymptomInput() {
     const voiceTranscriptRef = useRef('')
 
     const patientId = useMemo(() => {
-        if (activeRole === 'caregiver') return profile?.linked_elderly_id
+        if (activeRole === 'caregiver') return linkedElderId
         return user?.id
     }, [activeRole, profile, user])
 
@@ -309,13 +309,13 @@ export default function SymptomInput() {
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={() => navigate('/diagnosis')}
-                            className="p-3 rounded-xl text-sage-600 hover:bg-sage-100"
+                            className="btn-icon-ghost"
                             aria-label="Back"
                         >
                             <ArrowLeft className="w-6 h-6" />
                         </motion.button>
                         <div>
-                            <div className="text-sage-500 text-sm font-bold uppercase tracking-wider">Assistive Diagnosis</div>
+                            <div className="text-sage-500 text-sm font-bold">Assistive Diagnosis</div>
                             <h1 className="text-2xl font-serif font-bold text-sage-900">Describe Your Symptoms</h1>
                         </div>
                     </div>

@@ -1,176 +1,118 @@
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { ArrowLeft, Calendar, Pill, Heart, AlertCircle, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Pill, Heart, AlertCircle, CheckCircle } from 'lucide-react'
 import { useActivity } from '../hooks/useActivity'
-import FamilyNav from '../components/FamilyNav'
 import { useAuth } from '../contexts/AuthContext'
+
+const focusRing = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
+
+const PERIODS = [
+    { key: 'morning', label: 'Morning' },
+    { key: 'afternoon', label: 'Afternoon' },
+    { key: 'evening', label: 'Evening' },
+]
+
+const todayKey = () => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const EVENT_ICON = { medication: Pill, check_in: Heart, alert: AlertCircle }
 
 export default function FamilyReplay() {
     const navigate = useNavigate()
-    const { profile } = useAuth()
-    const { activities, grouped, loading, error, stats, selectedDate } = useActivity(profile?.linked_elderly_id)
+    const { linkedElderId } = useAuth()
+    const { activities, grouped, loading, error, stats, selectedDate, changeDate, refresh } = useActivity(linkedElderId)
 
-    const formatDate = (dateStr) => {
-        if (!dateStr) {
-            return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
-        }
-        return new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
-    }
+    // Parse YYYY-MM-DD as a local date so the label never shifts by timezone.
+    const label = (selectedDate ? new Date(`${selectedDate}T00:00:00`) : new Date()).toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+    })
 
-    const getEventIcon = (type) => {
-        switch (type) {
-            case 'medication':
-                return <Pill className="w-5 h-5" />
-            case 'check_in':
-                return <Heart className="w-5 h-5" />
-            case 'alert':
-                return <AlertCircle className="w-5 h-5" />
-            default:
-                return <CheckCircle className="w-5 h-5" />
-        }
-    }
-
-    const getEventColor = (type, status) => {
-        if (status === 'warning') return 'bg-amber-100 border-amber-200 text-amber-700'
-        switch (type) {
-            case 'medication':
-                return 'bg-sage-100 border-sage-200 text-sage-700'
-            case 'check_in':
-                return 'bg-rose-50 border-rose-100 text-rose-600'
-            case 'alert':
-                return 'bg-amber-100 border-amber-200 text-amber-700'
-            default:
-                return 'bg-sage-50 border-sage-100 text-sage-600'
-        }
-    }
-
-    const periods = [
-        { key: 'morning', label: 'Morning', icon: '🌅' },
-        { key: 'afternoon', label: 'Afternoon', icon: '☀️' },
-        { key: 'evening', label: 'Evening', icon: '🌙' },
-    ]
+    const summary = stats.alerts > 0
+        ? `${stats.alerts} alert${stats.alerts > 1 ? 's' : ''} to review`
+        : activities.length === 0 ? 'No activity recorded' : 'No alerts'
 
     return (
-        <div className="min-h-screen bg-cream-50 font-sans pb-24 md:pb-0">
-            {/* Header */}
-            <header className="px-6 py-5 flex items-center gap-4 sticky top-0 bg-cream-50 z-10 border-b border-sage-100">
-                <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate(-1)}
-                    className="p-3 text-sage-500 hover:bg-sage-50 rounded-xl"
-                >
-                    <ArrowLeft className="w-6 h-6" />
-                </motion.button>
-                <div className="flex-1">
-                    <h1 className="text-xl font-bold text-sage-800">Day Replay</h1>
-                    <div className="text-sage-500">{formatDate(selectedDate)}</div>
-                </div>
-                <button className="p-3 text-sage-400 hover:bg-sage-50 rounded-xl">
-                    <Calendar className="w-6 h-6" />
+        <div className="min-h-screen bg-cream-50 font-sans pb-24 md:pb-8">
+            <header className="px-4 md:px-6 py-4 flex items-center gap-3 border-b border-sage-200 sticky top-0 bg-cream-50 z-20">
+                <button type="button" onClick={() => navigate(-1)} aria-label="Go back" className={`w-11 h-11 rounded-full flex items-center justify-center text-sage-700 hover:bg-sage-100 ${focusRing}`}>
+                    <ArrowLeft className="w-5 h-5" />
                 </button>
+                <div className="flex-1 min-w-0">
+                    <h1 className="font-serif text-2xl text-sage-900">Day replay</h1>
+                    <p className="text-sm text-sage-500 truncate">{label}</p>
+                </div>
+                <label className="sr-only" htmlFor="replay-date">Choose a date</label>
+                <input
+                    id="replay-date"
+                    type="date"
+                    max={todayKey()}
+                    value={selectedDate || todayKey()}
+                    onChange={(e) => e.target.value && changeDate(e.target.value)}
+                    className={`min-h-[44px] rounded-full border border-sage-300 bg-white px-3 text-sm text-sage-800 ${focusRing}`}
+                />
             </header>
 
-            <main className="px-6 py-5 space-y-6">
-                {/* Summary Banner */}
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-3xl p-5 border-2 border-sage-100 shadow-sm"
-                >
-                    <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-sage-100 rounded-2xl flex items-center justify-center">
-                            <CheckCircle className="w-7 h-7 text-sage-600" />
-                        </div>
-                        <div>
-                            <div className="text-xl font-bold text-sage-800">
-                                {stats.alerts > 0 ? 'Needs Attention' : 'All Good Today'}
+            <main className="px-4 md:px-6 py-5 space-y-5 max-w-2xl mx-auto">
+                {!linkedElderId ? (
+                    <section className="rounded-2xl border border-sage-200 bg-white p-6">
+                        <h2 className="font-serif text-xl text-sage-900">You are not linked to anyone yet</h2>
+                        <p className="text-sage-600 mt-1">Link an account to see their day.</p>
+                        <button type="button" onClick={() => navigate('/link')} className="btn-primary mt-4 btn-sm">Enter a pairing code</button>
+                    </section>
+                ) : (
+                    <>
+                        <section className="rounded-2xl border border-sage-200 bg-white p-5">
+                            <div className={`font-serif text-xl ${stats.alerts > 0 ? 'text-amber-800' : 'text-sage-900'}`}>{summary}</div>
+                            <div className="text-sage-500 text-sm mt-1">
+                                {stats.medicationsTaken} medications taken, {stats.checkIns} check-ins
                             </div>
-                            <div className="text-sage-500">
-                                {stats.medicationsTaken} medications • {stats.checkIns} check-ins
+                        </section>
+
+                        {loading && <p className="text-sage-500 text-center py-8">Loading timeline...</p>}
+
+                        {error && !loading && (
+                            <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                                <p className="text-rose-800">Could not load activity. {typeof error === 'string' ? error : ''}</p>
+                                <button type="button" onClick={refresh} className={`mt-3 min-h-[44px] px-4 rounded-full border border-rose-300 text-sm font-semibold text-rose-800 hover:bg-rose-100 ${focusRing}`}>Try again</button>
                             </div>
-                        </div>
-                    </div>
-                </motion.div>
+                        )}
 
-                {/* Loading */}
-                {loading && (
-                    <div className="text-center py-12">
-                        <div className="loading-spinner mx-auto" />
-                        <p className="text-sage-500 mt-4 text-lg">Loading timeline...</p>
-                    </div>
-                )}
+                        {!loading && !error && PERIODS.map((p) => {
+                            const items = grouped?.[p.key] || []
+                            if (items.length === 0) return null
+                            return (
+                                <section key={p.key} aria-label={p.label}>
+                                    <h2 className="font-serif text-lg text-sage-900 mb-2">{p.label}</h2>
+                                    <ul className="rounded-2xl border border-sage-200 bg-white divide-y divide-sage-100">
+                                        {items.map((e, i) => {
+                                            const Icon = EVENT_ICON[e.type] || CheckCircle
+                                            const warn = e.status === 'warning' || e.type === 'alert'
+                                            return (
+                                                <li key={e.id || i} className="flex items-start gap-3 p-4">
+                                                    <Icon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${warn ? 'text-amber-700' : 'text-sage-500'}`} aria-hidden="true" />
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-sage-900">{e.title}</div>
+                                                        {e.detail && <div className="text-sm text-sage-500 break-words">{e.detail}</div>}
+                                                    </div>
+                                                    <span className="text-sm text-sage-500 flex-shrink-0">{e.time}</span>
+                                                </li>
+                                            )
+                                        })}
+                                    </ul>
+                                </section>
+                            )
+                        })}
 
-                {/* Error */}
-                {error && (
-                    <div className="bg-rose-50 border-2 border-rose-200 rounded-2xl p-5 text-center">
-                        <p className="text-rose-600">Failed to load activity</p>
-                    </div>
-                )}
-
-                {/* Narrative Timeline by Period */}
-                {!loading && !error && periods.map((period, periodIdx) => {
-                    const items = grouped[period.key] || []
-                    if (items.length === 0) return null
-
-                    return (
-                        <motion.div
-                            key={period.key}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: periodIdx * 0.1 }}
-                        >
-                            {/* Period Header */}
-                            <div className="flex items-center gap-2 mb-4">
-                                <span className="text-2xl">{period.icon}</span>
-                                <span className="text-lg font-bold text-sage-700">{period.label}</span>
+                        {!loading && !error && activities.length === 0 && (
+                            <div className="text-center py-12">
+                                <p className="text-sage-800 font-semibold">Nothing recorded on this day</p>
+                                <p className="text-sm text-sage-500 mt-1">Pick another date, or check back later today.</p>
                             </div>
-
-                            {/* Event Cards */}
-                            <div className="space-y-3">
-                                {items.map((event, i) => (
-                                    <motion.div
-                                        key={i}
-                                        initial={{ opacity: 0, x: -10 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: i * 0.05 }}
-                                        className="bg-white rounded-2xl p-4 border-2 border-sage-100"
-                                    >
-                                        <div className="flex items-start gap-4">
-                                            {/* Icon */}
-                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${getEventColor(event.type, event.status)}`}>
-                                                {event.icon ? (
-                                                    <span className="text-lg">{event.icon}</span>
-                                                ) : (
-                                                    getEventIcon(event.type)
-                                                )}
-                                            </div>
-
-                                            {/* Content */}
-                                            <div className="flex-1">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="font-bold text-sage-800">{event.title}</span>
-                                                    <span className="text-sage-400 text-sm">{event.time}</span>
-                                                </div>
-                                                <p className="text-sage-500 mt-1">{event.detail}</p>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    )
-                })}
-
-                {/* Empty State */}
-                {!loading && !error && activities.length === 0 && (
-                    <div className="text-center py-16 text-sage-400">
-                        <Calendar className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                        <p className="text-xl">No activity recorded</p>
-                    </div>
+                        )}
+                    </>
                 )}
             </main>
-
-            <FamilyNav />
         </div>
     )
 }

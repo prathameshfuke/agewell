@@ -1,11 +1,12 @@
 import { Suspense, lazy } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import FullScreenLoader from './components/FullScreenLoader'
 import BottomNav from './components/BottomNav'
 import AppErrorBoundary from './components/AppErrorBoundary'
+import PinGate from './components/PinGate'
 
-import DemoSimulationPanel from './components/DemoSimulationPanel'
 
 const CHUNK_ERROR_RE = /chunkloaderror|failed to fetch dynamically imported module|importing a module script failed|loading chunk [\d\w-]+ failed|unexpected token '<'/i
 const LAZY_RELOAD_FLAG = 'agewell-lazy-reload-attempted'
@@ -41,7 +42,6 @@ const lazyWithRetry = (importer) => {
 const Home = lazyWithRetry(() => import('./pages/Home'))
 const Auth = lazyWithRetry(() => import('./pages/Auth'))
 const AuthCallback = lazyWithRetry(() => import('./pages/AuthCallback'))
-const DemoPage = lazyWithRetry(() => import('./pages/DemoPage'))
 
 // Onboarding
 const RoleSelect = lazyWithRetry(() => import('./pages/RoleSelect'))
@@ -163,7 +163,7 @@ function OnboardingRoute({ children, requiredRole = null }) {
 }
 
 function ProtectedRoute({ children, requiredRole = null }) {
-    const { user, loading, role, isOnboardingComplete } = useAuth()
+    const { user, loading, role, isOnboardingComplete, caregiverUnlocked } = useAuth()
 
     if (loading) return <RouteLoader />
     if (!user) return <Navigate to="/auth" replace />
@@ -182,13 +182,31 @@ function ProtectedRoute({ children, requiredRole = null }) {
         return <Navigate to={onboardingPathForRole(normalizedActiveRole)} replace />
     }
 
+    // One account with both roles: caregiver mode needs the PIN.
+    if (normalizedActiveRole === 'caregiver' && !caregiverUnlocked) {
+        return <PinGate />
+    }
+
     return children
 }
 
+// Soft spring between pages: a short fade out, then a small rise in. Skipped for reduced motion.
+const PAGE_ENTER = { type: 'spring', stiffness: 320, damping: 32, mass: 0.9 }
+const PAGE_EXIT = { duration: 0.1, ease: 'easeIn' }
+
 function AppRoutes() {
+    const location = useLocation()
+    const reduce = useReducedMotion()
     return (
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={location.pathname}
+            initial={reduce ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0, transition: PAGE_ENTER }}
+            exit={reduce ? { opacity: 1 } : { opacity: 0, transition: PAGE_EXIT }}
+          >
         <Suspense fallback={<FullScreenLoader message="Loading AgeWell..." />}>
-            <Routes>
+            <Routes location={location}>
                 {/* HOME - redirect authenticated users into their flow */}
                 <Route path="/" element={
                     <ResetHandler>
@@ -203,7 +221,6 @@ function AppRoutes() {
                 <Route path="/login" element={<Navigate to="/auth" replace />} />
                 <Route path="/signup" element={<Navigate to="/auth" replace />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
-                <Route path="/demo" element={<DemoPage />} />
 
                 {/* ONBOARDING */}
                 <Route path="/onboarding/role-select" element={
@@ -319,6 +336,8 @@ function AppRoutes() {
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </Suspense>
+          </motion.div>
+        </AnimatePresence>
     )
 }
 
@@ -327,7 +346,6 @@ function App() {
         <AuthProvider>
             <AppErrorBoundary>
                 <BrowserRouter>
-                    {import.meta.env.DEV && <DemoSimulationPanel />}
                     <BottomNav />
                     <AppRoutes />
                 </BrowserRouter>

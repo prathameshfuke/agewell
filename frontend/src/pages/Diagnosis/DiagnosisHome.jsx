@@ -18,7 +18,7 @@ const urgencyStyles = {
 
 export default function DiagnosisHome() {
     const navigate = useNavigate()
-    const { user, profile, activeRole } = useAuth()
+    const { user, profile, activeRole, linkedElderId } = useAuth()
 
     const dashboardPath = activeRole === 'caregiver' ? '/family/dashboard' : '/elder/dashboard'
 
@@ -26,7 +26,7 @@ export default function DiagnosisHome() {
     const [loading, setLoading] = useState(true)
 
     const patientId = useMemo(() => {
-        if (activeRole === 'caregiver') return profile?.linked_elderly_id
+        if (activeRole === 'caregiver') return linkedElderId
         return user?.id
     }, [activeRole, profile, user])
 
@@ -58,13 +58,13 @@ export default function DiagnosisHome() {
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={() => navigate(dashboardPath)}
-                            className="p-3 rounded-xl text-sage-600 hover:bg-sage-100"
+                            className="btn-icon-ghost"
                             aria-label="Back to dashboard"
                         >
                             <ArrowLeft className="w-6 h-6" />
                         </motion.button>
                         <div>
-                            <div className="text-sage-500 text-sm font-bold uppercase tracking-wider mb-1">Assistive Diagnosis</div>
+                            <div className="text-sage-500 text-sm font-bold mb-1">Assistive Diagnosis</div>
                             <h1 className="text-3xl font-serif font-bold text-sage-900">Check My Symptoms</h1>
                             <p className="text-sage-500 text-lg mt-1">Answer a few simple questions for a doctor-ready summary.</p>
                         </div>

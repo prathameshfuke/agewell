@@ -1,223 +1,215 @@
-import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Heart, Shield, Activity, Leaf } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { Check } from 'lucide-react'
+import { logo, familyPhoto, couplePhoto, handsPhoto, walkIllustration, chatSticker } from '../assets/images'
 
-// Import assets
-import landingImage from '../assets/images/landing/landing.jpeg'
-import oneSticker from '../assets/images/stickers/one.jpeg'
-import twoSticker from '../assets/images/stickers/two.jpeg'
+const TABS = {
+  elder: {
+    label: 'For elders',
+    title: 'Big, simple screens made for daily use',
+    photo: couplePhoto,
+    size: [1024, 1210],
+    alt: 'An older couple taking their medicines with a glass of water',
+    points: [
+      'Today\'s medicines in one list, with a single large button to mark each one taken.',
+      'Symptom check by voice, in Hindi or English. Speak, and AgeWell asks follow-up questions and reads the answer back.',
+      'An emergency button that is always within reach.',
+      'Heart rate and SpO2 readings from a connected device, shown in plain language.',
+    ],
+  },
+  caregiver: {
+    label: 'For caregivers',
+    title: 'Know when something needs attention',
+    photo: handsPhoto,
+    size: [736, 1104],
+    alt: 'A younger hand resting on an older hand that holds a walking stick',
+    points: [
+      'Alerts when a dose is missed or a reading looks unusual.',
+      'Medication adherence and health trends over the past week.',
+      'Prescription upload: scan a prescription and review the medicines before they are saved.',
+      'A 4-digit PIN keeps caregiver mode private, even on a shared phone.',
+    ],
+  },
+}
 
-/**
- * Landing Page - Purely informational
- * 
- * Rules (per healthcare-grade spec):
- * - NO authentication checks
- * - NO redirects
- * - NO session inspection
- * - Clicking cards sets intendedRole and navigates to /auth
- */
+const STEPS = [
+  'Sign in with Google and choose elder, caregiver, or both.',
+  'The elder adds medicines by hand or by uploading a prescription.',
+  'The elder shares a link code so family can follow along.',
+  'Reminders, readings and alerts show up where each person needs them.',
+]
+
+const FAQ = [
+  ['Who is AgeWell for?', 'Elderly people in India who take regular medicines, and the family members who look after them from home or from far away.'],
+  ['Can I use one account as both elder and caregiver?', 'Yes. Sign in once with your email, choose "I\'m both", and set a 4-digit PIN. Elder mode opens first. Caregiver mode asks for the PIN. You can also keep two separate accounts.'],
+  ['Does it work in Hindi?', 'Yes. The symptom check accepts voice in Hindi and English, and replies can be read aloud in either.'],
+  ['Does AgeWell replace a doctor?', 'No. The symptom check gives general guidance only. For anything serious, call your doctor or emergency services.'],
+  ['How do I link a family member?', 'The elder generates a short link code in their settings. The caregiver enters it during setup, or from the link page.'],
+  ['What does it cost?', 'This is an early version and there is no pricing yet.'],
+]
+
+const spring = { type: 'spring', stiffness: 380, damping: 32 }
+
 export default function Home() {
   const navigate = useNavigate()
+  const reduce = useReducedMotion()
+  const [tab, setTab] = useState('elder')
+  const current = TABS[tab]
 
-  const handleElderlyClick = () => {
-    sessionStorage.setItem('intendedRole', 'elderly')
-    navigate('/auth')
-  }
-
-  const handleCaregiverClick = () => {
-    sessionStorage.setItem('intendedRole', 'caregiver')
+  const start = (role) => {
+    try { sessionStorage.setItem('intendedRole', role) } catch { /* private mode */ }
     navigate('/auth')
   }
 
   return (
-    <div className="min-h-screen font-sans overflow-x-hidden relative bg-gradient-to-br from-cream-100 via-cream-50 to-sage-100/40">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-20 left-10 w-72 h-72 bg-sage-200/40 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{ y: [0, 20, 0], rotate: [0, -5, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute bottom-20 right-10 w-96 h-96 bg-cream-300/40 rounded-full blur-3xl"
-        />
+    <div className="min-h-screen bg-cream-50 font-sans text-sage-900">
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:rounded-full focus:border focus:border-sage-300">Skip to content</a>
 
-        {/* Floating leaves */}
-        <motion.div
-          animate={{ y: [0, -30, 0], x: [0, 10, 0], rotate: [0, 15, 0] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-32 right-1/4 text-sage-300/50"
-        >
-          <Leaf className="w-12 h-12" />
-        </motion.div>
-      </div>
+      <header className="max-w-6xl mx-auto px-5 h-20 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2" aria-label="AgeWell home">
+          <img src={logo} alt="" width="48" height="48" className="sticker w-10 h-10 sm:w-12 sm:h-12 object-contain" />
+          <span className="font-serif text-xl sm:text-2xl leading-none">AgeWell</span>
+        </Link>
+        <nav aria-label="Account" className="flex items-center gap-2">
+          <Link to="/auth" className="hidden sm:inline-flex items-center min-h-[44px] px-4 rounded-full text-sage-700 hover:bg-sage-100 font-normal">Sign in</Link>
+          <Link to="/auth" className="btn-primary btn-sm whitespace-nowrap">Get started</Link>
+        </nav>
+      </header>
 
-      <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Header */}
-        <motion.header
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="p-4 sm:p-6 flex justify-between items-center z-50"
-        >
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="flex items-center gap-2 sm:gap-3 cursor-pointer"
-            onClick={() => navigate('/')}
-          >
-            <img
-              src="/logo.png"
-              alt="AgeWell"
-              className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl shadow-lg object-contain"
-            />
-            <span className="font-serif text-xl sm:text-2xl font-bold text-sage-800 tracking-tight">AgeWell</span>
-          </motion.div>
-
-          <div className="flex items-center gap-2 sm:gap-4">
-            <button
-              onClick={() => navigate('/auth')}
-              className="text-sage-700 font-bold hover:text-sage-900 transition-colors text-sm sm:text-base hidden xs:block"
-            >
-              Log In
-            </button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/signup')}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-sage-600 text-white rounded-full text-xs sm:text-sm font-bold shadow-lg hover:bg-sage-700 transition-all hover:shadow-xl whitespace-nowrap"
-            >
-              <span className="hidden xs:inline">Create Account</span>
-              <span className="xs:hidden">Sign Up</span>
-            </motion.button>
-          </div>
-        </motion.header>
-
-        <main className="flex-grow flex flex-col items-center justify-center p-6 space-y-10">
-          {/* Hero with Landing Image */}
-          <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-center max-w-2xl mx-auto"
-          >
-            {/* Landing Image */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 }}
-              className="w-64 h-80 mx-auto mb-6 rounded-3xl overflow-hidden shadow-lg border-4 border-white"
-            >
-              <img src={landingImage} alt="Family care" className="w-full h-full object-cover" />
-            </motion.div>
-
-            <h1 className="font-serif text-4xl md:text-6xl font-black text-sage-900 leading-[1.1] mb-6">
-              Care that feels <br />
-              <span className="bg-gradient-to-r from-sage-600 to-sage-500 bg-clip-text text-transparent">
-                like family.
-              </span>
+      <main id="main">
+        {/* Hero: copy left, one real photo right */}
+        <section className="max-w-6xl mx-auto px-5 pt-6 pb-16 sm:pb-24 grid lg:grid-cols-[1.05fr_1fr] gap-10 lg:gap-14 items-center">
+          <div>
+            <h1 className="font-serif text-4xl sm:text-6xl leading-[1.08]">
+              Medicines taken, health watched, <span className="text-clay">family in the loop.</span>
             </h1>
-
-            <p className="text-sage-600 font-medium text-xl leading-relaxed mb-8 max-w-xl mx-auto">
-              Comprehensive care management for your loved ones, designed with simplicity and warmth.
+            <p className="mt-6 text-lg sm:text-xl text-sage-600 max-w-xl font-normal">
+              AgeWell gives elderly people simple medication reminders and voice symptom checks in Hindi or English, and lets family follow along without constant phone calls.
             </p>
-
-            <div className="flex flex-wrap items-center justify-center gap-6 text-sage-600">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="flex items-center gap-2 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full border border-sage-200"
-              >
-                <Shield className="w-5 h-5 text-status-success" />
-                <span className="font-semibold">Private & Secure</span>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="flex items-center gap-2 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full border border-sage-200"
-              >
-                <Activity className="w-5 h-5 text-sage-500" />
-                <span className="font-semibold">24/7 Monitoring</span>
-              </motion.div>
+            <div className="btn-row mt-9 max-w-lg">
+              <button type="button" onClick={() => start('elderly')} className="btn-primary">Get started</button>
+              <button type="button" onClick={() => start('caregiver')} className="btn-secondary">I am a caregiver</button>
             </div>
-          </motion.div>
+          </div>
+          <div className="relative">
+            <div aria-hidden="true" className="absolute -inset-3 sm:-inset-4 rounded-[2.25rem] bg-clay-light rotate-2" />
+            <img
+              src={familyPhoto}
+              alt="A smiling family of four at home: two grandparents with their grown son and daughter"
+              width="1536" height="1024" fetchpriority="high"
+              className="relative w-full aspect-[4/3] object-cover rounded-[2rem] shadow-elevated"
+            />
+          </div>
+        </section>
 
-          {/* Role Selection Cards with stickers */}
-          <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 w-full max-w-3xl mx-auto"
-          >
-            {/* Elderly Card */}
-            <motion.button
-              whileHover={{ scale: 1.02, y: -5 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleElderlyClick}
-              className="group relative bg-white/90 backdrop-blur-md rounded-4xl p-8 text-left shadow-card hover:shadow-card-hover border-2 border-transparent hover:border-sage-200 overflow-hidden transition-all"
-            >
-              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-sage-100 to-sage-50 rounded-full blur-2xl opacity-60 -mr-16 -mt-16" />
+        {/* Two views: tabs with a shared sliding pill */}
+        <section aria-labelledby="two-modes" className="bg-cream-100 py-16 sm:py-24">
+          <div className="max-w-6xl mx-auto px-5">
+            <h2 id="two-modes" className="font-serif text-3xl sm:text-5xl text-center">Two views, one app</h2>
+            <div role="tablist" aria-label="Interface" className="mt-8 mx-auto flex w-full max-w-md gap-1 rounded-full bg-white p-1 border border-sage-200 shadow-soft">
+              {Object.entries(TABS).map(([key, t]) => (
+                <button
+                  key={key}
+                  role="tab"
+                  id={`tab-${key}`}
+                  aria-selected={tab === key}
+                  aria-controls="tabpanel"
+                  onClick={() => setTab(key)}
+                  className={`relative flex-1 min-h-[48px] rounded-full px-3 text-base whitespace-nowrap sm:text-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${tab === key ? 'text-white' : 'text-sage-700 hover:text-sage-900'}`}
+                >
+                  {tab === key && <motion.span layoutId="home-tab" transition={reduce ? { duration: 0 } : spring} className="absolute inset-0 rounded-full bg-sage-900" />}
+                  <span className="relative">{t.label}</span>
+                </button>
+              ))}
+            </div>
 
-              <div className="relative z-10">
-                <div className="w-20 h-20 rounded-2xl overflow-hidden mb-6 shadow-lg group-hover:scale-110 transition-transform">
-                  <img src={oneSticker} alt="Elderly" className="w-full h-full object-cover" />
-                </div>
-                <h2 className="text-2xl font-serif font-bold text-sage-900 mb-3">I am an Elderly User</h2>
-                <p className="text-sage-600 text-base leading-relaxed mb-4">
-                  Simple, large buttons and easy access to your medication schedule and vitals.
-                </p>
-                <div className="flex items-center text-sage-600 font-bold text-sm group-hover:text-sage-500 transition-colors">
-                  <span>Get Started</span>
-                  <motion.span
-                    animate={{ x: [0, 5, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                    className="ml-2"
-                  >
-                    →
-                  </motion.span>
-                </div>
-              </div>
-            </motion.button>
+            <div id="tabpanel" role="tabpanel" aria-labelledby={`tab-${tab}`} className="mt-10 grid md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] gap-8 md:gap-12 items-center max-w-4xl mx-auto">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.img
+                  key={tab + 'img'}
+                  src={current.photo}
+                  alt={current.alt}
+                  width={current.size[0]} height={current.size[1]} loading="lazy"
+                  initial={reduce ? false : { opacity: 0, scale: 0.97 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="w-full max-w-sm md:max-w-none mx-auto aspect-[4/5] object-cover rounded-[2rem] shadow-elevated"
+                />
+              </AnimatePresence>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={tab}
+                  initial={reduce ? false : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <h3 className="font-serif text-2xl sm:text-4xl">{current.title}</h3>
+                  <ul className="mt-6 space-y-4 text-sage-700 text-lg font-normal">
+                    {current.points.map((p) => (
+                      <li key={p} className="flex gap-3">
+                        <Check className="w-6 h-6 mt-0.5 shrink-0 text-clay" aria-hidden="true" />
+                        <span>{p}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+        </section>
 
-            {/* Caregiver Card */}
-            <motion.button
-              whileHover={{ scale: 1.02, y: -5 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleCaregiverClick}
-              className="group relative bg-white/90 backdrop-blur-md rounded-4xl p-8 text-left shadow-card hover:shadow-card-hover border-2 border-transparent hover:border-cream-400 overflow-hidden transition-all"
-            >
-              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-cream-200 to-cream-100 rounded-full blur-2xl opacity-60 -mr-16 -mt-16" />
+        {/* How it works: illustration beside numbered steps */}
+        <section aria-labelledby="how" className="max-w-5xl mx-auto px-5 py-16 sm:py-24 grid md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-10 md:gap-16 items-center">
+          <img
+            src={walkIllustration}
+            alt="An adult walking slowly beside an elderly woman with a cane along a path toward the sunrise"
+            width="640" height="959" loading="lazy"
+            className="w-full max-w-xs md:max-w-none mx-auto aspect-[4/5] object-cover object-top rounded-[2rem] shadow-soft"
+          />
+          <div>
+            <h2 id="how" className="font-serif text-3xl sm:text-5xl">How it works</h2>
+            <ol className="mt-8 divide-y divide-sage-200 border-y border-sage-200">
+              {STEPS.map((text, i) => (
+                <li key={text} className="flex items-center gap-5 py-5">
+                  <span aria-hidden="true" className="font-serif text-4xl text-clay w-10 shrink-0 text-center leading-none">{i + 1}</span>
+                  <span className="text-lg text-sage-700 font-normal">{text}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
 
-              <div className="relative z-10">
-                <div className="w-20 h-20 rounded-2xl overflow-hidden mb-6 shadow-lg shadow-cream-200 group-hover:scale-110 transition-transform">
-                  <img src={twoSticker} alt="Caregiver" className="w-full h-full object-cover" />
-                </div>
-                <h2 className="text-2xl font-serif font-bold text-sage-900 mb-3">I am a Caregiver</h2>
-                <p className="text-sage-600 text-base leading-relaxed mb-4">
-                  Monitor your loved one's health, receive alerts, and manage care remotely.
-                </p>
-                <div className="flex items-center text-sage-600 font-bold text-sm group-hover:text-sage-500 transition-colors">
-                  <span>Get Started</span>
-                  <motion.span
-                    animate={{ x: [0, 5, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                    className="ml-2"
-                  >
-                    →
-                  </motion.span>
-                </div>
-              </div>
-            </motion.button>
-          </motion.div>
-        </main>
+        <section aria-labelledby="faq" className="max-w-3xl mx-auto px-5 pb-20 sm:pb-28">
+          <div className="flex items-center justify-center gap-4">
+            <img src={chatSticker} alt="" width="472" height="340" loading="lazy" className="sticker h-20 w-auto" />
+            <h2 id="faq" className="font-serif text-3xl sm:text-5xl">Questions</h2>
+          </div>
+          <div className="mt-8 border-t border-sage-200">
+            {FAQ.map(([q, a]) => (
+              <details key={q} className="group border-b border-sage-200">
+                <summary className="cursor-pointer list-none flex items-center justify-between gap-4 min-h-[64px] py-3 text-lg font-bold rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+                  <span>{q}</span>
+                  <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sage-100 text-sage-600 group-open:rotate-45 transition-transform motion-reduce:transition-none">+</span>
+                </summary>
+                <p className="pb-5 text-sage-600 font-normal text-lg">{a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+      </main>
 
-        <motion.footer
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="text-center text-sage-500 text-sm pb-8"
-        >
-          <p className="font-medium">© 2025 AgeWell · Made with <Heart className="inline w-4 h-4 text-rose-400 fill-current" /> for families</p>
-        </motion.footer>
-      </div>
+      <footer className="border-t border-sage-200">
+        <div className="max-w-6xl mx-auto px-5 py-8 flex flex-col sm:flex-row sm:items-center gap-3 justify-between text-sm text-sage-600 font-normal">
+          <span className="flex items-center gap-2">
+            <img src={logo} alt="" width="28" height="28" className="sticker w-7 h-7 object-contain" />
+            AgeWell. Not a substitute for medical advice.
+          </span>
+          <Link to="/auth" className="inline-flex items-center min-h-[44px] hover:text-sage-900 underline-offset-4 hover:underline">Sign in</Link>
+        </div>
+      </footer>
     </div>
   )
 }

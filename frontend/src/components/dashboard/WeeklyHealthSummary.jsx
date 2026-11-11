@@ -1,108 +1,48 @@
-import { motion } from 'framer-motion'
-import { TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react'
-import Card, { CardHeader } from '../ui/Card'
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import TrendChart from '../ui/TrendChart'
-import AnimatedCounter from '../ui/AnimatedCounter'
 
 /**
- * WeeklyHealthSummary - Displays 7-day health trends
- * 
- * Shows heart rate and activity trends with animated stats
+ * WeeklyHealthSummary - 7-day heart rate trend from real readings.
+ * Empty states are honest: no data means no chart and no averages.
  */
 export default function WeeklyHealthSummary({
   healthData = [],
   averageHeartRate = null,
   averageSteps = null,
   trend = 'stable',
-  className = ''
+  className = '',
 }) {
-  // Use real data or show empty state
-  const weeklyData = healthData.length > 0 ? healthData : []
-  const hasData = weeklyData.length > 0 || averageHeartRate || averageSteps
-
-  const getTrendIcon = () => {
-    if (trend === 'up') return <TrendingUp className="w-4 h-4 text-sage-600" />
-    if (trend === 'down') return <TrendingDown className="w-4 h-4 text-rose-500" />
-    return <Minus className="w-4 h-4 text-sage-400" />
-  }
-
-  const getTrendText = () => {
-    if (trend === 'up') return 'Improving'
-    if (trend === 'down') return 'Declining'
-    return 'Stable'
-  }
-
-  const summaryTiles = [
-    {
-      key: 'avg-hr',
-      title: 'Avg HR',
-      value: averageHeartRate,
-      suffix: 'bpm',
-    },
-    {
-      key: 'avg-steps',
-      title: 'Avg Steps',
-      value: averageSteps,
-      suffix: 'daily',
-    },
-    {
-      key: 'trend',
-      title: 'Trend',
-      custom: true,
-    },
-  ]
+  const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus
+  const trendText = trend === 'up' ? 'Rising' : trend === 'down' ? 'Falling' : 'Steady'
+  const hasData = healthData.length > 0
 
   return (
-    <Card className={className}>
-      <CardHeader
-        icon={<Activity className="w-5 h-5 text-sage-500" />}
-        label="Weekly Summary"
-      />
+    <section className={`rounded-2xl border border-sage-200 bg-white p-5 ${className}`} aria-labelledby="weekly-title">
+      <h2 id="weekly-title" className="font-serif text-lg text-sage-900">This week</h2>
 
-      {/* Chart */}
-      <div className="mb-4">
-        {weeklyData.length > 0 ? (
-          <TrendChart
-            data={weeklyData}
-            color="#7C9A8E"
-            height={80}
-            showTooltip={true}
-          />
-        ) : (
-          <div className="h-20 flex items-center justify-center text-sage-400 text-sm">No health data yet</div>
-        )}
-      </div>
-
-      {/* Stats Row - Mobile-first: stack on tiny screens, 3 cols from xs up */}
-      <div className="grid grid-cols-1 xs:grid-cols-3 gap-2 xs:gap-3">
-        {summaryTiles.map((tile, index) => (
-          <motion.div
-            key={tile.key}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08 + index * 0.06 }}
-            className="bg-sage-50 rounded-2xl p-3 text-center border border-sage-100"
-          >
-            <div className="text-sage-500 text-[11px] font-semibold uppercase tracking-wide mb-1 break-words">
-              {tile.title}
+      {hasData ? (
+        <>
+          <div className="mt-3">
+            <TrendChart data={healthData} color="#2F5BEA" height={80} showTooltip={true} />
+          </div>
+          <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-sage-100">
+            <div>
+              <div className="text-sm text-sage-500">Avg heart rate</div>
+              <div className="text-lg text-sage-900">{averageHeartRate != null ? `${averageHeartRate} bpm` : 'No data'}</div>
             </div>
-
-            {tile.custom ? (
-              <div className="flex items-center justify-center gap-1">
-                {getTrendIcon()}
-                <span className="text-sm font-bold text-sage-700 break-words">{getTrendText()}</span>
-              </div>
-            ) : (
-              <>
-                <div className="text-2xl sm:text-3xl font-bold text-sage-800 leading-none">
-                  {tile.value ? <AnimatedCounter value={tile.value} /> : <span className="text-sage-400">--</span>}
-                </div>
-                <div className="text-sage-500 text-xs break-words mt-1">{tile.suffix}</div>
-              </>
-            )}
-          </motion.div>
-        ))}
-      </div>
-    </Card>
+            <div>
+              <div className="text-sm text-sage-500">Avg steps</div>
+              <div className="text-lg text-sage-900">{averageSteps != null ? averageSteps : 'No data'}</div>
+            </div>
+            <div>
+              <div className="text-sm text-sage-500">Trend</div>
+              <div className="text-lg text-sage-900 flex items-center gap-1"><TrendIcon className="w-4 h-4 text-sage-500" aria-hidden="true" />{trendText}</div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <p className="text-sm text-sage-500 mt-2">No readings this week yet. Connect a device to see trends.</p>
+      )}
+    </section>
   )
 }

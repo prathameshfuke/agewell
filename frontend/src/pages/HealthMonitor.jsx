@@ -12,16 +12,14 @@ import notwellSticker from '../assets/images/stickers/notwell.jpeg'
 
 export default function HealthMonitor() {
     const navigate = useNavigate()
-    const { user, profile } = useAuth()
+    const { user, activeRole, linkedElderId } = useAuth()
     const [healthData, setHealthData] = useState(null)
     const [environmentData, setEnvironmentData] = useState(null)
     const [loading, setLoading] = useState(true)
     const [lastUpdated, setLastUpdated] = useState(null)
 
     // Get the elderly user ID (self if elderly, linked if caregiver)
-    const elderlyId = profile?.role === 'caregiver'
-        ? profile?.linked_elderly_id
-        : user?.id || 'mock-elderly-1'
+    const elderlyId = activeRole === 'caregiver' ? linkedElderId : user?.id
 
     useEffect(() => {
         loadData()
@@ -101,7 +99,7 @@ export default function HealthMonitor() {
                 <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={() => navigate(-1)}
-                    className="p-2 text-sage-500 hover:bg-sage-100 rounded-xl"
+                    className="btn-icon-ghost"
                 >
                     <ArrowLeft className="w-6 h-6" />
                 </motion.button>
@@ -168,7 +166,7 @@ export default function HealthMonitor() {
                                         }`} />
                                 </div>
                                 <div>
-                                    <div className="text-sage-500 text-sm font-bold uppercase">Blood Oxygen</div>
+                                    <div className="text-sage-500 text-sm font-bold">Blood Oxygen</div>
                                     <div className={`text-sm font-bold ${spo2Status.color === 'rose' ? 'text-rose-600' :
                                             spo2Status.color === 'amber' ? 'text-amber-600' : 'text-sage-600'
                                         }`}>
@@ -200,7 +198,7 @@ export default function HealthMonitor() {
                                         }`} />
                                 </div>
                                 <div>
-                                    <div className="text-sage-500 text-sm font-bold uppercase">Heart Rate</div>
+                                    <div className="text-sage-500 text-sm font-bold">Heart Rate</div>
                                     <div className={`text-sm font-bold ${hrStatus.color === 'rose' ? 'text-rose-600' :
                                             hrStatus.color === 'amber' ? 'text-amber-600' : 'text-sage-600'
                                         }`}>
@@ -232,7 +230,7 @@ export default function HealthMonitor() {
                                         }`} />
                                 </div>
                                 <div>
-                                    <div className="text-sage-500 text-sm font-bold uppercase">Body Temp</div>
+                                    <div className="text-sage-500 text-sm font-bold">Body Temp</div>
                                     <div className={`text-sm font-bold ${tempStatus.color === 'rose' ? 'text-rose-600' :
                                             tempStatus.color === 'amber' ? 'text-amber-600' : 'text-sage-600'
                                         }`}>
@@ -264,7 +262,7 @@ export default function HealthMonitor() {
                                     <Thermometer className="w-6 h-6 text-orange-500" />
                                 </div>
                                 <div>
-                                    <div className="text-sage-500 text-sm font-bold uppercase">Room Temp</div>
+                                    <div className="text-sage-500 text-sm font-bold">Room Temp</div>
                                     <div className="text-sm font-bold text-sage-600">Comfortable</div>
                                 </div>
                             </div>
@@ -285,7 +283,7 @@ export default function HealthMonitor() {
                                     <Droplets className="w-6 h-6 text-blue-500" />
                                 </div>
                                 <div>
-                                    <div className="text-sage-500 text-sm font-bold uppercase">Humidity</div>
+                                    <div className="text-sage-500 text-sm font-bold">Humidity</div>
                                     <div className="text-sm font-bold text-sage-600">Normal</div>
                                 </div>
                             </div>
@@ -306,7 +304,7 @@ export default function HealthMonitor() {
                                     <Wind className="w-6 h-6 text-green-500" />
                                 </div>
                                 <div>
-                                    <div className="text-sage-500 text-sm font-bold uppercase">Air Quality</div>
+                                    <div className="text-sage-500 text-sm font-bold">Air Quality</div>
                                     <div className="text-sm font-bold text-sage-600">Good</div>
                                 </div>
                             </div>

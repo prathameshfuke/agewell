@@ -1,5 +1,3 @@
-import { motion } from 'framer-motion'
-
 /**
  * PageLayout - Unified page layout for AgeWell+
  * 
@@ -18,14 +16,13 @@ export default function PageLayout({
 }) {
   const backgrounds = {
     default: 'bg-cream-50',
-    gradient: 'bg-gradient-to-br from-cream-100 via-cream-50 to-sage-100/40',
+    gradient: 'bg-cream-50',
   }
 
   return (
     <div className={`min-h-screen font-sans ${backgrounds[background]} ${className}`}>
       {/* Decorative background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-sage-100/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
       </div>
 
       {/* Content */}
@@ -44,7 +41,7 @@ export default function PageLayout({
  */
 export function PageHeader({ children, className = '' }) {
   return (
-    <header className={`px-4 py-3 sm:py-4 md:px-6 md:py-6 bg-cream-50/80 backdrop-blur-sm sticky top-0 z-20 ${className}`}>
+    <header className={`px-4 py-3 sm:py-4 md:px-6 md:py-6 bg-cream-50 sticky top-0 z-20 ${className}`}>
       {children}
     </header>
   )
@@ -63,19 +60,10 @@ export function PageMain({ children, className = '' }) {
 }
 
 /**
- * PageSection - Animated section with delay
+ * PageSection - plain wrapper (no per-section entrance animation; the route transition handles it)
  */
-export function PageSection({ children, delay = 0, className = '' }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  )
+export function PageSection({ children, className = '' }) {
+  return <div className={className}>{children}</div>
 }
 
 /**
@@ -84,7 +72,7 @@ export function PageSection({ children, delay = 0, className = '' }) {
  */
 export function CenteredLayout({ children, className = '' }) {
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-cream-100 via-cream-50 to-sage-100/40 flex flex-col p-3 sm:p-4 md:p-6 ${className}`}>
+    <div className={`min-h-screen bg-cream-50 flex flex-col p-3 sm:p-4 md:p-6 ${className}`}>
       <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
         {children}
       </div>

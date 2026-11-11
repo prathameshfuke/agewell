@@ -1,103 +1,46 @@
 import { useNavigate } from 'react-router-dom'
-import { Activity, MapPin, Bell, Eye } from 'lucide-react'
-import { useState } from 'react'
-import FamilyNav from '../components/FamilyNav'
+import { ArrowLeft } from 'lucide-react'
+
+const focusRing = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
+
+// What caregivers linked to an elder can see today. This is a description, not a setting.
+const SEES = [
+    ['Vitals', 'Heart rate, oxygen and temperature from the wearable.'],
+    ['Medications', "Today's doses, what was taken and what was missed."],
+    ['Activity', 'Check-ins, medication events and alerts.'],
+    ['Symptom reports', 'Reports from the symptom checker.'],
+    ['Contacts', 'The emergency contact saved on the elder profile.'],
+]
 
 export default function FamilyPermissions() {
     const navigate = useNavigate()
-    const [settings, setSettings] = useState({
-        shareVitals: true,
-        shareLocation: false,
-        shareMood: true,
-        emergencyAlerts: true
-    })
-
-    const toggle = (key) => {
-        setSettings(p => ({ ...p, [key]: !p[key] }))
-    }
 
     return (
-        <div className="min-h-screen bg-[#F0F4FF] font-sans pb-24 md:pb-0">
-            <header className="px-6 py-6 sticky top-0 bg-[#F0F4FF]/90 backdrop-blur-sm z-10">
-                <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Privacy</div>
-                <h1 className="font-romelio text-2xl text-slate-900">Permissions</h1>
+        <div className="min-h-screen bg-cream-50 font-sans pb-24 md:pb-8">
+            <header className="px-4 md:px-6 py-4 flex items-center gap-3 border-b border-sage-200 sticky top-0 bg-cream-50 z-20">
+                <button type="button" onClick={() => navigate(-1)} aria-label="Go back" className={`w-11 h-11 rounded-full flex items-center justify-center text-sage-700 hover:bg-sage-100 ${focusRing}`}>
+                    <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div>
+                    <h1 className="font-serif text-2xl text-sage-900">What caregivers can see</h1>
+                    <p className="text-sm text-sage-500">Everyone on the care team sees the same information</p>
+                </div>
             </header>
 
-            <main className="px-6 space-y-6">
-                <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100">
-                    <div className="p-5 border-b border-slate-50">
-                        <h2 className="font-bold text-slate-900">What Caregivers Can See</h2>
-                        <p className="text-xs text-slate-500 mt-1">These settings apply to all non-primary members.</p>
-                    </div>
-
-                    <div className="divide-y divide-slate-50">
-                        <SettingItem
-                            icon={<Activity className="w-5 h-5 text-rose-500" />}
-                            title="Vitals"
-                            desc="Heart rate, BP, sugar levels"
-                            active={settings.shareVitals}
-                            onToggle={() => toggle('shareVitals')}
-                        />
-                        <SettingItem
-                            icon={<Eye className="w-5 h-5 text-indigo-500" />}
-                            title="Mood & Wellness"
-                            desc="Daily check-in responses"
-                            active={settings.shareMood}
-                            onToggle={() => toggle('shareMood')}
-                        />
-                        <SettingItem
-                            icon={<MapPin className="w-5 h-5 text-emerald-500" />}
-                            title="Location"
-                            desc="Real-time GPS (disabled)"
-                            active={settings.shareLocation}
-                            onToggle={() => toggle('shareLocation')}
-                        />
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100">
-                    <div className="p-5 border-b border-slate-50">
-                        <h2 className="font-bold text-slate-900">Notifications</h2>
-                    </div>
-                    <div className="divide-y divide-slate-50">
-                        <SettingItem
-                            icon={<Bell className="w-5 h-5 text-amber-500" />}
-                            title="Emergency Alerts"
-                            desc="Immediate notifications for emergencies"
-                            active={settings.emergencyAlerts}
-                            onToggle={() => toggle('emergencyAlerts')}
-                        />
-                    </div>
-                </div>
-
-                <p className="text-center text-slate-400 text-xs">
-                    Privacy builds trust. Share only what's needed.
+            <main className="px-4 md:px-6 py-5 space-y-4 max-w-2xl mx-auto">
+                <ul className="rounded-2xl border border-sage-200 bg-white divide-y divide-sage-100">
+                    {SEES.map(([title, desc]) => (
+                        <li key={title} className="p-4">
+                            <div className="text-sage-900">{title}</div>
+                            <div className="text-sm text-sage-500">{desc}</div>
+                        </li>
+                    ))}
+                </ul>
+                <p className="text-sm text-sage-600">
+                    Location is not collected. Per-person sharing controls are not available yet. To remove someone, ask the elder to unlink them.
                 </p>
+                <button type="button" onClick={() => navigate('/family/members')} className="btn-secondary btn-sm">View care team</button>
             </main>
-
-            <FamilyNav />
-        </div>
-    )
-}
-
-function SettingItem({ icon, title, desc, active, onToggle }) {
-    return (
-        <div className="p-5 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center">
-                    {icon}
-                </div>
-                <div>
-                    <div className="font-bold text-slate-800">{title}</div>
-                    <div className="text-xs text-slate-400">{desc}</div>
-                </div>
-            </div>
-            <button
-                onClick={onToggle}
-                className={`w-12 h-7 rounded-full transition-colors relative flex items-center ${active ? 'bg-care-primary' : 'bg-slate-200'}`}
-            >
-                <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform absolute ${active ? 'translate-x-[22px]' : 'translate-x-[2px]'}`}></div>
-            </button>
         </div>
     )
 }

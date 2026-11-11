@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { notify } from '../lib/notify'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Mic, Square, Play, Pause, Trash2, Send, Clock, User } from 'lucide-react'
@@ -12,7 +13,7 @@ import goodmoodSticker from '../assets/images/stickers/goodmood.jpeg'
 
 export default function VoiceMemos() {
     const navigate = useNavigate()
-    const { user, profile } = useAuth()
+    const { user, profile, linkedElderId } = useAuth()
     const [memos, setMemos] = useState([])
     const [loading, setLoading] = useState(true)
     const [isRecording, setIsRecording] = useState(false)
@@ -28,7 +29,7 @@ export default function VoiceMemos() {
 
     const isCaregiver = profile?.role === 'caregiver'
     const userId = user?.id
-    const linkedElderlyId = profile?.linked_elderly_id
+    const linkedElderlyId = linkedElderId
 
     useEffect(() => {
         loadMemos()
@@ -74,7 +75,7 @@ export default function VoiceMemos() {
             }, 1000)
         } catch (error) {
             console.error('Error starting recording:', error)
-            alert('Could not access microphone. Please allow microphone access.')
+            notify('Could not access microphone. Please allow microphone access.', { error: true })
         }
     }
 
@@ -129,11 +130,11 @@ export default function VoiceMemos() {
                 setAudioUrl(null)
                 setRecordingTime(0)
                 loadMemos()
-                alert('Voice memo sent!')
+                notify('Voice memo sent!')
             }
         } catch (error) {
             console.error('Error sending memo:', error)
-            alert('Failed to send voice memo')
+            notify('Failed to send voice memo', { error: true })
         }
     }
 
@@ -181,7 +182,7 @@ export default function VoiceMemos() {
                 <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={() => navigate(-1)}
-                    className="p-2 text-sage-500 hover:bg-sage-100 rounded-xl"
+                    className="btn-icon-ghost"
                 >
                     <ArrowLeft className="w-6 h-6" />
                 </motion.button>

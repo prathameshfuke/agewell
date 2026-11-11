@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Loader2 } from 'lucide-react'
@@ -21,7 +21,7 @@ function progressPercent(progressLabel) {
 export default function QAFlow() {
     const navigate = useNavigate()
     const location = useLocation()
-    const { user, profile, activeRole } = useAuth()
+    const { user, profile, activeRole, linkedElderId } = useAuth()
 
     const querySessionId = useMemo(() => {
         const params = new URLSearchParams(location.search)
@@ -55,6 +55,11 @@ export default function QAFlow() {
     const [generating, setGenerating] = useState(false)
     const [error, setError] = useState('')
     const [extractedSymptoms, setExtractedSymptoms] = useState(initialSymptoms)
+    const audioRef = useRef(null)
+    // Stop any playing question audio when leaving the screen.
+    useEffect(() => () => { audioRef.current?.pause(); audioRef.current = null }, [])
+
+    // Audio is optional: any failure falls back to the on-screen text silently.
     const playAudio = async (base64Audio) => {
         if (!base64Audio || isPlaying) return
         let audioUrl = null
@@ -64,6 +69,7 @@ export default function QAFlow() {
             const audioBlob = new Blob([byteArray], { type: 'audio/wav' })
             audioUrl = URL.createObjectURL(audioBlob)
             const audio = new Audio(audioUrl)
+            audioRef.current = audio
             
             setIsPlaying(true)
             
@@ -95,9 +101,9 @@ export default function QAFlow() {
     }
 
     const patientId = useMemo(() => {
-        if (activeRole === 'caregiver') return profile?.linked_elderly_id
+        if (activeRole === 'caregiver') return linkedElderId
         return user?.id
-    }, [activeRole, profile, user])
+    }, [activeRole, linkedElderId, user])
 
     useEffect(() => {
         if (!sessionId || (!initialQuestion && !done)) {
@@ -235,13 +241,13 @@ export default function QAFlow() {
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={() => navigate('/diagnosis/input')}
-                            className="p-3 rounded-xl text-sage-600 hover:bg-sage-100"
+                            className="btn-icon-ghost"
                             aria-label="Back"
                         >
                             <ArrowLeft className="w-6 h-6" />
                         </motion.button>
                         <div>
-                            <div className="text-sage-500 text-sm font-bold uppercase tracking-wider">Assistive Diagnosis</div>
+                            <div className="text-sage-500 text-sm font-bold">Assistive Diagnosis</div>
                             <h1 className="text-2xl font-serif font-bold text-sage-900">Simple Yes/No Questions</h1>
                         </div>
                     </div>

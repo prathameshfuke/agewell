@@ -1,5 +1,5 @@
 import secrets
-import string
+import time
 from datetime import datetime, timedelta, timezone
 
 from flask import Blueprint, jsonify, request
@@ -13,6 +13,24 @@ PROFILES_TABLE = 'profiles'
 CODE_LENGTH = 6
 PENDING_WINDOW = timedelta(hours=24)
 CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+# ponytail: in-process failed-guess counter per caregiver (per worker, resets on restart).
+# Move to Redis or a DB table if the API runs on several instances.
+JOIN_MAX_FAILURES = 10
+JOIN_WINDOW_SECONDS = 15 * 60
+_join_failures = {}  # caregiver_id -> [monotonic timestamps of wrong guesses]
+
+
+def join_blocked(caregiver_id: str) -> bool:
+    recent = [t for t in _join_failures.get(caregiver_id, []) if time.monotonic() - t < JOIN_WINDOW_SECONDS]
+    _join_failures[caregiver_id] = recent
+    return len(recent) >= JOIN_MAX_FAILURES
+
+
+def record_join_failure(caregiver_id: str) -> None:
+    if len(_join_failures) > 5000:
+        _join_failures.clear()
+    _join_failures.setdefault(caregiver_id, []).append(time.monotonic())
 
 
 def _utc_now() -> datetime:
@@ -156,6 +174,9 @@ def join_with_code():
         if len(link_code) != CODE_LENGTH:
             return jsonify({'error': 'link_code must be a 6-character code'}), 400
 
+        if join_blocked(caregiver_id):
+            return jsonify({'error': 'Too many wrong codes. Please wait 15 minutes and try again.'}), 429
+
         client = get_supabase_client()
 
         lookup_response = (
@@ -180,6 +201,7 @@ def join_with_code():
             )
             legacy_rows = legacy_response.data or []
             if not legacy_rows:
+                record_join_failure(caregiver_id)
                 return jsonify({'error': 'Invalid or already used link code'}), 404
 
             used_legacy_pairing_code = True
@@ -200,6 +222,7 @@ def join_with_code():
 
         if not used_legacy_pairing_code and _pending_expired(pending_link):
             client.table(TABLE).update({'status': 'revoked'}).eq('id', pending_link['id']).execute()
+            record_join_failure(caregiver_id)
             return jsonify({'error': 'This code has expired. Ask the elder to generate a new code.'}), 410
 
         existing_response = (
@@ -261,10 +284,9 @@ def join_with_code():
                 .execute()
             )
             updated_rows = update_response.data or []
-            updated_link = updated_rows[0] if updated_rows else {
-                **pending_link,
-                **update_payload
-            }
+            if not updated_rows:  # someone else claimed this code between our lookup and update
+                return jsonify({'error': 'Invalid or already used link code'}), 409
+            updated_link = updated_rows[0]
 
         if used_legacy_pairing_code and legacy_elder_profile:
             elder_profile_rows = [legacy_elder_profile]

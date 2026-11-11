@@ -15,65 +15,70 @@ export default {
         },
         extend: {
             fontFamily: {
-                serif: ['"DM Serif Display"', 'Butler', 'serif'],
-                sans: ['"DM Sans"', 'Poppins', 'sans-serif'],
+                serif: ['Butler', 'Georgia', 'serif'],
+                sans: ['"Atkinson Hyperlegible"', 'system-ui', 'sans-serif'],
                 romelio: ['Romelio', 'sans-serif'],
             },
             // Simplified color palette - only 2-3 colors optimized for elderly users
             colors: {
-                // Primary - Sage Green (simplified to 3 levels)
+                // One accent (blue), ink neutrals, warm paper. Status colours are for status only.
                 primary: {
-                    DEFAULT: '#5C7A6E',  // Main sage green
-                    light: '#9BB5A5',    // Light sage
-                    dark: '#3A4E46',     // Dark sage
-                    bg: '#E8F0EB',       // Very light background
+                    DEFAULT: '#2F5BEA',
+                    light: '#8FA8F5',
+                    dark: '#1E3FAE',
+                    bg: '#E9EEFD',
                 },
-                // Secondary - Warm Cream (simplified to 2 levels)
                 secondary: {
-                    DEFAULT: '#FAF8F5',  // Cream background
-                    dark: '#C9B9A4',     // Cream border
+                    DEFAULT: '#FBF7F0',
+                    dark: '#EBE2D0',
                 },
-                // Accent - Emergency Red (single color)
                 accent: {
-                    DEFAULT: '#EF4444',  // Emergency red
-                    light: '#FEE2E2',    // Light red bg
+                    DEFAULT: '#C2362B',
+                    light: '#FBE9E7',
                 },
-                // Legacy compatibility - map to simplified palette
+                // Legacy names kept so existing pages inherit the new palette.
+                // sage = ink neutrals (text, borders, dark buttons)
                 sage: {
-                    50: '#E8F0EB',
-                    100: '#E8F0EB',
-                    200: '#9BB5A5',
-                    300: '#9BB5A5',
-                    400: '#9BB5A5',
-                    500: '#5C7A6E',
-                    600: '#5C7A6E',
-                    700: '#3A4E46',
-                    800: '#3A4E46',
-                    900: '#3A4E46',
+                    50: '#F8F5EF',
+                    100: '#F1ECE2',
+                    200: '#E6DFD1',
+                    300: '#D3CBBA',
+                    400: '#7D7566',
+                    500: '#6A6355',
+                    600: '#524C40',
+                    700: '#3A352C',
+                    800: '#27231D',
+                    900: '#1A1713',
                 },
+                // cream = warm paper surfaces
                 cream: {
-                    50: '#FAF8F5',
-                    100: '#FAF8F5',
-                    200: '#C9B9A4',
-                    300: '#C9B9A4',
-                    400: '#C9B9A4',
-                    500: '#C9B9A4',
-                    600: '#C9B9A4',
-                    700: '#C9B9A4',
-                    800: '#665D52',
-                    900: '#665D52',
+                    50: '#FBF7F0',
+                    100: '#F5EEE1',
+                    200: '#EBE2D0',
+                    300: '#DDD1BA',
+                    400: '#BDB19A',
+                    500: '#948976',
+                    600: '#70675A',
+                    700: '#52493F',
+                    800: '#38322B',
+                    900: '#26221D',
                 },
-                // Status colors (clear communication)
+                // Warm secondary: terracotta. Sparing use: accents, highlights, illustrations.
+                clay: {
+                    DEFAULT: '#B5522F',
+                    light: '#F7E4D9',
+                    dark: '#8C3E22',
+                },
                 status: {
-                    success: '#10B981',
-                    warning: '#F59E0B',
-                    danger: '#EF4444',
-                    info: '#3B82F6',
+                    success: '#1E7F5C',
+                    warning: '#B7791F',
+                    danger: '#C2362B',
+                    info: '#2F5BEA',
                 },
                 rose: {
-                    50: '#FEE2E2',
-                    500: '#EF4444',
-                    600: '#DC2626',
+                    50: '#FBE9E7',
+                    500: '#C2362B',
+                    600: '#A82D23',
                 }
             },
             // Increased font sizes for elderly users
@@ -90,16 +95,21 @@ export default {
                 '6xl': ['56px', { lineHeight: '1.1', letterSpacing: '-0.025em' }],
             },
             boxShadow: {
-                'soft': '0 4px 20px rgba(124, 154, 142, 0.08)',
-                'elevated': '0 8px 30px rgba(124, 154, 142, 0.12)',
-                'glow-sage': '0 0 30px rgba(124, 154, 142, 0.2)',
-                'glow-cream': '0 0 30px rgba(245, 237, 227, 0.5)',
-                'card': '0 2px 12px rgba(0, 0, 0, 0.04)',
-                'card-hover': '0 8px 24px rgba(124, 154, 142, 0.15)',
+                // Warm, low, wide shadows: brown-tinted so they read as paper, not plastic
+                'soft': '0 1px 2px rgba(74, 52, 28, 0.06), 0 6px 18px -10px rgba(74, 52, 28, 0.14)',
+                'elevated': '0 2px 4px rgba(74, 52, 28, 0.06), 0 18px 40px -18px rgba(74, 52, 28, 0.22)',
+                'glow-sage': '0 0 0 4px rgba(47, 91, 234, 0.15)',
+                'glow-cream': '0 0 0 4px rgba(235, 226, 208, 0.6)',
+                'card': '0 1px 2px rgba(74, 52, 28, 0.06), 0 6px 18px -10px rgba(74, 52, 28, 0.14)',
+                'card-hover': '0 2px 4px rgba(74, 52, 28, 0.06), 0 14px 30px -14px rgba(74, 52, 28, 0.22)',
             },
             borderRadius: {
-                '4xl': '2rem',
-                '5xl': '2.5rem',
+                // Tighter than Tailwind defaults: cleaner, less bubbly
+                'xl': '0.75rem',
+                '2xl': '1rem',
+                '3xl': '1.25rem',
+                '4xl': '1.75rem',
+                '5xl': '2rem',
             },
             animation: {
                 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
@@ -142,9 +152,9 @@ export default {
                 },
             },
             backgroundImage: {
-                'gradient-sage': 'linear-gradient(135deg, #7C9A8E 0%, #5C7A6E 100%)',
-                'gradient-cream': 'linear-gradient(135deg, #FAF8F5 0%, #F5EDE3 100%)',
-                'gradient-soft': 'linear-gradient(135deg, #E8F0EB 0%, #F5EDE3 100%)',
+                'gradient-sage': 'linear-gradient(135deg, #2F5BEA 0%, #1E3FAE 100%)',
+                'gradient-cream': 'linear-gradient(135deg, #FBF7F0 0%, #F5EEE1 100%)',
+                'gradient-soft': 'linear-gradient(135deg, #E9EEFD 0%, #F5EEE1 100%)',
             },
             // Mobile-first spacing utilities
             spacing: {

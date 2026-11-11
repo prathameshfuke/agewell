@@ -1,95 +1,75 @@
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { CheckCircle, ArrowLeft } from 'lucide-react'
-import ElderNav from '../components/ElderNav'
 import { api } from '../api/client'
 import { useAuth } from '../contexts/AuthContext'
+import { ElderPage, Loading, ErrorNote, EmptyNote } from '../components/ElderNav'
 
-const historyData = [
-    {
-        date: 'Today', items: [
-            { name: 'Metformin', time: '2:05 PM', status: 'Taken' },
-            { name: 'Atorvastatin', time: '8:00 AM', status: 'Taken' }
-        ]
-    },
-    {
-        date: 'Yesterday', items: [
-            { name: 'Metformin', time: '2:00 PM', status: 'Taken' },
-            { name: 'Atorvastatin', time: '8:15 AM', status: 'Taken' }
-        ]
-    },
-    {
-        date: 'Jan 14', items: [
-            { name: 'Metformin', time: '2:00 PM', status: 'Taken' },
-            { name: 'Atorvastatin', time: '8:00 AM', status: 'Taken' }
-        ]
-    }
-]
+const dayLabel = (d) => d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })
+const timeOf = (d) => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+const STATUS = { taken: 'Taken', missed: 'Skipped', pending: 'Not taken' }
 
 export default function ElderHistory() {
-    const navigate = useNavigate()
-    const { user } = useAuth()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const [logs, setLogs] = useState(null)
+  const [error, setError] = useState('')
 
-    const handleImOk = async () => {
-        if (!user?.id) return
-        await api.submitCheckIn(user.id, 'good')
-        alert("Saved. Your family has been informed.")
-    }
+  const load = useCallback(async () => {
+    if (!user?.id) return
+    setError('')
+    setLogs(null)
+    const result = await api.getAdherenceLogs(user.id, 14)
+    if (result.success) setLogs(result.logs || [])
+    else setError('We could not load your past medicines. Check your connection and try again.')
+  }, [user?.id])
 
-    return (
-        <div className="min-h-screen bg-cream-50 font-sans pb-24 md:pb-0">
-            <header className="px-5 py-5 bg-white border-b border-sage-100 sticky top-0 z-10">
-                <div className="flex items-center gap-3">
-                    <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => navigate(-1)}
-                        className="p-2 -ml-2 text-sage-500 hover:bg-sage-50 rounded-lg"
-                    >
-                        <ArrowLeft className="w-5 h-5" />
-                    </motion.button>
-                    <div>
-                        <div className="text-sage-500 text-xs font-medium uppercase tracking-wide">Past</div>
-                        <h1 className="text-xl font-serif font-bold text-sage-900">Medication History</h1>
-                    </div>
-                </div>
-            </header>
+  useEffect(() => {
+    load()
+  }, [load])
 
-            <div className="px-5 py-6 space-y-6">
-                {historyData.map((day, i) => (
-                    <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                    >
-                        <div className="mb-3">
-                            <span className="text-xs font-bold text-sage-500 uppercase tracking-wide bg-cream-100 px-3 py-1.5 rounded-full border border-cream-200">
-                                {day.date}
-                            </span>
-                        </div>
-                        <div className="space-y-2 pl-4 border-l-2 border-sage-200 ml-3">
-                            {day.items.map((item, j) => (
-                                <div key={j} className="relative pl-5">
-                                    <div className="absolute -left-[9px] top-4 w-4 h-4 rounded-full bg-sage-500 ring-4 ring-cream-50"></div>
-                                    <div className="bg-white p-4 rounded-2xl border border-sage-100">
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <div className="text-lg font-bold text-sage-800">{item.name}</div>
-                                                <div className="text-sage-500 text-sm">{item.time}</div>
-                                            </div>
-                                            <div className="bg-sage-100 text-sage-700 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1">
-                                                <CheckCircle className="w-3 h-3" /> Taken
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </motion.div>
-                ))}
-            </div>
+  // Group by calendar day, newest first (logs already come newest first).
+  const days = []
+  for (const log of logs || []) {
+    const when = new Date(log.scheduled_time)
+    const label = dayLabel(when)
+    let day = days.find((d) => d.label === label)
+    if (!day) days.push((day = { label, items: [] }))
+    day.items.push({ ...log, when })
+  }
 
-            <ElderNav onImOk={handleImOk} />
-        </div>
-    )
+  return (
+    <ElderPage title="Past medicines" subtitle="The last 14 days" backTo="/elder/meds">
+      {error ? (
+        <ErrorNote onRetry={load}>{error}</ErrorNote>
+      ) : logs === null ? (
+        <Loading />
+      ) : days.length === 0 ? (
+        <EmptyNote
+          title="Nothing here yet"
+          action={<button type="button" onClick={() => navigate('/elder/meds')} className="btn-secondary">See today's medicines</button>}
+        >
+          Your past medicines will show here after your first day.
+        </EmptyNote>
+      ) : (
+        days.map((day) => (
+          <section key={day.label} aria-label={day.label}>
+            <h2 className="mb-3 font-serif text-2xl font-bold">{day.label}</h2>
+            <ul className="space-y-3">
+              {day.items.map((item) => (
+                <li key={item.id} className="card flex items-center justify-between gap-3 !p-5">
+                  <div className="min-w-0">
+                    <p className="text-2xl font-bold break-words">{item.medication?.name || 'Medicine'}</p>
+                    <p className="text-lg text-sage-600">{timeOf(item.when)}</p>
+                  </div>
+                  <span className={item.status === 'taken' ? 'badge-success' : item.status === 'missed' ? 'badge-danger' : 'badge-neutral'}>
+                    {STATUS[item.status] || 'Not taken'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      )}
+    </ElderPage>
+  )
 }

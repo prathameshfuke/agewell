@@ -68,8 +68,8 @@ def save_keys():
             'invalid_keys': invalid_keys
         })
 
-    except ValueError as exc:
-        return jsonify({'error': str(exc)}), 400
+    except ValueError:
+        return jsonify({'error': 'Invalid setting.'}), 400
     except Exception as exc:
         return jsonify({'error': str(exc)}), 500
 

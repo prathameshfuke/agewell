@@ -5,8 +5,7 @@ import {
   LogOut, 
   Link2,
   User, 
-  ChevronDown,
-  HelpCircle 
+  ChevronDown
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import RoleSwitcher from './RoleSwitcher'
@@ -57,9 +56,9 @@ export default function ProfileDropdown({
 
   const MenuItem = ({ icon: Icon, label, onClick, variant = 'default' }) => {
     const variants = {
-      default: 'hover:bg-primary-bg text-primary-dark',
-      danger: 'hover:bg-accent-light text-accent',
-      primary: 'hover:bg-primary-bg text-primary',
+      default: 'hover:bg-sage-100 text-sage-900',
+      danger: 'hover:bg-rose-50 text-rose-700',
+      primary: 'hover:bg-sage-100 text-primary',
     }
 
     return (
@@ -78,7 +77,7 @@ export default function ProfileDropdown({
   }
 
   const Divider = () => (
-    <div className="border-t-2 border-primary-light/20 my-1" />
+    <div className="border-t-2 border-sage-200 my-1" />
   )
 
   return (
@@ -89,6 +88,7 @@ export default function ProfileDropdown({
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-3 focus:outline-none focus:ring-2 focus:ring-primary rounded-full"
         aria-expanded={isOpen}
+        aria-label="Account menu"
         aria-haspopup="true"
       >
         {triggerImage && (
@@ -122,16 +122,16 @@ export default function ProfileDropdown({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ type: "spring", duration: 0.3 }}
-              className="absolute right-0 top-16 bg-white rounded-3xl shadow-2xl border-2 border-primary-light/30 py-2 min-w-[280px] z-50 overflow-hidden"
+              className="absolute right-0 top-16 bg-white rounded-2xl border border-sage-200 py-2 min-w-[280px] z-50 overflow-hidden"
             >
               {/* User Info Header */}
-              <div className="px-5 py-4 border-b-2 border-primary-light/20">
+              <div className="px-5 py-4 border-b-2 border-sage-200">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-primary-bg flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-sage-100 flex items-center justify-center">
                     <User className="w-6 h-6 text-primary" strokeWidth={2.5} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-lg text-primary-dark truncate">
+                    <p className="font-bold text-lg text-sage-900 truncate">
                       {profile?.full_name || 'User'}
                     </p>
                     <p className="text-sm text-primary truncate">
@@ -166,15 +166,6 @@ export default function ProfileDropdown({
                   icon={Link2}
                   label="Caregiver Link"
                   onClick={() => navigate('/link')}
-                />
-
-                {/* Help */}
-                <MenuItem
-                  icon={HelpCircle}
-                  label="Help & Support"
-                  onClick={() => {
-                    // Can add help page route here
-                  }}
                 />
 
                 <Divider />

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api/client';
 import { supabase } from '../lib/supabase';
 
@@ -7,6 +7,7 @@ export function useMedications(userId) {
     const [medications, setMedications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const latest = useRef(0); // only the newest schedule request may update state
 
     const fetchSchedule = useCallback(async (date = null, options = {}) => {
         if (!userId) {
@@ -14,9 +15,11 @@ export function useMedications(userId) {
             return;
         }
 
+        const request = ++latest.current;
         try {
             if (!options.silent) setLoading(true);
             const result = await api.getSchedule(userId, date);
+            if (request !== latest.current) return;
             if (result.success) {
                 setSchedule(result.schedule || []);
                 setError(null);
@@ -24,9 +27,9 @@ export function useMedications(userId) {
                 setError(result.error);
             }
         } catch (err) {
-            setError(err.message);
+            if (request === latest.current) setError(err.message);
         } finally {
-            setLoading(false);
+            if (request === latest.current) setLoading(false);
         }
     }, [userId]);
 

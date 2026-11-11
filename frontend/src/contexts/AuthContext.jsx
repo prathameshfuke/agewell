@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 
 const AuthContext = createContext({})
@@ -14,9 +14,24 @@ function normalizeRole(role) {
     return ROLE_ALIASES[role.trim().toLowerCase()] || null
 }
 
+const UNLOCK_KEY = 'caregiverUnlockUntil'
+const UNLOCK_MINUTES = 30
+
+function readUnlockUntil() {
+    try {
+        const stored = Number(sessionStorage.getItem(UNLOCK_KEY)) || 0
+        return stored > Date.now() ? stored : 0
+    } catch {
+        return 0
+    }
+}
+
 function getStoredRole() {
-    const raw = localStorage.getItem('activeRole') || sessionStorage.getItem('sessionActiveRole')
-    return normalizeRole(raw)
+    try {
+        return normalizeRole(localStorage.getItem('activeRole') || sessionStorage.getItem('sessionActiveRole'))
+    } catch {
+        return null // storage blocked (private window): a throw here would blank the whole app
+    }
 }
 
 function buildRoleList(profileData) {
@@ -92,6 +107,24 @@ export function AuthProvider({ children }) {
     const [onboardingComplete, setOnboardingComplete] = useState(false)
     const [loading, setLoading] = useState(true)
     const [initialized, setInitialized] = useState(false)
+    const [unlockUntil, setUnlockUntilState] = useState(readUnlockUntil)
+    const signedInUserId = useRef(null) // Supabase re-emits SIGNED_IN on tab refocus: ignore it for the same user
+
+    const setUnlockUntil = useCallback((timestamp) => {
+        try {
+            if (timestamp) sessionStorage.setItem(UNLOCK_KEY, String(timestamp))
+            else sessionStorage.removeItem(UNLOCK_KEY)
+        } catch { /* storage unavailable: unlock lasts until reload */ }
+        setUnlockUntilState(timestamp || 0)
+    }, [])
+
+    // Re-lock automatically when the unlock window ends.
+    useEffect(() => {
+        const remaining = unlockUntil - Date.now()
+        if (remaining <= 0) return undefined
+        const timer = setTimeout(() => setUnlockUntilState(0), remaining)
+        return () => clearTimeout(timer)
+    }, [unlockUntil])
 
     const setSessionActiveRole = useCallback((role) => {
         const normalizedRole = normalizeRole(role)
@@ -112,7 +145,9 @@ export function AuthProvider({ children }) {
         setProfile(null)
         setSessionActiveRole(null)
         setOnboardingComplete(false)
-    }, [setSessionActiveRole])
+        setUnlockUntil(0)
+        signedInUserId.current = null
+    }, [setSessionActiveRole, setUnlockUntil])
 
     const applyProfileState = useCallback((profileData, preferredRole = null) => {
         setProfile(profileData)
@@ -167,6 +202,7 @@ export function AuthProvider({ children }) {
             return
         }
 
+        signedInUserId.current = session.user.id
         setUser(session.user)
         await fetchProfile(session.user.id, preferredRole)
     }, [clearAuthState, fetchProfile])
@@ -207,6 +243,10 @@ export function AuthProvider({ children }) {
                 // Don't reload on TOKEN_REFRESHED if user hasn't changed
                 if (event === 'TOKEN_REFRESHED') {
                     // Token refresh doesn't change user identity, skip full reload
+                    return
+                }
+
+                if (event === 'SIGNED_IN' && session?.user?.id && session.user.id === signedInUserId.current) {
                     return
                 }
 
@@ -267,12 +307,7 @@ export function AuthProvider({ children }) {
 
         const { data, error } = await supabase.auth.signUp({
             email,
-            password,
-            options: {
-                data: {
-                    full_name: 'Admin User'
-                }
-            }
+            password
         })
 
         if (error) {
@@ -461,6 +496,49 @@ export function AuthProvider({ children }) {
     const roles = buildRoleList(profile)
     const hasAnyRole = roles.length > 0
 
+    // One email can be both the elder and the caregiver. Then the caregiver
+    // dashboard sits behind a PIN, and it shows this same account's data.
+    const isDualRole = roles.includes('elderly') && roles.includes('caregiver')
+    const pinRequired = isDualRole
+    const caregiverUnlocked = !pinRequired || unlockUntil > Date.now()
+    const linkedElderId = profile?.linked_elderly_id || (roles.includes('elderly') ? user?.id || null : null)
+
+    const callPinRpc = useCallback(async (fn, args) => {
+        if (!supabase) throw new Error('Supabase not configured')
+        const { data, error } = await supabase.rpc(fn, args)
+        if (error) throw error
+        return data || { ok: false, error: 'unknown' }
+    }, [])
+
+    const hasCaregiverPin = useCallback(async () => {
+        if (!supabase) return false
+        const { data, error } = await supabase.rpc('has_caregiver_pin')
+        if (error) throw error
+        return Boolean(data)
+    }, [])
+
+    const unlockCaregiver = useCallback(async (pin) => {
+        const result = await callPinRpc('verify_caregiver_pin', { pin })
+        if (result.ok) setUnlockUntil(Date.now() + UNLOCK_MINUTES * 60 * 1000)
+        return result
+    }, [callPinRpc, setUnlockUntil])
+
+    const setCaregiverPin = useCallback(async (newPin, currentPin = null) => {
+        const result = await callPinRpc('set_caregiver_pin', { new_pin: newPin, current_pin: currentPin })
+        if (result.ok) setUnlockUntil(Date.now() + UNLOCK_MINUTES * 60 * 1000)
+        return result
+    }, [callPinRpc, setUnlockUntil])
+
+    const resetCaregiverPin = useCallback(async (newPin) => {
+        const result = await callPinRpc('reset_caregiver_pin', { new_pin: newPin })
+        if (result.ok) setUnlockUntil(Date.now() + UNLOCK_MINUTES * 60 * 1000)
+        return result
+    }, [callPinRpc, setUnlockUntil])
+
+    const lockCaregiver = useCallback(() => setUnlockUntil(0), [setUnlockUntil])
+    const recentSignIn = Boolean(user?.last_sign_in_at) &&
+        Date.now() - new Date(user.last_sign_in_at).getTime() < 5 * 60 * 1000
+
     const value = {
         user,
         profile,
@@ -472,6 +550,16 @@ export function AuthProvider({ children }) {
         onboardingComplete,
         isAuthenticated,
         hasAnyRole,
+        isDualRole,
+        pinRequired,
+        caregiverUnlocked,
+        linkedElderId,
+        recentSignIn,
+        hasCaregiverPin,
+        unlockCaregiver,
+        setCaregiverPin,
+        resetCaregiverPin,
+        lockCaregiver,
 
         login,
         loginWithEmail,

@@ -14,7 +14,7 @@ import twoSticker from '../assets/images/stickers/two.jpeg'
  */
 export default function CaregiverOnboarding() {
     const navigate = useNavigate()
-    const { user, profile, completeOnboarding, isOnboardingComplete, loading: authLoading, initialized } = useAuth()
+    const { user, profile, roles, completeOnboarding, isOnboardingComplete, loading: authLoading, initialized } = useAuth()
 
     const [step, setStep] = useState(1)
     const [loading, setLoading] = useState(false)
@@ -27,6 +27,9 @@ export default function CaregiverOnboarding() {
         consent_acknowledged: false,
         pairing_code: ''
     })
+
+    // Same email is both elder and caregiver: nobody to pair with, the account watches itself.
+    const isSelf = roles?.includes('elderly')
 
     const normalizedPairingCode = (formData.pairing_code || '').replace(/[^A-Z0-9]/gi, '').toUpperCase()
 
@@ -55,7 +58,7 @@ export default function CaregiverOnboarding() {
             setError('Please enter your name')
             return false
         }
-        if (step === 2) {
+        if (step === 2 && !isSelf) {
             if (normalizedPairingCode.length !== 6) {
                 setError('Please enter a valid 6-character pairing code')
                 return false
@@ -98,21 +101,24 @@ export default function CaregiverOnboarding() {
         setError(null)
 
         try {
-            const linkResponse = await api.joinLinkCode(user.id, normalizedPairingCode)
-            if (!linkResponse?.success) {
-                throw new Error(linkResponse?.error || 'Invalid pairing code. Please check and try again.')
-            }
+            let linkedElderId = null
+            if (!isSelf) {
+                const linkResponse = await api.joinLinkCode(user.id, normalizedPairingCode)
+                if (!linkResponse?.success) {
+                    throw new Error(linkResponse?.error || 'Invalid pairing code. Please check and try again.')
+                }
 
-            const linkedElderId = linkResponse?.link?.elder_id || linkResponse?.elder?.id
-            if (!linkedElderId) {
-                throw new Error('Could not resolve linked elder from pairing code.')
+                linkedElderId = linkResponse?.link?.elder_id || linkResponse?.elder?.id
+                if (!linkedElderId) {
+                    throw new Error('Could not resolve linked elder from pairing code.')
+                }
             }
 
             await completeOnboarding('caregiver', {
                 full_name: formData.full_name,
-                caregiver_relationship: formData.relationship,
+                caregiver_relationship: isSelf ? 'Self' : formData.relationship,
                 notifications_enabled: formData.notifications_enabled,
-                linked_elderly_id: linkedElderId
+                ...(linkedElderId ? { linked_elderly_id: linkedElderId } : {})
             })
             navigate('/family/dashboard', { replace: true })
         } catch (err) {
@@ -124,39 +130,35 @@ export default function CaregiverOnboarding() {
 
     if (!initialized || authLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-cream-100 via-cream-50 to-sage-100/40 flex items-center justify-center">
-                <div className="loading-spinner" />
+            <div className="min-h-screen bg-cream-50 flex items-center justify-center">
+                <div className="loading-spinner" role="status" aria-label="Loading" />
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-cream-100 via-cream-50 to-sage-100/40 flex flex-col p-6">
+        <div className="min-h-screen bg-cream-50 flex flex-col p-6">
             {/* Header with Progress */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-8 w-full max-w-md mx-auto">
                 <button
                     onClick={handleBack}
-                    className="text-sage-500 hover:text-sage-700 flex items-center gap-2 text-sm font-bold min-h-[44px]"
+                    className="justify-self-start inline-flex items-center gap-2 min-h-[44px] pr-3 text-sage-600 hover:text-sage-900 text-base font-bold"
                 >
                     <ArrowLeft className="w-5 h-5" /> Back
                 </button>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2" aria-hidden="true">
                     {[1, 2, 3].map(s => (
-                        <div
-                            key={s}
-                            className={`w-3 h-3 rounded-full transition-colors ${s === step ? 'bg-cream-500' : s < step ? 'bg-cream-300' : 'bg-cream-100'
-                                }`}
-                        />
+                        <div key={s} className={`h-2.5 rounded-full transition-all duration-300 ${s === step ? 'w-8 bg-primary' : s < step ? 'w-2.5 bg-primary/40' : 'w-2.5 bg-sage-200'}`} />
                     ))}
                 </div>
-                <div className="w-16" />
+                <span aria-hidden="true" />
             </div>
 
             <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
                 <motion.img
                     src={twoSticker}
-                    alt="Caregiver"
-                    className="w-24 h-24 rounded-3xl shadow-lg border-4 border-white mb-6"
+                    alt=""
+                    width="472" height="340" className="sticker h-28 w-auto mb-6"
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                 />
@@ -173,7 +175,7 @@ export default function CaregiverOnboarding() {
                                     </div>
                                     <span className="text-sage-700 font-bold">Your Name</span>
                                 </div>
-                                <input
+                                <input aria-label="Full name"
                                     type="text"
                                     value={formData.full_name}
                                     onChange={(e) => handleChange('full_name', e.target.value)}
@@ -184,7 +186,14 @@ export default function CaregiverOnboarding() {
                         </motion.div>
                     )}
 
-                    {step === 2 && (
+                    {step === 2 && isSelf && (
+                        <motion.div key="step2-self" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full text-center">
+                            <h1 className="text-2xl font-serif font-bold text-sage-900 mb-2">Your own account</h1>
+                            <p className="text-sage-600 mb-8">Caregiver mode will show the health and medication data of this account. You will create a 4-digit PIN next, so only you can open it.</p>
+                        </motion.div>
+                    )}
+
+                    {step === 2 && !isSelf && (
                         <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full text-center">
                             <h1 className="text-2xl font-serif font-bold text-sage-900 mb-2">Connect to Elder</h1>
                             <p className="text-sage-600 mb-8">Enter the pairing code from their device</p>
@@ -195,7 +204,7 @@ export default function CaregiverOnboarding() {
                                     </div>
                                     <span className="text-sage-700 font-bold">Pairing Code</span>
                                 </div>
-                                <input
+                                <input aria-label="Pairing code"
                                     type="text"
                                     maxLength={6}
                                     value={formData.pairing_code}
@@ -213,7 +222,7 @@ export default function CaregiverOnboarding() {
                                         </div>
                                         <span className="text-sage-700 font-bold">Relationship</span>
                                     </div>
-                                    <input
+                                    <input aria-label="Your relationship to them"
                                         type="text"
                                         value={formData.relationship}
                                         onChange={(e) => handleChange('relationship', e.target.value)}
@@ -233,7 +242,7 @@ export default function CaregiverOnboarding() {
                                 <p className="text-sage-600 text-sm text-left mb-4">
                                     As a caregiver, you'll be able to monitor your loved one's medication schedule, health stats, and receive important alerts.
                                 </p>
-                                <label className="flex items-start gap-3 cursor-pointer bg-cream-50 p-4 rounded-xl border-2 border-cream-100 hover:border-cream-200 transition-colors">
+                                <label className="flex items-start gap-3 cursor-pointer bg-cream-50 p-4 rounded-xl border border-sage-200 hover:border-sage-400 transition-colors">
                                     <input
                                         type="checkbox"
                                         checked={formData.consent_acknowledged}
@@ -253,7 +262,7 @@ export default function CaregiverOnboarding() {
                     <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="w-full bg-rose-50 border-2 border-rose-200 text-rose-600 px-4 py-3 rounded-2xl text-sm mt-4 font-medium"
+                        className="w-full bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-2xl text-sm mt-4 font-medium"
                     >
                         {error}
                     </motion.div>
@@ -284,7 +293,7 @@ export default function CaregiverOnboarding() {
                 </div>
             </div>
 
-            <p className="text-sage-400 text-sm mt-4 font-medium">Step {step} of 3</p>
+            <p className="text-sage-500 text-sm mt-4 font-medium">Step {step} of 3</p>
         </div>
     )
 }

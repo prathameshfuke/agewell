@@ -92,51 +92,52 @@ export default function AuthCallback() {
     useEffect(() => {
         if (!initialized) return
 
+        let t
         if (user) {
             setStatus('success')
             // Route guards at "/" resolve final onboarding/dashboard destination.
-            setTimeout(() => navigate('/', { replace: true }), 500)
+            t = setTimeout(() => navigate('/', { replace: true }), 500)
         } else if (!loading) {
             setStatus('error')
             setError((prev) => prev || 'Authentication failed')
-            setTimeout(() => navigate('/auth', { replace: true }), 2000)
+            t = setTimeout(() => navigate('/auth', { replace: true }), 2000)
         }
+        return () => clearTimeout(t)
     }, [user, loading, initialized, navigate])
 
     return (
-        <div className="min-h-screen bg-cream-50 flex items-center justify-center">
-            <div className="bg-white rounded-3xl p-8 shadow-lg border-2 border-sage-100 text-center max-w-sm">
+        <main className="min-h-screen bg-cream-50 flex items-center justify-center px-5">
+            <div role="status" aria-live="polite" className="bg-white rounded-3xl p-8 border border-sage-200 text-center max-w-sm w-full">
                 {status === 'processing' && (
                     <>
-                        <Loader2 className="w-12 h-12 text-sage-500 animate-spin mx-auto mb-4" />
-                        <h2 className="text-xl font-bold text-sage-800 mb-2">Signing you in...</h2>
-                        <p className="text-sage-500">Please wait</p>
+                        <Loader2 className="w-10 h-10 text-primary animate-spin motion-reduce:animate-none mx-auto mb-4" aria-hidden="true" />
+                        <h1 className="text-2xl font-serif text-sage-900 mb-1">Signing you in…</h1>
+                        <p className="text-sage-600 font-normal">This only takes a moment.</p>
                         {fallbackVisible && (
-                            <button
-                                type="button"
-                                onClick={() => navigate('/auth', { replace: true })}
-                                className="mt-4 inline-flex items-center justify-center rounded-xl border border-sage-300 px-4 py-2 text-sm font-semibold text-sage-700 hover:bg-sage-50"
-                            >
-                                Back to Sign In
+                            <button type="button" onClick={() => navigate('/auth', { replace: true })} className="btn-secondary mt-4 mx-auto">
+                                Back to sign in
                             </button>
                         )}
                     </>
                 )}
                 {status === 'success' && (
                     <>
-                        <CheckCircle className="w-12 h-12 text-sage-500 mx-auto mb-4" />
-                        <h2 className="text-xl font-bold text-sage-800 mb-2">Welcome!</h2>
-                        <p className="text-sage-500">Setting up...</p>
+                        <CheckCircle className="w-10 h-10 text-emerald-600 mx-auto mb-4" aria-hidden="true" />
+                        <h1 className="text-2xl font-serif text-sage-900 mb-1">Signed in</h1>
+                        <p className="text-sage-600 font-normal">Setting things up…</p>
                     </>
                 )}
                 {status === 'error' && (
                     <>
-                        <XCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
-                        <h2 className="text-xl font-bold text-sage-800 mb-2">Error</h2>
-                        <p className="text-rose-500 text-sm">{error}</p>
+                        <XCircle className="w-10 h-10 text-rose-600 mx-auto mb-4" aria-hidden="true" />
+                        <h1 className="text-2xl font-serif text-sage-900 mb-1">Sign-in failed</h1>
+                        <p className="text-rose-700 text-sm font-normal">{error}</p>
+                        <button type="button" onClick={() => navigate('/auth', { replace: true })} className="btn-secondary mt-4 mx-auto">
+                            Back to sign in
+                        </button>
                     </>
                 )}
             </div>
-        </div>
+        </main>
     )
 }

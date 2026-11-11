@@ -7,6 +7,7 @@ import { api } from '../../api/client'
 import { useAuth } from '../../contexts/AuthContext'
 import ElderNav from '../../components/ElderNav'
 import FamilyNav from '../../components/FamilyNav'
+import { notify } from '../../lib/notify'
 import { Card, Button } from '../../components/ui'
 import { PageLayout, PageHeader, PageMain, PageSection } from '../../components/layout'
 
@@ -21,7 +22,7 @@ const DISCLAIMER = 'This summary is for informational purposes only and is not a
 export default function DiagnosisReport() {
     const navigate = useNavigate()
     const location = useLocation()
-    const { user, profile, activeRole } = useAuth()
+    const { user, profile, activeRole, linkedElderId } = useAuth()
 
     const [sharing, setSharing] = useState(false)
     const [shareMessage, setShareMessage] = useState('')
@@ -71,7 +72,7 @@ export default function DiagnosisReport() {
     }, [location.state, profile, reportState?.patient_name, user])
 
     const patientId = useMemo(() => {
-        if (activeRole === 'caregiver') return profile?.linked_elderly_id
+        if (activeRole === 'caregiver') return linkedElderId
         return user?.id
     }, [activeRole, profile, user])
 
@@ -114,10 +115,10 @@ export default function DiagnosisReport() {
         navigate('/diagnosis/history')
     }
 
-    const handleDownloadPdf = () => {
+    const handleDownloadPdf = async () => {
         if (!sessionId) return
-        const url = api.getDiagnosisPdfUrl(sessionId, patientName)
-        window.open(url, '_blank', 'noopener,noreferrer')
+        const result = await api.downloadDiagnosisPdf(sessionId, patientName)
+        if (!result.success) notify(result.error, { error: true })
     }
 
     const handleShare = async () => {
@@ -144,7 +145,7 @@ export default function DiagnosisReport() {
                             <motion.button
                                 whileTap={{ scale: 0.95 }}
                                 onClick={goBack}
-                                className="p-3 rounded-xl text-sage-600 hover:bg-sage-100"
+                                className="btn-icon-ghost"
                                 aria-label="Back to history"
                             >
                                 <ArrowLeft className="w-6 h-6" />
@@ -180,13 +181,13 @@ export default function DiagnosisReport() {
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={goBack}
-                            className="p-3 rounded-xl text-sage-600 hover:bg-sage-100"
+                            className="btn-icon-ghost"
                             aria-label="Back to history"
                         >
                             <ArrowLeft className="w-6 h-6" />
                         </motion.button>
                         <div>
-                            <div className="text-sage-500 text-sm font-bold uppercase tracking-wider mb-1">Assistive Diagnosis</div>
+                            <div className="text-sage-500 text-sm font-bold mb-1">Assistive Diagnosis</div>
                             <h1 className="text-3xl font-serif font-bold text-sage-900">Symptom Summary Report</h1>
                             <p className="text-sage-500 text-lg mt-1">Prepared for doctor discussion.</p>
                         </div>

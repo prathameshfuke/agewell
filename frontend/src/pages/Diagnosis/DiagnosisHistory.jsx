@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { notify } from '../../lib/notify'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Calendar, Clock, FileText } from 'lucide-react'
@@ -24,7 +25,7 @@ const urgencyStyles = {
 
 export default function DiagnosisHistory() {
     const navigate = useNavigate()
-    const { user, profile, activeRole } = useAuth()
+    const { user, profile, activeRole, linkedElderId } = useAuth()
 
     const [history, setHistory] = useState([])
     const [loading, setLoading] = useState(true)
@@ -33,7 +34,7 @@ export default function DiagnosisHistory() {
     const [auditLoadingId, setAuditLoadingId] = useState(null)
 
     const patientId = useMemo(() => {
-        if (activeRole === 'caregiver') return profile?.linked_elderly_id
+        if (activeRole === 'caregiver') return linkedElderId
         return user?.id
     }, [activeRole, profile, user])
 
@@ -65,7 +66,7 @@ export default function DiagnosisHistory() {
 
     const openRow = (row) => {
         if (!row.report_json) {
-            alert('This session does not have a generated report yet.')
+            notify('This session does not have a generated report yet.', { error: true })
             return
         }
 
@@ -122,13 +123,13 @@ export default function DiagnosisHistory() {
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={() => navigate('/diagnosis')}
-                            className="p-3 rounded-xl text-sage-600 hover:bg-sage-100"
+                            className="btn-icon-ghost"
                             aria-label="Back"
                         >
                             <ArrowLeft className="w-6 h-6" />
                         </motion.button>
                         <div>
-                            <div className="text-sage-500 text-sm font-bold uppercase tracking-wider">Assistive Diagnosis</div>
+                            <div className="text-sage-500 text-sm font-bold">Assistive Diagnosis</div>
                             <h1 className="text-2xl font-serif font-bold text-sage-900">Session History</h1>
                         </div>
                     </div>

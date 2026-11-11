@@ -1,3 +1,4 @@
+from html import escape
 import os
 import smtplib
 from datetime import datetime
@@ -85,22 +86,39 @@ def _load_caregiver_profiles(caregiver_ids: List[str]) -> Dict[str, Dict[str, An
 
 def get_family_contacts(patient_id: str) -> List[Dict[str, Any]]:
     """
-    Returns caregivers linked to a patient. Uses caregiver_relationships when available,
-    and falls back to profiles.linked_elderly_id.
+    Returns caregivers linked to a patient: caregiver_links first, then caregiver_relationships,
+    then profiles.linked_elderly_id.
     """
     client = _get_client()
 
     relation_rows: List[Dict[str, Any]] = []
-    try:
-        relationship_response = (
-            client.table("caregiver_relationships")
-            .select("caregiver_id, relation")
+    try:  # the app's own link table (join-by-code); a caregiver can be linked to several elders
+        link_response = (
+            client.table("caregiver_links")
+            .select("caregiver_id")
             .eq("elder_id", patient_id)
+            .eq("status", "active")
             .execute()
         )
-        relation_rows = relationship_response.data or []
+        relation_rows = [
+            {"caregiver_id": row["caregiver_id"], "relation": "Caregiver"}
+            for row in (link_response.data or [])
+            if row.get("caregiver_id")
+        ]
     except Exception:
         relation_rows = []
+
+    if not relation_rows:
+        try:
+            relationship_response = (
+                client.table("caregiver_relationships")
+                .select("caregiver_id, relation")
+                .eq("elder_id", patient_id)
+                .execute()
+            )
+            relation_rows = relationship_response.data or []
+        except Exception:
+            relation_rows = []
 
     if not relation_rows:
         try:
@@ -157,6 +175,9 @@ def send_emergency_email(contact: Dict[str, Any], patient_name: str, urgency_rea
         return False
 
     try:
+        # patient_name comes from the client and urgency_reason from an LLM: never trust either in HTML or headers.
+        patient_name = " ".join(str(patient_name).split())[:80]
+        safe_name, safe_reason = escape(patient_name), escape(str(urgency_reason))
         msg = MIMEMultipart("alternative")
         msg["Subject"] = f"URGENT - AgeWell Alert for {patient_name}"
         msg["From"] = f"AgeWell Alerts <{smtp_user}>"
@@ -168,9 +189,9 @@ def send_emergency_email(contact: Dict[str, Any], patient_name: str, urgency_rea
             <h1 style=\"margin:0;font-size:24px;\">Urgent Medical Alert</h1>
           </div>
           <div style=\"background:#fef2f2;padding:24px;border:1px solid #fecaca;border-radius:0 0 8px 8px;\">
-            <p style=\"font-size:18px;font-weight:bold;color:#991b1b;\">{patient_name} may need immediate medical attention.</p>
-            <p style=\"font-size:16px;color:#374151;background:white;padding:16px;border-radius:6px;border-left:4px solid #dc2626;\">{urgency_reason}</p>
-            <p style=\"color:#6b7280;font-size:14px;\">Session ID: {session_id}</p>
+            <p style=\"font-size:18px;font-weight:bold;color:#991b1b;\">{safe_name} may need immediate medical attention.</p>
+            <p style=\"font-size:16px;color:#374151;background:white;padding:16px;border-radius:6px;border-left:4px solid #dc2626;\">{safe_reason}</p>
+            <p style=\"color:#6b7280;font-size:14px;\">Session ID: {escape(str(session_id))}</p>
             <p style=\"color:#6b7280;font-size:14px;\">This is a preliminary symptom assessment and not a medical diagnosis.</p>
           </div>
         </div>

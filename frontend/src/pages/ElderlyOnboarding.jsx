@@ -108,40 +108,35 @@ export default function ElderlyOnboarding() {
 
     if (!initialized || authLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-cream-100 via-cream-50 to-sage-100/40 flex items-center justify-center">
-                <div className="loading-spinner" />
+            <div className="min-h-screen bg-cream-50 flex items-center justify-center">
+                <div className="loading-spinner" role="status" aria-label="Loading" />
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-cream-100 via-cream-50 to-sage-100/40 flex flex-col p-6">
+        <div className="min-h-screen bg-cream-50 flex flex-col p-6">
             {/* Header with Progress */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-8 w-full max-w-md mx-auto">
                 <button
                     onClick={handleBack}
-                    className="text-sage-500 hover:text-sage-700 flex items-center gap-2 text-sm font-bold min-h-[44px]"
+                    className="justify-self-start inline-flex items-center gap-2 min-h-[44px] pr-3 text-sage-600 hover:text-sage-900 text-base font-bold"
                 >
                     <ArrowLeft className="w-5 h-5" /> Back
                 </button>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2" aria-hidden="true">
                     {[1, 2, 3].map(s => (
-                        <div 
-                            key={s} 
-                            className={`w-3 h-3 rounded-full transition-colors ${
-                                s === step ? 'bg-sage-500' : s < step ? 'bg-sage-300' : 'bg-sage-100'
-                            }`} 
-                        />
+                        <div key={s} className={`h-2.5 rounded-full transition-all duration-300 ${s === step ? 'w-8 bg-primary' : s < step ? 'w-2.5 bg-primary/40' : 'w-2.5 bg-sage-200'}`} />
                     ))}
                 </div>
-                <div className="w-16" />
+                <span aria-hidden="true" />
             </div>
 
             <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
                 <motion.img 
                     src={oneSticker} 
-                    alt="Welcome" 
-                    className="w-24 h-24 rounded-3xl shadow-lg border-4 border-white mb-6"
+                    alt="" 
+                    width="736" height="601" className="sticker h-28 w-auto mb-6"
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                 />
@@ -158,7 +153,7 @@ export default function ElderlyOnboarding() {
                                     </div>
                                     <span className="text-sage-700 font-bold">Your Name</span>
                                 </div>
-                                <input
+                                <input aria-label="Full name"
                                     type="text"
                                     value={formData.full_name}
                                     onChange={(e) => handleChange('full_name', e.target.value)}
@@ -166,8 +161,8 @@ export default function ElderlyOnboarding() {
                                     className="input mb-4"
                                 />
                                 <div>
-                                    <label className="block text-sage-600 text-sm font-medium mb-2">Date of Birth (optional)</label>
-                                    <input
+                                    <label htmlFor="dob" className="block text-sage-600 text-sm font-medium mb-2">Date of birth (optional)</label>
+                                    <input id="dob"
                                         type="date"
                                         value={formData.date_of_birth}
                                         onChange={(e) => handleChange('date_of_birth', e.target.value)}
@@ -190,7 +185,7 @@ export default function ElderlyOnboarding() {
                                         </div>
                                         <span className="text-sage-700 font-bold">Contact Name</span>
                                     </div>
-                                    <input
+                                    <input aria-label="Emergency contact name"
                                         type="text"
                                         value={formData.emergency_contact_name}
                                         onChange={(e) => handleChange('emergency_contact_name', e.target.value)}
@@ -205,11 +200,11 @@ export default function ElderlyOnboarding() {
                                         </div>
                                         <span className="text-sage-700 font-bold">Phone Number</span>
                                     </div>
-                                    <input
+                                    <input aria-label="Emergency contact phone"
                                         type="tel"
                                         value={formData.emergency_contact_phone}
                                         onChange={(e) => handleChange('emergency_contact_phone', e.target.value)}
-                                        placeholder="+1 (555) 123-4567"
+                                        placeholder="+91 98765 43210"
                                         className="input"
                                     />
                                 </div>
@@ -231,7 +226,7 @@ export default function ElderlyOnboarding() {
                                 <p className="text-sage-600 text-sm text-left mb-4">
                                     AgeWell helps you manage medications and connect with caregivers. Your information is private and secure.
                                 </p>
-                                <label className="flex items-start gap-3 cursor-pointer bg-sage-50 p-4 rounded-xl border-2 border-sage-100 hover:border-sage-200 transition-colors">
+                                <label className="flex items-start gap-3 cursor-pointer bg-sage-50 p-4 rounded-xl border border-sage-200 hover:border-sage-400 transition-colors">
                                     <input
                                         type="checkbox"
                                         checked={formData.consent_acknowledged}
@@ -251,7 +246,7 @@ export default function ElderlyOnboarding() {
                     <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="w-full bg-rose-50 border-2 border-rose-200 text-rose-600 px-4 py-3 rounded-2xl text-sm mt-4 font-medium"
+                        className="w-full bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-2xl text-sm mt-4 font-medium"
                     >
                         {error}
                     </motion.div>
@@ -281,7 +276,7 @@ export default function ElderlyOnboarding() {
                     )}
                 </div>
 
-                <p className="text-sage-400 text-sm mt-4 font-medium">Step {step} of 3</p>
+                <p className="text-sage-500 text-sm mt-4 font-medium">Step {step} of 3</p>
             </div>
         </div>
     )

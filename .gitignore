@@ -87,3 +87,5 @@ instance/
 agewell_ocr/
 stitch_elder_dashboard/
 
+.vercel
+.env*

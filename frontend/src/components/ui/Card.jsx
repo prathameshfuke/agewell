@@ -25,11 +25,11 @@ export default function Card({
 }) {
   // Mobile-first: Start with mobile padding, scale up for desktop
   // No fixed heights - cards auto-expand with content
-  const baseClasses = 'bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 border-2 border-sage-100 w-full break-words'
+  const baseClasses = 'bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 border border-sage-200/70 shadow-card w-full break-words'
 
   const variantClasses = {
-    default: 'shadow-soft',
-    interactive: 'shadow-soft hover:shadow-card-hover hover:border-sage-200 cursor-pointer transition-all duration-200 active:scale-[0.98]',
+    default: '',
+    interactive: 'hover:shadow-card-hover cursor-pointer !transition-shadow duration-200',
     elevated: 'shadow-elevated',
     flush: '', // No shadow or extra styling
   }
@@ -68,7 +68,7 @@ export function CardHeader({ icon, label, action, className = '' }) {
           <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: 'currentColor' }} />
         )}
         {typeof icon === 'string' ? null : icon}
-        <span className="text-sage-600 font-bold uppercase tracking-wider text-xs sm:text-sm break-words">{label}</span>
+        <span className="text-sage-600 font-bold text-xs sm:text-sm break-words">{label}</span>
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}
     </div>

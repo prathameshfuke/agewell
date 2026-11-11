@@ -101,7 +101,7 @@ export default function DispenserSetup() {
                 <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={() => navigate(-1)}
-                    className="p-2 text-sage-500 hover:bg-sage-100 rounded-xl"
+                    className="btn-icon-ghost"
                 >
                     <ArrowLeft className="w-6 h-6" />
                 </motion.button>
@@ -225,7 +225,7 @@ export default function DispenserSetup() {
                                             </div>
 
                                             <div className="flex-1">
-                                                <div className="text-sage-500 text-sm font-bold uppercase tracking-wider mb-1">
+                                                <div className="text-sage-500 text-sm font-bold mb-1">
                                                     Slot {slotNum}
                                                 </div>
 
