@@ -29,9 +29,60 @@ function Section({ title, children }) {
   )
 }
 
+function ChangePin({ onChange }) {
+  const [current, setCurrent] = useState('')
+  const [next, setNext] = useState('')
+  const [status, setStatus] = useState({ ok: true, text: '' })
+  const [busy, setBusy] = useState(false)
+  const valid = /^\d{4}$/.test(current) && /^\d{4}$/.test(next)
+
+  const submit = async (event) => {
+    event.preventDefault()
+    setBusy(true)
+    try {
+      const result = await onChange(next, current)
+      if (result.ok) {
+        setStatus({ ok: true, text: 'PIN changed.' })
+        setCurrent('')
+        setNext('')
+      } else if (result.error === 'locked') {
+        setStatus({ ok: false, text: 'Too many wrong PINs. Try again in 15 minutes.' })
+      } else if (result.error === 'wrong_pin') {
+        setStatus({ ok: false, text: `The current PIN is wrong. ${result.attempts_left ?? 0} attempts left.` })
+      } else {
+        setStatus({ ok: false, text: 'Could not change the PIN. Try again.' })
+      }
+    } catch {
+      setStatus({ ok: false, text: 'Could not reach the server. Check your connection and try again.' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const digits = (setter) => (event) => setter(event.target.value.replace(/\D/g, '').slice(0, 4))
+
+  return (
+    <section>
+      <h2 className="font-serif text-lg text-sage-900 mb-2">Caregiver PIN</h2>
+      <form onSubmit={submit} className="rounded-2xl border border-sage-200 bg-white p-5 space-y-3">
+        <div>
+          <label htmlFor="pin-current" className="block text-sm text-sage-700 mb-1">Current PIN</label>
+          <input id="pin-current" type="password" inputMode="numeric" autoComplete="off" value={current} onChange={digits(setCurrent)} className="input" />
+        </div>
+        <div>
+          <label htmlFor="pin-new" className="block text-sm text-sage-700 mb-1">New 4-digit PIN</label>
+          <input id="pin-new" type="password" inputMode="numeric" autoComplete="off" value={next} onChange={digits(setNext)} className="input" />
+        </div>
+        <button type="submit" disabled={!valid || busy} className="btn-primary !min-h-[44px] !text-base !py-2 disabled:opacity-50">Change PIN</button>
+        {status.text && <p role="status" className={`text-sm ${status.ok ? 'text-sage-600' : 'text-rose-700'}`}>{status.text}</p>}
+      </form>
+    </section>
+  )
+}
+
 export default function FamilySettings() {
   const navigate = useNavigate()
-  const { logout, profile, roles, setActiveRole } = useAuth()
+  const { logout, profile, roles, setActiveRole, pinRequired, setCaregiverPin } = useAuth()
   const hasElderRole = roles?.includes('elderly')
 
   const [confirmingLogout, setConfirmingLogout] = useState(false)
@@ -89,6 +140,8 @@ export default function FamilySettings() {
           <Row title="Care team" description="See who has access to this health data" onClick={() => navigate('/family/members')} />
           <Row title="What caregivers can see" onClick={() => navigate('/family/permissions')} />
         </Section>
+
+        {pinRequired && <ChangePin onChange={setCaregiverPin} />}
 
         <button type="button" onClick={() => setConfirmingLogout(true)} className="btn-secondary w-full !min-h-[44px] !text-base !py-2">Sign out</button>
       </main>
