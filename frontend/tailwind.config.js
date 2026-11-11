@@ -20,8 +20,8 @@ export default {
         },
         extend: {
             fontFamily: {
-                serif: ['Butler', 'Georgia', 'serif'],
-                sans: ['"Atkinson Hyperlegible"', 'system-ui', 'sans-serif'],
+                serif: ['Butler', '"Noto Serif Devanagari"', 'Georgia', 'serif'],
+                sans: ['"Atkinson Hyperlegible"', '"Noto Sans Devanagari"', 'system-ui', 'sans-serif'],
                 romelio: ['Romelio', 'sans-serif'],
             },
             // Palette: paper + ink + forest green, saffron/terracotta as sparing warm accents.
