@@ -37,7 +37,7 @@ export default function DemoFamilyDashboard({ onSwitchToElder, onNavigate, mockD
                             <AnimatePresence>
                                 {showMenu && (
                                     <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className="absolute right-4 top-16 bg-white rounded-2xl shadow-elevated border-2 border-sage-100 py-2 min-w-[200px] z-50">
-                                        <div className="px-4 py-2 text-xs font-bold text-sage-400 uppercase tracking-wider">Demo Controls</div>
+                                        <div className="px-4 py-2 text-xs font-bold text-sage-400">Demo Controls</div>
                                         <button onClick={() => { setShowMenu(false); onSwitchToElder(); }} className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-sage-50 text-sage-700">
                                             <User className="w-5 h-5" /><span className="font-medium">Switch to Elder View</span>
                                         </button>

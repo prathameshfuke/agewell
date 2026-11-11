@@ -21,7 +21,7 @@ export default function FamilyMembers() {
             <header className="px-6 py-6 sticky top-0 bg-cream-50/80 backdrop-blur-md z-10 border-b border-sage-100/50">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
-                        <div className="text-sage-500 text-xs font-bold uppercase tracking-wider mb-1">Access</div>
+                        <div className="text-sage-500 text-xs font-bold mb-1">Access</div>
                         <h1 className="font-serif text-3xl text-sage-900 tracking-tight">Care Team</h1>
                     </div>
                     <motion.div
@@ -70,7 +70,7 @@ export default function FamilyMembers() {
                                         {m.role === 'Primary' && <Crown className="w-4 h-4 text-amber-400 fill-amber-400" />}
                                     </div>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block tracking-wide uppercase ${m.role === 'Primary' ? 'bg-sage-100 text-sage-700' : 'bg-slate-100 text-slate-500'
+                                        <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block ${m.role === 'Primary' ? 'bg-sage-100 text-sage-700' : 'bg-slate-100 text-slate-500'
                                             }`}>
                                             {m.role}
                                         </div>

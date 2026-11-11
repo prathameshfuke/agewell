@@ -93,7 +93,7 @@ export default function DemoElderHealth({ onNavigate, onImOk }) {
                                 <span className="text-3xl font-bold text-sage-900">{healthData.heartRate.value}</span>
                                 <span className="text-sage-600 text-base font-medium">{healthData.heartRate.unit}</span>
                             </div>
-                            <div className="text-sage-500 text-sm font-bold uppercase tracking-wide">Heart Rate</div>
+                            <div className="text-sage-500 text-sm font-bold">Heart Rate</div>
                         </div>
                     </div>
 
@@ -110,7 +110,7 @@ export default function DemoElderHealth({ onNavigate, onImOk }) {
                                 <span className="text-3xl font-bold text-sage-900">{healthData.bloodOxygen.value}</span>
                                 <span className="text-sage-600 text-base font-medium">{healthData.bloodOxygen.unit}</span>
                             </div>
-                            <div className="text-sage-500 text-sm font-bold uppercase tracking-wide">Blood Oxygen</div>
+                            <div className="text-sage-500 text-sm font-bold">Blood Oxygen</div>
                         </div>
                     </div>
                 </div>
@@ -122,7 +122,7 @@ export default function DemoElderHealth({ onNavigate, onImOk }) {
                             <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
                                 <Moon className="w-5 h-5 text-white" />
                             </div>
-                            <span className="text-white/90 text-sm font-bold uppercase tracking-wide">Last Night's Sleep</span>
+                            <span className="text-white/90 text-sm font-bold">Last Night's Sleep</span>
                         </div>
                         <div className="flex items-baseline gap-2 mb-2">
                             <span className="text-4xl font-bold">{healthData.sleep.hours}h {healthData.sleep.minutes}m</span>
@@ -137,7 +137,7 @@ export default function DemoElderHealth({ onNavigate, onImOk }) {
                             <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
                                 <Footprints className="w-5 h-5 text-amber-600" />
                             </div>
-                            <span className="text-sage-500 text-sm font-bold uppercase tracking-wide">Today's Steps</span>
+                            <span className="text-sage-500 text-sm font-bold">Today's Steps</span>
                         </div>
                         <span className="text-sm font-bold text-emerald-600 bg-emerald-100 px-3 py-1.5 rounded-full">On Track! 🎯</span>
                     </div>

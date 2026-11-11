@@ -86,7 +86,7 @@ export default function VitalsStatsRow({
             {getTrendIcon(stat.trend)}
           </div>
 
-          <div className="text-sage-600 text-xs font-semibold uppercase tracking-wide mb-1">
+          <div className="text-sage-600 text-xs font-semibold mb-1">
             {stat.label}
           </div>
 

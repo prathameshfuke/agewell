@@ -194,7 +194,7 @@ export default function LiveVitalsPanel({
                 ) : (
                   <v.icon className={`w-4 h-4 ${v.iconColor}`} />
                 )}
-                <span className="text-sage-500 text-xs font-bold uppercase tracking-wide">
+                <span className="text-sage-500 text-xs font-bold">
                   {v.label}
                 </span>
               </div>

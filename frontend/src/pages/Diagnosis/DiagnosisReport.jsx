@@ -186,7 +186,7 @@ export default function DiagnosisReport() {
                             <ArrowLeft className="w-6 h-6" />
                         </motion.button>
                         <div>
-                            <div className="text-sage-500 text-sm font-bold uppercase tracking-wider mb-1">Assistive Diagnosis</div>
+                            <div className="text-sage-500 text-sm font-bold mb-1">Assistive Diagnosis</div>
                             <h1 className="text-3xl font-serif font-bold text-sage-900">Symptom Summary Report</h1>
                             <p className="text-sage-500 text-lg mt-1">Prepared for doctor discussion.</p>
                         </div>

@@ -26,7 +26,7 @@ export default function DemoAutomationFeedback({ message, type = 'comfort', onCl
                         <Sparkles className="w-5 h-5" />
                     </div>
                     <div className="flex-1 pr-6">
-                        <div className={`font-bold text-sm uppercase tracking-wider mb-1 opacity-70 ${style.text}`}>Smart Adjustment</div>
+                        <div className={`font-bold text-sm mb-1 opacity-70 ${style.text}`}>Smart Adjustment</div>
                         <div className={`font-medium ${style.text} text-lg leading-tight`}>
                             {message}
                         </div>

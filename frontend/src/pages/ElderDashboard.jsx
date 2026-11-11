@@ -163,7 +163,7 @@ export default function ElderDashboard() {
               </h1>
               <p className="text-sage-500 text-base sm:text-lg mt-1">Your most important care tasks are ready.</p>
               <div className="flex flex-wrap items-center gap-2 mt-2">
-                <span className="inline-flex px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide bg-sage-100 text-sage-700">
+                <span className="inline-flex px-2.5 py-1 rounded-lg text-xs font-bold bg-sage-100 text-sage-700">
                   {hasCaregiverRole ? 'Caregiver Connected' : 'Connected'}
                 </span>
                 <SensorStatusBadge connected={sensorConnected} />
@@ -211,7 +211,7 @@ export default function ElderDashboard() {
             <div className="relative">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
                 <div>
-                  <div className="text-white/70 text-sm font-bold uppercase tracking-wider">Today at a Glance</div>
+                  <div className="text-white/70 text-sm font-bold">Today at a Glance</div>
                   <h2 className="text-3xl sm:text-4xl font-serif font-bold mt-1">
                     {nextMedication ? 'Next dose is ready' : 'You are caught up'}
                   </h2>
@@ -225,15 +225,15 @@ export default function ElderDashboard() {
                 <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   <div className="rounded-2xl bg-white/15 p-3 sm:p-4 text-center backdrop-blur-sm">
                     <div className="text-2xl sm:text-3xl font-bold">{pendingMeds.length}</div>
-                    <div className="text-white/70 text-xs font-bold uppercase">Pending</div>
+                    <div className="text-white/70 text-xs font-bold">Pending</div>
                   </div>
                   <div className="rounded-2xl bg-white/15 p-3 sm:p-4 text-center backdrop-blur-sm">
                     <div className="text-2xl sm:text-3xl font-bold">{completedMeds.length}</div>
-                    <div className="text-white/70 text-xs font-bold uppercase">Taken</div>
+                    <div className="text-white/70 text-xs font-bold">Taken</div>
                   </div>
                   <div className="rounded-2xl bg-white/15 p-3 sm:p-4 text-center backdrop-blur-sm">
                     <div className="text-2xl sm:text-3xl font-bold">{healthLoading ? '...' : heartRateDisplay}</div>
-                    <div className="text-white/70 text-xs font-bold uppercase">Heart</div>
+                    <div className="text-white/70 text-xs font-bold">Heart</div>
                   </div>
                 </div>
               </div>
@@ -280,7 +280,7 @@ export default function ElderDashboard() {
               <Card className="h-full">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-3 h-3 bg-sage-500 rounded-full" />
-                  <span className="text-sage-600 font-bold uppercase tracking-wider text-sm">Next Medication</span>
+                  <span className="text-sage-600 font-bold text-sm">Next Medication</span>
                 </div>
 
                 {medsLoading ? (

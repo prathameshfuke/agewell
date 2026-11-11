@@ -30,7 +30,7 @@ export default function DemoFamilyMeds({ onNavigate, medications = [], onAddMedi
                         <ArrowLeft className="w-6 h-6" />
                     </motion.button>
                     <div>
-                        <div className="text-sage-500 text-sm font-bold uppercase tracking-wide">Manage</div>
+                        <div className="text-sage-500 text-sm font-bold">Manage</div>
                         <h1 className="text-xl font-serif font-bold text-sage-900">Medications</h1>
                     </div>
                 </div>

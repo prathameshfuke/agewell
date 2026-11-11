@@ -43,7 +43,7 @@ function AlertItem({ icon: Icon, title, reason, confidence, color, bg }) {
                 <div className="text-xs text-sage-600 mt-0.5">{reason}</div>
             </div>
             <div className="flex flex-col items-end">
-                <span className="text-[10px] font-bold text-sage-400 uppercase">Confidence</span>
+                <span className="text-[10px] font-bold text-sage-400">Confidence</span>
                 <span className="text-xs font-bold text-sage-700">{confidence}</span>
             </div>
         </div>

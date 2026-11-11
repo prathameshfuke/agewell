@@ -72,7 +72,7 @@ export default function HealthOverviewCard({
           <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-1">
               <Activity className="w-4 h-4 text-white/70" />
-              <span className="text-white/70 text-xs font-bold uppercase">Heart Rate</span>
+              <span className="text-white/70 text-xs font-bold">Heart Rate</span>
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-3xl font-bold">
@@ -87,7 +87,7 @@ export default function HealthOverviewCard({
           <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-1">
               <Heart className="w-4 h-4 text-white/70" />
-              <span className="text-white/70 text-xs font-bold uppercase">Blood Pressure</span>
+              <span className="text-white/70 text-xs font-bold">Blood Pressure</span>
             </div>
             <div className="flex items-baseline gap-0.5 sm:gap-1 flex-wrap">
               <span className="text-2xl sm:text-3xl font-bold">{bloodPressure.systolic ?? '--'}</span>
@@ -100,7 +100,7 @@ export default function HealthOverviewCard({
         {/* Mini Trend Chart */}
         {chartData.length > 0 ? (
           <div className="bg-white/10 rounded-xl p-3">
-            <div className="text-white/70 text-xs font-bold uppercase mb-2">7-Day Trend</div>
+            <div className="text-white/70 text-xs font-bold mb-2">7-Day Trend</div>
             <TrendChart
               data={chartData}
               color="rgba(255,255,255,0.8)"

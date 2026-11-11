@@ -18,7 +18,7 @@ export default function DemoElderHistory({ onNavigate, onImOk, activities = [] }
                         <ArrowLeft className="w-5 h-5" />
                     </motion.button>
                     <div>
-                        <div className="text-sage-500 text-xs font-medium uppercase tracking-wide">Past</div>
+                        <div className="text-sage-500 text-xs font-medium">Past</div>
                         <h1 className="text-xl font-serif font-bold text-sage-900">Medication History</h1>
                     </div>
                 </div>

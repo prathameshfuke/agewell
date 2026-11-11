@@ -166,7 +166,7 @@ export default function HealthMonitor() {
                                         }`} />
                                 </div>
                                 <div>
-                                    <div className="text-sage-500 text-sm font-bold uppercase">Blood Oxygen</div>
+                                    <div className="text-sage-500 text-sm font-bold">Blood Oxygen</div>
                                     <div className={`text-sm font-bold ${spo2Status.color === 'rose' ? 'text-rose-600' :
                                             spo2Status.color === 'amber' ? 'text-amber-600' : 'text-sage-600'
                                         }`}>
@@ -198,7 +198,7 @@ export default function HealthMonitor() {
                                         }`} />
                                 </div>
                                 <div>
-                                    <div className="text-sage-500 text-sm font-bold uppercase">Heart Rate</div>
+                                    <div className="text-sage-500 text-sm font-bold">Heart Rate</div>
                                     <div className={`text-sm font-bold ${hrStatus.color === 'rose' ? 'text-rose-600' :
                                             hrStatus.color === 'amber' ? 'text-amber-600' : 'text-sage-600'
                                         }`}>
@@ -230,7 +230,7 @@ export default function HealthMonitor() {
                                         }`} />
                                 </div>
                                 <div>
-                                    <div className="text-sage-500 text-sm font-bold uppercase">Body Temp</div>
+                                    <div className="text-sage-500 text-sm font-bold">Body Temp</div>
                                     <div className={`text-sm font-bold ${tempStatus.color === 'rose' ? 'text-rose-600' :
                                             tempStatus.color === 'amber' ? 'text-amber-600' : 'text-sage-600'
                                         }`}>
@@ -262,7 +262,7 @@ export default function HealthMonitor() {
                                     <Thermometer className="w-6 h-6 text-orange-500" />
                                 </div>
                                 <div>
-                                    <div className="text-sage-500 text-sm font-bold uppercase">Room Temp</div>
+                                    <div className="text-sage-500 text-sm font-bold">Room Temp</div>
                                     <div className="text-sm font-bold text-sage-600">Comfortable</div>
                                 </div>
                             </div>
@@ -283,7 +283,7 @@ export default function HealthMonitor() {
                                     <Droplets className="w-6 h-6 text-blue-500" />
                                 </div>
                                 <div>
-                                    <div className="text-sage-500 text-sm font-bold uppercase">Humidity</div>
+                                    <div className="text-sage-500 text-sm font-bold">Humidity</div>
                                     <div className="text-sm font-bold text-sage-600">Normal</div>
                                 </div>
                             </div>
@@ -304,7 +304,7 @@ export default function HealthMonitor() {
                                     <Wind className="w-6 h-6 text-green-500" />
                                 </div>
                                 <div>
-                                    <div className="text-sage-500 text-sm font-bold uppercase">Air Quality</div>
+                                    <div className="text-sage-500 text-sm font-bold">Air Quality</div>
                                     <div className="text-sm font-bold text-sage-600">Good</div>
                                 </div>
                             </div>

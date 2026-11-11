@@ -37,7 +37,7 @@ export default function DemoSettings({ onNavigate, settings, onToggle }) {
 
             <div className="page-main">
                 <Card>
-                    <h3 className="text-sm font-bold text-sage-500 uppercase tracking-wider mb-4">Notifications</h3>
+                    <h3 className="text-sm font-bold text-sage-500 mb-4">Notifications</h3>
                     <SettingRow
                         icon={Bell}
                         label="Medication Reminders"
@@ -56,7 +56,7 @@ export default function DemoSettings({ onNavigate, settings, onToggle }) {
                 </Card>
 
                 <Card>
-                    <h3 className="text-sm font-bold text-sage-500 uppercase tracking-wider mb-4">Device</h3>
+                    <h3 className="text-sm font-bold text-sage-500 mb-4">Device</h3>
                     <SettingRow icon={Volume2} label="Sound Volume" value={<span className="text-sage-800 font-bold">100%</span>} />
                     <SettingRow icon={Shield} label="Emergency Contact" value={<span className="text-sage-800 font-bold">Martha Jr.</span>} />
                 </Card>

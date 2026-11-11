@@ -64,7 +64,7 @@ export default function WeeklyHealthSummary({
         {weeklyData.length > 0 ? (
           <TrendChart
             data={weeklyData}
-            color="#7C9A8E"
+            color="#2F5BEA"
             height={80}
             showTooltip={true}
           />
@@ -83,7 +83,7 @@ export default function WeeklyHealthSummary({
             transition={{ delay: 0.08 + index * 0.06 }}
             className="bg-sage-50 rounded-2xl p-3 text-center border border-sage-100"
           >
-            <div className="text-sage-500 text-[11px] font-semibold uppercase tracking-wide mb-1 break-words">
+            <div className="text-sage-500 text-[11px] font-semibold mb-1 break-words">
               {tile.title}
             </div>
 

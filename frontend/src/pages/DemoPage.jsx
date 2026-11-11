@@ -205,7 +205,7 @@ export default function DemoPage() {
                   exit={{ opacity: 0, y: -10, scale: 0.95 }}
                   className="absolute left-0 top-16 bg-white rounded-2xl shadow-elevated border-2 border-sage-100 py-2 min-w-[220px] z-50"
                 >
-                  <div className="px-4 py-2 text-xs font-bold text-sage-400 uppercase tracking-wider">Demo Controls</div>
+                  <div className="px-4 py-2 text-xs font-bold text-sage-400">Demo Controls</div>
                   <button
                     onClick={() => { setShowMenu(false); setCurrentView('elder-dashboard'); }}
                     className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-sage-50 text-sage-900 font-bold`}
@@ -317,7 +317,7 @@ export default function DemoPage() {
           <Card>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-3 h-3 bg-sage-500 rounded-full" />
-              <span className="text-sage-600 font-bold uppercase tracking-wider text-sm">Next Medication</span>
+              <span className="text-sage-600 font-bold text-sm">Next Medication</span>
             </div>
             <div className="bg-sage-50 rounded-2xl p-5 mb-5">
               <div className="flex items-center gap-3 mb-3">
@@ -358,12 +358,12 @@ export default function DemoPage() {
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="px-6 pb-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="bg-rose-50 rounded-2xl p-5 border-2 border-rose-100">
-                      <div className="flex items-center gap-2 mb-2"><Activity className="w-4 h-4 text-rose-500" /><div className="text-sage-500 text-sm font-bold uppercase">Heart Rate</div></div>
+                      <div className="flex items-center gap-2 mb-2"><Activity className="w-4 h-4 text-rose-500" /><div className="text-sage-500 text-sm font-bold">Heart Rate</div></div>
                       <div className="flex items-baseline gap-2"><span className="text-3xl font-bold text-sage-800">{mockVitals.heart_rate}</span><span className="text-sage-500 text-lg">bpm</span></div>
                       <div className="flex items-center gap-2 mt-2"><div className="w-2 h-2 bg-sage-500 rounded-full" /><span className="text-sage-600 font-medium">Normal</span></div>
                     </div>
                     <div className="bg-sage-50 rounded-2xl p-5 border-2 border-sage-100">
-                      <div className="flex items-center gap-2 mb-2"><Droplets className="w-4 h-4 text-sage-500" /><div className="text-sage-500 text-sm font-bold uppercase">BP</div></div>
+                      <div className="flex items-center gap-2 mb-2"><Droplets className="w-4 h-4 text-sage-500" /><div className="text-sage-500 text-sm font-bold">BP</div></div>
                       <div className="flex items-baseline gap-2"><span className="text-3xl font-bold text-sage-800">{mockVitals.blood_pressure_systolic}/{mockVitals.blood_pressure_diastolic}</span></div>
                       <div className="flex items-center gap-2 mt-2"><div className="w-2 h-2 bg-sage-500 rounded-full" /><span className="text-sage-600 font-medium">Normal</span></div>
                     </div>

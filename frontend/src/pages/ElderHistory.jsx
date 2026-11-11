@@ -48,7 +48,7 @@ export default function ElderHistory() {
                         <ArrowLeft className="w-5 h-5" />
                     </motion.button>
                     <div>
-                        <div className="text-sage-500 text-xs font-medium uppercase tracking-wide">Past</div>
+                        <div className="text-sage-500 text-xs font-medium">Past</div>
                         <h1 className="text-xl font-serif font-bold text-sage-900">Medication History</h1>
                     </div>
                 </div>
@@ -63,7 +63,7 @@ export default function ElderHistory() {
                         transition={{ delay: i * 0.1 }}
                     >
                         <div className="mb-3">
-                            <span className="text-xs font-bold text-sage-500 uppercase tracking-wide bg-cream-100 px-3 py-1.5 rounded-full border border-cream-200">
+                            <span className="text-xs font-bold text-sage-500 bg-cream-100 px-3 py-1.5 rounded-full border border-cream-200">
                                 {day.date}
                             </span>
                         </div>

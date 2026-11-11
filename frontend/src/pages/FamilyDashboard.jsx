@@ -395,7 +395,7 @@ export default function FamilyDashboard() {
                                     <Card>
                                         <div className="flex items-center gap-2 mb-4">
                                             <Calendar className="w-5 h-5 text-sage-500" />
-                                            <span className="text-sage-600 font-bold uppercase tracking-wider text-sm">Medication Adherence</span>
+                                            <span className="text-sage-600 font-bold text-sm">Medication Adherence</span>
                                         </div>
                                         <div className="flex items-center justify-between mb-4">
                                             <div>

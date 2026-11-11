@@ -15,65 +15,64 @@ export default {
         },
         extend: {
             fontFamily: {
-                serif: ['"DM Serif Display"', 'Butler', 'serif'],
-                sans: ['"DM Sans"', 'Poppins', 'sans-serif'],
+                serif: ['Butler', 'Georgia', 'serif'],
+                sans: ['"Atkinson Hyperlegible"', 'system-ui', 'sans-serif'],
                 romelio: ['Romelio', 'sans-serif'],
             },
             // Simplified color palette - only 2-3 colors optimized for elderly users
             colors: {
-                // Primary - Sage Green (simplified to 3 levels)
+                // One accent (blue), ink neutrals, warm paper. Status colours are for status only.
                 primary: {
-                    DEFAULT: '#5C7A6E',  // Main sage green
-                    light: '#9BB5A5',    // Light sage
-                    dark: '#3A4E46',     // Dark sage
-                    bg: '#E8F0EB',       // Very light background
+                    DEFAULT: '#2F5BEA',
+                    light: '#8FA8F5',
+                    dark: '#1E3FAE',
+                    bg: '#E9EEFD',
                 },
-                // Secondary - Warm Cream (simplified to 2 levels)
                 secondary: {
-                    DEFAULT: '#FAF8F5',  // Cream background
-                    dark: '#C9B9A4',     // Cream border
+                    DEFAULT: '#FBFBF8',
+                    dark: '#E9E8E1',
                 },
-                // Accent - Emergency Red (single color)
                 accent: {
-                    DEFAULT: '#EF4444',  // Emergency red
-                    light: '#FEE2E2',    // Light red bg
+                    DEFAULT: '#C2362B',
+                    light: '#FBE9E7',
                 },
-                // Legacy compatibility - map to simplified palette
+                // Legacy names kept so existing pages inherit the new palette.
+                // sage = ink neutrals (text, borders, dark buttons)
                 sage: {
-                    50: '#E8F0EB',
-                    100: '#E8F0EB',
-                    200: '#9BB5A5',
-                    300: '#9BB5A5',
-                    400: '#9BB5A5',
-                    500: '#5C7A6E',
-                    600: '#5C7A6E',
-                    700: '#3A4E46',
-                    800: '#3A4E46',
-                    900: '#3A4E46',
+                    50: '#F6F7F9',
+                    100: '#EEF0F4',
+                    200: '#E1E4EA',
+                    300: '#CDD1DA',
+                    400: '#757C8C',
+                    500: '#646B7B',
+                    600: '#4B5161',
+                    700: '#2E3340',
+                    800: '#1E222B',
+                    900: '#12141A',
                 },
+                // cream = warm paper surfaces
                 cream: {
-                    50: '#FAF8F5',
-                    100: '#FAF8F5',
-                    200: '#C9B9A4',
-                    300: '#C9B9A4',
-                    400: '#C9B9A4',
-                    500: '#C9B9A4',
-                    600: '#C9B9A4',
-                    700: '#C9B9A4',
-                    800: '#665D52',
-                    900: '#665D52',
+                    50: '#FBFBF8',
+                    100: '#F5F5F0',
+                    200: '#E9E8E1',
+                    300: '#DAD9D0',
+                    400: '#B9B7AB',
+                    500: '#8F8D80',
+                    600: '#6B695E',
+                    700: '#4F4E45',
+                    800: '#36352F',
+                    900: '#24231F',
                 },
-                // Status colors (clear communication)
                 status: {
-                    success: '#10B981',
-                    warning: '#F59E0B',
-                    danger: '#EF4444',
-                    info: '#3B82F6',
+                    success: '#1E7F5C',
+                    warning: '#B7791F',
+                    danger: '#C2362B',
+                    info: '#2F5BEA',
                 },
                 rose: {
-                    50: '#FEE2E2',
-                    500: '#EF4444',
-                    600: '#DC2626',
+                    50: '#FBE9E7',
+                    500: '#C2362B',
+                    600: '#A82D23',
                 }
             },
             // Increased font sizes for elderly users
@@ -90,16 +89,20 @@ export default {
                 '6xl': ['56px', { lineHeight: '1.1', letterSpacing: '-0.025em' }],
             },
             boxShadow: {
-                'soft': '0 4px 20px rgba(124, 154, 142, 0.08)',
-                'elevated': '0 8px 30px rgba(124, 154, 142, 0.12)',
-                'glow-sage': '0 0 30px rgba(124, 154, 142, 0.2)',
-                'glow-cream': '0 0 30px rgba(245, 237, 227, 0.5)',
-                'card': '0 2px 12px rgba(0, 0, 0, 0.04)',
-                'card-hover': '0 8px 24px rgba(124, 154, 142, 0.15)',
+                'soft': '0 1px 2px rgba(18, 20, 26, 0.05)',
+                'elevated': '0 8px 24px rgba(18, 20, 26, 0.08)',
+                'glow-sage': '0 0 0 4px rgba(47, 91, 234, 0.15)',
+                'glow-cream': '0 0 0 4px rgba(233, 232, 225, 0.6)',
+                'card': '0 1px 2px rgba(18, 20, 26, 0.05)',
+                'card-hover': '0 6px 20px rgba(18, 20, 26, 0.08)',
             },
             borderRadius: {
-                '4xl': '2rem',
-                '5xl': '2.5rem',
+                // Tighter than Tailwind defaults: cleaner, less bubbly
+                'xl': '0.75rem',
+                '2xl': '1rem',
+                '3xl': '1.25rem',
+                '4xl': '1.75rem',
+                '5xl': '2rem',
             },
             animation: {
                 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
@@ -142,9 +145,9 @@ export default {
                 },
             },
             backgroundImage: {
-                'gradient-sage': 'linear-gradient(135deg, #7C9A8E 0%, #5C7A6E 100%)',
-                'gradient-cream': 'linear-gradient(135deg, #FAF8F5 0%, #F5EDE3 100%)',
-                'gradient-soft': 'linear-gradient(135deg, #E8F0EB 0%, #F5EDE3 100%)',
+                'gradient-sage': 'linear-gradient(135deg, #2F5BEA 0%, #1E3FAE 100%)',
+                'gradient-cream': 'linear-gradient(135deg, #FBFBF8 0%, #F5F5F0 100%)',
+                'gradient-soft': 'linear-gradient(135deg, #E9EEFD 0%, #F5F5F0 100%)',
             },
             // Mobile-first spacing utilities
             spacing: {

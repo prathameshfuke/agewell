@@ -225,7 +225,7 @@ export default function DispenserSetup() {
                                             </div>
 
                                             <div className="flex-1">
-                                                <div className="text-sage-500 text-sm font-bold uppercase tracking-wider mb-1">
+                                                <div className="text-sage-500 text-sm font-bold mb-1">
                                                     Slot {slotNum}
                                                 </div>
 

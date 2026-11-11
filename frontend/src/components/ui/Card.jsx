@@ -68,7 +68,7 @@ export function CardHeader({ icon, label, action, className = '' }) {
           <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: 'currentColor' }} />
         )}
         {typeof icon === 'string' ? null : icon}
-        <span className="text-sage-600 font-bold uppercase tracking-wider text-xs sm:text-sm break-words">{label}</span>
+        <span className="text-sage-600 font-bold text-xs sm:text-sm break-words">{label}</span>
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}
     </div>

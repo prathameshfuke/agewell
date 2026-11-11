@@ -137,7 +137,7 @@ export default function CaregiverLink() {
             <ArrowLeft className="w-5 h-5" />
           </motion.button>
           <div>
-            <p className="text-xs uppercase tracking-widest text-sage-500 font-semibold">Dual-role Linking</p>
+            <p className="text-xs text-sage-500 font-semibold">Dual-role Linking</p>
             <h1 className="text-2xl font-serif font-bold text-sage-900">Caregiver Link</h1>
           </div>
         </div>
@@ -175,7 +175,7 @@ export default function CaregiverLink() {
                       {codeChars.map((char, index) => (
                         <div
                           key={`${char}-${index}`}
-                          className="w-11 h-12 rounded-xl border border-sage-300 bg-sage-50 flex items-center justify-center text-lg font-bold tracking-wide text-sage-900"
+                          className="w-11 h-12 rounded-xl border border-sage-300 bg-sage-50 flex items-center justify-center text-lg font-bold text-sage-900"
                         >
                           {char}
                         </div>

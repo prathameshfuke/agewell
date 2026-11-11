@@ -30,7 +30,7 @@ export default function DemoSmartHubCard({ lastTrigger = "System operating norma
                 </div>
 
                 <div className="bg-cream-50 rounded-xl p-3 border border-cream-100">
-                    <div className="text-xs font-bold text-cream-700 uppercase mb-1">Last Trigger Reason</div>
+                    <div className="text-xs font-bold text-cream-700 mb-1">Last Trigger Reason</div>
                     <div className="text-sm font-medium text-sage-800">
                         {lastTrigger}
                     </div>

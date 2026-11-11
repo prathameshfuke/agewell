@@ -272,7 +272,7 @@ export default function Settings() {
               <ArrowLeft className="w-5 h-5" />
             </motion.button>
             <div>
-              <p className="text-xs uppercase tracking-widest text-sage-500 font-semibold">AI Keys</p>
+              <p className="text-xs text-sage-500 font-semibold">AI Keys</p>
               <h1 className="text-2xl font-serif font-bold text-sage-900">Settings</h1>
             </div>
           </div>

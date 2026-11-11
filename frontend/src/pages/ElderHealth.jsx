@@ -145,7 +145,7 @@ export default function ElderHealth() {
                                 <span className="text-3xl font-bold text-sage-900">{healthData.heartRate.value}</span>
                                 <span className="text-sage-500 text-sm">{healthData.heartRate.unit}</span>
                             </div>
-                            <div className="text-sage-500 text-xs font-medium uppercase tracking-wide">Heart Rate</div>
+                            <div className="text-sage-500 text-xs font-medium">Heart Rate</div>
                             <div className={`text-sm font-medium capitalize ${getStatusColor(healthData.heartRate.status)}`}>
                                 ● {healthData.heartRate.status}
                             </div>
@@ -171,7 +171,7 @@ export default function ElderHealth() {
                                 <span className="text-3xl font-bold text-sage-900">{healthData.bloodOxygen.value}</span>
                                 <span className="text-sage-500 text-sm">{healthData.bloodOxygen.unit}</span>
                             </div>
-                            <div className="text-sage-500 text-xs font-medium uppercase tracking-wide">Blood Oxygen</div>
+                            <div className="text-sage-500 text-xs font-medium">Blood Oxygen</div>
                             <div className={`text-sm font-medium capitalize ${getStatusColor(healthData.bloodOxygen.status)}`}>
                                 ● {healthData.bloodOxygen.status}
                             </div>
@@ -194,7 +194,7 @@ export default function ElderHealth() {
                                 <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
                                     <Moon className="w-5 h-5 text-white" />
                                 </div>
-                                <span className="text-white/80 text-sm font-medium uppercase tracking-wide">Last Night's Sleep</span>
+                                <span className="text-white/80 text-sm font-medium">Last Night's Sleep</span>
                             </div>
                             <div className="flex items-baseline gap-2 mb-2">
                                 <span className="text-4xl font-bold">{healthData.sleep.hours}h {healthData.sleep.minutes}m</span>
@@ -235,7 +235,7 @@ export default function ElderHealth() {
                             <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
                                 <Footprints className="w-5 h-5 text-amber-600" />
                             </div>
-                            <span className="text-sage-500 text-sm font-medium uppercase tracking-wide">Today's Steps</span>
+                            <span className="text-sage-500 text-sm font-medium">Today's Steps</span>
                         </div>
                         <motion.span
                             initial={{ scale: 0 }}
@@ -292,7 +292,7 @@ export default function ElderHealth() {
                             <Thermometer className="w-6 h-6 text-orange-500" />
                         </div>
                         <div className="flex-1">
-                            <div className="text-sage-500 text-xs font-medium uppercase tracking-wide mb-1">Body Temperature</div>
+                            <div className="text-sage-500 text-xs font-medium mb-1">Body Temperature</div>
                             <div className="flex items-baseline gap-1">
                                 <span className="text-2xl font-bold text-sage-900">{healthData.temperature.value}</span>
                                 <span className="text-sage-500">{healthData.temperature.unit}</span>

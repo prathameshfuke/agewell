@@ -241,7 +241,7 @@ export default function QAFlow() {
                             <ArrowLeft className="w-6 h-6" />
                         </motion.button>
                         <div>
-                            <div className="text-sage-500 text-sm font-bold uppercase tracking-wider">Assistive Diagnosis</div>
+                            <div className="text-sage-500 text-sm font-bold">Assistive Diagnosis</div>
                             <h1 className="text-2xl font-serif font-bold text-sage-900">Simple Yes/No Questions</h1>
                         </div>
                     </div>

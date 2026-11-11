@@ -72,7 +72,7 @@ export default function ElderMeds() {
                             <ArrowLeft className="w-6 h-6" />
                         </motion.button>
                         <div>
-                            <div className="text-sage-500 text-sm font-bold uppercase tracking-wider mb-1">AgeWell+</div>
+                            <div className="text-sage-500 text-sm font-bold mb-1">AgeWell+</div>
                             <h1 className="text-3xl font-serif font-bold text-sage-900">Today's Medicines</h1>
                             <p className="text-sage-500 text-lg mt-1">
                                 {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}

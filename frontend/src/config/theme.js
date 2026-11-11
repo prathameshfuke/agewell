@@ -14,7 +14,7 @@ export const theme = {
   colors: {
     // Primary - Sage Green (calming, trustworthy)
     primary: {
-      main: '#5C7A6E',      // Main sage green - high contrast
+      main: '#2F5BEA',      // Main sage green - high contrast
       light: '#9BB5A5',     // Light sage - backgrounds
       dark: '#3A4E46',      // Dark sage - text
       bg: '#E8F0EB',        // Very light sage for subtle backgrounds
@@ -144,7 +144,7 @@ export const theme = {
     
     // Focus visible styles
     focus: {
-      outline: '3px solid #5C7A6E',
+      outline: '3px solid #2F5BEA',
       offset: '2px',
     },
   },

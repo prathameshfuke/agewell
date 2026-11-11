@@ -104,7 +104,7 @@ export default function ElderEmergency() {
                         className="w-48 h-48 bg-gradient-to-br from-rose-400 to-rose-500 rounded-full flex flex-col items-center justify-center text-white shadow-xl relative z-10"
                     >
                         <span className="text-4xl font-bold">SOS</span>
-                        <span className="text-sm font-medium mt-1 uppercase tracking-wider">
+                        <span className="text-sm font-medium mt-1">
                             {holding ? 'Keep Holding...' : 'Hold to Call'}
                         </span>
                     </motion.button>
@@ -115,7 +115,7 @@ export default function ElderEmergency() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 }}
-                    className="text-rose-400 font-bold uppercase tracking-wider text-sm mb-10"
+                    className="text-rose-400 font-bold text-sm mb-10"
                 >
                     Release to Cancel
                 </motion.p>
@@ -131,7 +131,7 @@ export default function ElderEmergency() {
                         <span className="text-2xl">👩</span>
                     </div>
                     <div className="flex-1">
-                        <div className="text-sage-400 text-xs uppercase tracking-wide">Emergency Contact</div>
+                        <div className="text-sage-400 text-xs">Emergency Contact</div>
                         <div className="font-bold text-sage-800">Sarah</div>
                         <div className="text-sage-500 text-sm">(Daughter)</div>
                     </div>

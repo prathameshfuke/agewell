@@ -15,21 +15,21 @@ export default function DemoMedicineHub({ status = 'Active', lastInteraction = '
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                         </span>
-                        <span className="text-xs font-bold text-sage-600 uppercase tracking-wider">{status} (DEMO)</span>
+                        <span className="text-xs font-bold text-sage-600">{status} (DEMO)</span>
                     </div>
                 }
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="bg-white p-3 rounded-xl border border-sage-100 shadow-sm">
-                    <div className="text-xs text-sage-500 font-bold uppercase mb-1">Last Interaction</div>
+                    <div className="text-xs text-sage-500 font-bold mb-1">Last Interaction</div>
                     <div className="text-lg font-bold text-sage-900 flex items-center gap-2">
                         <Activity className="w-4 h-4 text-sage-400" />
                         {lastInteraction}
                     </div>
                 </div>
                 <div className="bg-white p-3 rounded-xl border border-sage-100 shadow-sm">
-                    <div className="text-xs text-sage-500 font-bold uppercase mb-1">Next Dose</div>
+                    <div className="text-xs text-sage-500 font-bold mb-1">Next Dose</div>
                     <div className="text-lg font-bold text-sage-900 flex items-center gap-2">
                         <ClockIcon className="w-4 h-4 text-sage-400" />
                         {nextDose}
@@ -38,7 +38,7 @@ export default function DemoMedicineHub({ status = 'Active', lastInteraction = '
             </div>
 
             <div className="border-t border-sage-100 pt-4">
-                <div className="text-xs font-bold text-sage-400 uppercase mb-3 text-center">Linked Home Status</div>
+                <div className="text-xs font-bold text-sage-400 mb-3 text-center">Linked Home Status</div>
                 <div className="grid grid-cols-3 gap-2">
                     <StatusItem icon={Thermometer} label="Comfort" value="Optimal" color="text-amber-500" bg="bg-amber-50" />
                     <StatusItem icon={Wind} label="Air Quality" value="Good" color="text-blue-500" bg="bg-blue-50" />

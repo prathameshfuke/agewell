@@ -18,7 +18,7 @@ export default function DemoFamilyTimeline({ onNavigate, activities = [] }) {
                         <ArrowLeft className="w-5 h-5" />
                     </motion.button>
                     <div>
-                        <div className="text-sage-500 text-xs font-medium uppercase tracking-wide">Activity</div>
+                        <div className="text-sage-500 text-xs font-medium">Activity</div>
                         <h1 className="text-xl font-serif font-bold text-sage-900">Timeline</h1>
                     </div>
                 </div>

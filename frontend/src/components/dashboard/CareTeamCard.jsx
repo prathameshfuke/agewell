@@ -18,7 +18,7 @@ export default function CareTeamCard({ className = '' }) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Users className="w-5 h-5 text-sage-600" />
-          <span className="text-sage-600 font-bold uppercase tracking-wider text-xs sm:text-sm">
+          <span className="text-sage-600 font-bold text-xs sm:text-sm">
             Care Team
           </span>
         </div>
