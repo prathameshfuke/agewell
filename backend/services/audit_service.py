@@ -49,7 +49,7 @@ def log_event(patient_id: str, session_id: str, event_type: str, event_data: Dic
     try:
         _get_client().table(TABLE).insert(payload).execute()
     except Exception as exc:
-        print(f"Audit log failed (non-blocking): {exc}")
+        print(f"Audit log failed (non-blocking): {type(exc).__name__}")
 
 
 def get_session_audit_log(session_id: str) -> List[Dict[str, Any]]:

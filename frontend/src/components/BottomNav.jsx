@@ -75,7 +75,7 @@ export default function BottomNav() {
                 />
               )}
               <Icon aria-hidden="true" strokeWidth={1.75} className={`relative h-6 w-6 ${active ? 'text-primary' : tab.danger ? 'text-rose-600' : 'text-sage-600'}`} />
-              <span className={`relative max-w-full truncate px-1 text-[13px] leading-none ${active ? 'text-primary' : 'text-sage-600'}`}>{tab.label}</span>
+              <span className={`relative whitespace-nowrap text-[12px] leading-none tracking-tight ${active ? 'text-primary' : 'text-sage-600'}`}>{tab.label}</span>
             </button>
           )
         })}

@@ -7,5 +7,14 @@ import voice from './voice.svg'
 import morning from './morning.svg'
 import done from './done.svg'
 import family from './family.svg'
+import hero from './hero.svg'
+import couple from './couple.svg'
+import hands from './hands.svg'
+import walk from './walk.svg'
+import pet from './pet.svg'
+import moodGood from './moodGood.svg'
+import moodFine from './moodFine.svg'
+import moodUnwell from './moodUnwell.svg'
+import moodSleep from './moodSleep.svg'
 
-export { pills, heart, call, shield, together, voice, morning, done, family }
+export { pills, heart, call, shield, together, voice, morning, done, family, hero, couple, hands, walk, pet, moodGood, moodFine, moodUnwell, moodSleep }

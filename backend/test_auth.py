@@ -46,6 +46,53 @@ for _ in range(lr.JOIN_MAX_FAILURES):
 assert lr.join_blocked(ME) and not lr.join_blocked(STRANGER)
 assert call('/api/link/join', 'good', 'post', json={'caregiver_id': ME, 'link_code': 'ABCDEF'}) == 429
 
+# Ids must be plain UUID strings: routes strip() them, so padding or a non-string must not skip the check
+assert call('/api/link/generate-code', 'good', 'post', json={'elder_id': ' ' + STRANGER}) == 400
+assert call('/api/link/generate-code', 'good', 'post', json={'elder_id': [STRANGER]}) == 400
+assert call('/api/diagnosis/history/' + STRANGER + '%0A', 'good') == 400   # trailing newline
+assert call('/api/link/generate-code', 'good', 'post', json={'elder_id': ELDER}) == 403  # caregiver cannot mint a code for the elder
+assert call('/api/link/generate-code', 'good', 'post', json={'elder_id': STRANGER}) == 403
+# session_id sent as a multipart form field is checked too (upload-image)
+assert call('/api/diagnosis/upload-image', 'good', 'post', data={'session_id': '22222222-2222-2222-2222-222222222222'}) == 403
+assert call('/api/prescriptions/upload', 'good', 'post', data={'user_id': STRANGER}) == 403
+assert call('/api/settings/keys', 'good', 'post', json={'user_id': ELDER, 'setting_key': 'GROQ_API_KEY', 'setting_value': 'x'}) == 403  # not own
+
+# Oversized JSON is refused before parsing
+big = {'Authorization': 'Bearer good', 'Content-Type': 'application/json'}
+assert app.test_client().post('/api/diagnosis/start', data='{"a":"' + 'x' * 70000 + '"}', headers=big).status_code == 413
+
+# Rate limit: the 6th share in the window is a 429 with a message and Retry-After
+auth._calls.clear()
+share = {'session_id': '11111111-1111-1111-1111-111111111111'}
+assert all(call('/api/diagnosis/share', 'good', 'post', json=share) != 429 for _ in range(5))
+r = app.test_client().post('/api/diagnosis/share', json=share, headers={'Authorization': 'Bearer good'})
+assert r.status_code == 429 and 'Retry-After' in r.headers and 'too often' in r.json['error']
+
+# Security headers; API responses are never cached
+r = app.test_client().get('/api/diagnosis/history/' + ME, headers={'Authorization': 'Bearer good'})
+assert r.headers['Cache-Control'] == 'no-store' and r.headers['X-Content-Type-Options'] == 'nosniff' and r.headers['X-Frame-Options'] == 'DENY'
+
+# Uploads are judged by content, not name
+import io
+from PIL import Image
+from werkzeug.datastructures import FileStorage
+from services.uploads import read_image
+def upload(data, fmt=None):
+    return FileStorage(io.BytesIO(data), filename='x.png')
+def img(fmt):
+    b = io.BytesIO(); Image.new('RGB', (8, 8)).save(b, fmt); return b.getvalue()
+assert read_image(upload(img('PNG')))[0].size == (8, 8)
+assert read_image(upload(img('JPEG')))[0].size == (8, 8)
+for bad in (img('GIF'), b'<script>alert(1)</script>', b'', b'%PDF-1.4 ' + b'0' * 100, img('PNG')[:40]):
+    try:
+        read_image(upload(bad)); raise SystemExit('accepted a bad upload')
+    except ValueError:
+        pass
+try:
+    read_image(upload(b'\x89PNG' + b'0' * (9 * 1024 * 1024))); raise SystemExit('accepted an oversized upload')
+except ValueError as exc:
+    assert 'too large' in str(exc)
+
 # Legacy SQLite routes are gone
 assert call('/api/users/1', 'good') == 404
 

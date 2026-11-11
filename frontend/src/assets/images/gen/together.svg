@@ -1,69 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 400">
-<defs>
-<linearGradient id="k1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2E7D5B"/><stop offset="1" stop-color="#1F5F4A"/></linearGradient>
-<linearGradient id="s1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#F3C77A"/><stop offset="1" stop-color="#E8A33D"/></linearGradient>
-</defs>
-<g transform="translate(-14 0)">
-<ellipse cx="260" cy="368" rx="200" ry="11" fill="#1B2A24" opacity=".08"/>
-<!-- caregiver -->
-<g>
-<!-- back leg -->
-<path d="M156 250H178L176 346H152Z" fill="#8FB29C"/>
-<path d="M146 346H178Q180 360 164 362H146Q142 354 146 346Z" fill="#1B2A24"/>
-<!-- front leg stepping -->
-<path d="M184 250H208L222 344L198 348Z" fill="#A9C8B4"/>
-<path d="M196 345L224 341Q232 352 220 360L196 362Q190 354 196 345Z" fill="#1B2A24"/>
-<!-- left arm hanging -->
-<path d="M140 138Q128 142 130 164L134 214" fill="none" stroke="#2E7D5B" stroke-width="16" stroke-linecap="round"/>
-<circle cx="135" cy="224" r="9" fill="#D9A07A"/>
-<!-- kurta -->
-<path d="M142 138Q142 126 156 122H192Q206 126 206 138L214 268Q172 280 130 268Z" fill="url(#k1)"/>
-<path d="M174 124V262" stroke="#174A3A" stroke-width="3" opacity=".6"/>
-<circle cx="174" cy="160" r="2.6" fill="#F3C77A"/><circle cx="174" cy="184" r="2.6" fill="#F3C77A"/>
-<path d="M130 268Q172 280 214 268" stroke="#F3C77A" stroke-width="4" fill="none"/>
-<!-- right arm reaching to elder -->
-<path d="M202 140Q228 152 246 182" fill="none" stroke="#2E7D5B" stroke-width="17" stroke-linecap="round"/>
-<path d="M244 178L266 208" stroke="#D9A07A" stroke-width="13" stroke-linecap="round"/>
-<!-- head -->
-<rect x="164" y="104" width="20" height="22" rx="8" fill="#B97A56"/>
-<circle cx="174" cy="90" r="25" fill="#D9A07A"/>
-<path d="M148 90Q146 60 174 62Q204 60 200 90Q196 76 184 74Q166 78 152 80Z" fill="#1B2A24"/>
-<circle cx="164" cy="94" r="2.6" fill="#1B2A24"/><circle cx="185" cy="94" r="2.6" fill="#1B2A24"/>
-<path d="M165 103Q175 111 185 103" fill="none" stroke="#1B2A24" stroke-width="2.6" stroke-linecap="round"/>
-<circle cx="157" cy="102" r="4" fill="#E59A74" opacity=".6"/><circle cx="192" cy="102" r="4" fill="#E59A74" opacity=".6"/>
-</g>
-<!-- elder -->
-<g>
-<!-- feet -->
-<path d="M296 342H322V358Q300 362 292 356Z" fill="#1B2A24"/>
-<path d="M334 342H358Q364 358 346 360Q334 358 334 342Z" fill="#1B2A24"/>
-<!-- stick -->
-<path d="M388 360V246" stroke="#8D5A3B" stroke-width="6" stroke-linecap="round"/>
-<path d="M388 246Q388 228 402 228Q412 228 412 238" fill="none" stroke="#8D5A3B" stroke-width="6" stroke-linecap="round"/>
-<!-- far arm toward caregiver -->
-<path d="M304 196Q290 204 280 214" fill="none" stroke="#C8643C" stroke-width="13" stroke-linecap="round"/><circle cx="276" cy="216" r="7" fill="#B97A56"/>
-<!-- saree body -->
-<path d="M298 196Q298 176 318 172H338Q358 176 358 196L368 346Q328 358 288 346Z" fill="url(#s1)"/>
-<path d="M298 196Q298 176 318 172H338Q358 176 358 196L362 262Q330 276 296 262Z" fill="#C8643C"/>
-<path d="M296 262Q330 276 362 262" fill="none" stroke="#E59A74" stroke-width="4"/>
-<path d="M304 180Q330 222 352 330" fill="none" stroke="#C8643C" stroke-width="22" stroke-linecap="round" opacity=".9"/>
-<path d="M310 184Q332 226 352 324" fill="none" stroke="#E59A74" stroke-width="3" stroke-linecap="round" opacity=".6"/>
-<path d="M290 345Q328 357 368 345" stroke="#C8643C" stroke-width="5" fill="none"/>
-<!-- near arm on stick -->
-<path d="M352 186Q370 206 376 236" fill="none" stroke="#C8643C" stroke-width="14" stroke-linecap="round"/>
-<circle cx="378" cy="244" r="8" fill="#B97A56"/>
-<!-- head -->
-<rect x="318" y="150" width="18" height="22" rx="8" fill="#B97A56"/>
-<circle cx="327" cy="140" r="23" fill="#B97A56"/>
-<circle cx="305" cy="124" r="11" fill="#E9E4DA"/>
-<path d="M304 140Q300 114 327 114Q354 114 350 140Q346 126 336 123Q316 126 308 132Z" fill="#E9E4DA"/>
-<circle cx="318" cy="143" r="2.4" fill="#1B2A24"/><circle cx="337" cy="143" r="2.4" fill="#1B2A24"/>
-<path d="M319 152Q328 159 337 152" fill="none" stroke="#1B2A24" stroke-width="2.4" stroke-linecap="round"/>
-<circle cx="311" cy="151" r="3.6" fill="#E59A74" opacity=".6"/><circle cx="344" cy="151" r="3.6" fill="#E59A74" opacity=".6"/>
-<circle cx="327" cy="123" r="2.2" fill="#C8643C"/>
-</g>
-<!-- ground leaves -->
-<path d="M70 360Q60 340 76 326Q88 342 70 360Z" fill="#A9C8B4"/><path d="M84 362Q86 344 104 340Q102 356 84 362Z" fill="#2E7D5B" opacity=".8"/>
-<path d="M452 360Q444 342 458 330Q470 346 452 360Z" fill="#A9C8B4"/>
-</g>
+<defs><clipPath id="b"><path d="M0 0H480V330Q480 376 434 376H46Q0 376 0 330Z"/></clipPath></defs>
+<ellipse cx="240" cy="384" rx="214" ry="10" fill="#1B2A24" opacity=".08"/>
+<g clip-path="url(#b)">
+<g transform="translate(0 -26)">
+<path d="M213 410V242.6Q213 228 233.2 228H402.8Q423 228 423 242.6V410Z" fill="#1F5F4A"/><path d="M333.8 228H402.8Q423 228 423 242.6V410H333.8Z" fill="#1B2A24" opacity=".08"/><rect x="300" y="201" width="36" height="36" rx="15" fill="#D9A07A"/><path d="M296.4 227Q318 253.2 339.6 227Z" fill="#D9A07A"/><path d="M288 222Q265.5 258 273.9 410M348 222Q347.4 252 370.5 410" fill="none" stroke="#E8A33D" stroke-width="27.6" stroke-linecap="round"/><g transform="rotate(-3 318 150)"><path d="M253.2 150Q243 252 270 282L366 282Q393 252 382.8 150Z" fill="#1B2A24"/><circle cx="259.2" cy="158.4" r="10.2" fill="#C48C66"/><circle cx="376.8" cy="158.4" r="10.2" fill="#C48C66"/><circle cx="318" cy="150" r="60" fill="#D9A07A"/><circle cx="258.6" cy="175.2" r="5.1" fill="#E8A33D"/><circle cx="377.4" cy="175.2" r="5.1" fill="#E8A33D"/><path d="M258 153.6Q253.2 79.2 318 82.8Q382.8 79.2 378 153.6Q364.8 120 330 117Q288 126 258 153.6Z" fill="#1B2A24"/><circle cx="295.8" cy="154.8" r="5.1" fill="#1B2A24"/><circle cx="340.2" cy="154.8" r="5.1" fill="#1B2A24"/><path d="M284.4 141.6Q295.2 132 306 140.4M351.6 141.6Q340.8 132 330 140.4" stroke="#1B2A24" stroke-width="4.1" stroke-linecap="round" fill="none"/><path d="M298.8 177.6Q318 205.4 337.2 177.6" fill="none" stroke="#1B2A24" stroke-width="6.1" stroke-linecap="round"/><circle cx="278.4" cy="174" r="8.4" fill="#E59A74" opacity=".55"/><circle cx="357.6" cy="174" r="8.4" fill="#E59A74" opacity=".55"/><circle cx="318" cy="132" r="3.9" fill="#C8643C"/></g>
+<path d="M55 410V262.6Q55 248 75.2 248H244.8Q265 248 265 262.6V410Z" fill="#C8643C"/><path d="M175.8 248H244.8Q265 248 265 262.6V410H175.8Z" fill="#1B2A24" opacity=".08"/><rect x="142" y="221" width="36" height="36" rx="15" fill="#B97A56"/><path d="M138.4 247Q160 272 181.6 247Z" fill="#B97A56"/><path d="M78.1 254Q170.5 257 233.5 410" fill="none" stroke="#F3C77A" stroke-width="43.2" stroke-linecap="round"/><path d="M78.1 273.2Q170.5 278 233.5 410" fill="none" stroke="#FAF6EE" stroke-width="4.2" stroke-linecap="round" opacity=".6" stroke-dasharray="8.4 8.4"/><g transform="rotate(3 160 170)"><circle cx="160" cy="102.8" r="24" fill="#DCD7CC"/><circle cx="101.2" cy="178.4" r="10.2" fill="#A06844"/><circle cx="218.8" cy="178.4" r="10.2" fill="#A06844"/><circle cx="160" cy="170" r="60" fill="#B97A56"/><circle cx="100.6" cy="195.2" r="5.1" fill="#E8A33D"/><circle cx="219.4" cy="195.2" r="5.1" fill="#E8A33D"/><path d="M100 173.6Q95.2 99.2 160 102.8Q224.8 99.2 220 173.6Q206.8 140 172 137Q130 146 100 173.6Z" fill="#DCD7CC"/><circle cx="137.8" cy="174.8" r="5.1" fill="#1B2A24"/><circle cx="182.2" cy="174.8" r="5.1" fill="#1B2A24"/><path d="M126.4 161.6Q137.2 152 148 160.4M193.6 161.6Q182.8 152 172 160.4" stroke="#C2BCAF" stroke-width="4.1" stroke-linecap="round" fill="none"/><path d="M140.8 197.6Q160 225.4 179.2 197.6" fill="none" stroke="#1B2A24" stroke-width="6.1" stroke-linecap="round"/><circle cx="120.4" cy="194" r="8.4" fill="#E59A74" opacity=".55"/><circle cx="199.6" cy="194" r="8.4" fill="#E59A74" opacity=".55"/><circle cx="160" cy="152" r="3.9" fill="#C8643C"/></g>
+<path d="M292 352L240 266" stroke="#2E7D5B" stroke-width="34" stroke-linecap="round" fill="none"/><circle cx="240" cy="266" r="16" fill="#D9A07A"/>
+</g></g>
 </svg>

@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Menu, X, Plus } from 'lucide-react'
-import { logo, familyPhoto, couplePhoto, handsPhoto } from '../assets/images'
-import { pills, voice, shield } from '../assets/images/gen'
+import { logo } from '../assets/images'
+import { pills, voice, shield, hero, couple, hands } from '../assets/images/gen'
 
 const NAV = [['How it works', '#how'], ['Two views', '#views'], ['Hindi and English', '#voice'], ['Privacy', '#privacy'], ['Questions', '#faq']]
 
@@ -11,10 +11,8 @@ const VIEWS = [
   {
     label: 'For elders',
     title: 'Big, simple screens made for daily use',
-    photo: couplePhoto,
-    size: [1024, 1210],
-    pos: 'object-[50%_12%]',
-    alt: 'An older couple taking their medicines with a glass of water',
+    art: couple,
+    alt: 'An older couple sitting together on a sofa',
     points: [
       "Today's medicines in one list, with a single large button to mark each one taken.",
       'Symptom check by voice. Speak, and AgeWell asks follow-up questions and reads the answer back.',
@@ -25,10 +23,8 @@ const VIEWS = [
   {
     label: 'For caregivers',
     title: 'Know when something needs attention',
-    photo: handsPhoto,
-    size: [736, 1104],
-    pos: 'object-[50%_35%]',
-    alt: 'A younger hand resting on an older hand that holds a walking stick',
+    art: hands,
+    alt: 'A younger hand resting on an older hand',
     points: [
       'Alerts when a dose is missed or a reading looks unusual.',
       'Medication adherence and health trends over the past week.',
@@ -157,10 +153,10 @@ export default function Home() {
           </div>
           <div className="lg:col-span-6">
             <img
-              src={familyPhoto}
-              alt="A smiling family of four at home: two grandparents with their grown son and daughter"
-              width="1536" height="1024" fetchpriority="high"
-              className="aspect-[4/3] w-full rounded-[20px] object-cover"
+              src={hero}
+              alt="A smiling family of three generations at home: grandparents, parents and a child"
+              width="640" height="480" fetchpriority="high"
+              className="h-auto w-full"
             />
           </div>
         </motion.section>
@@ -195,8 +191,8 @@ export default function Home() {
               {VIEWS.map((v) => (
                 <article key={v.label}>
                   <img
-                    src={v.photo} alt={v.alt} width={v.size[0]} height={v.size[1]} loading="lazy"
-                    className={`aspect-[16/9] w-full rounded-[20px] object-cover ${v.pos}`}
+                    src={v.art} alt={v.alt} width="400" height="500" loading="lazy"
+                    className="mx-auto h-72 w-auto sm:h-80"
                   />
                   <p className="mt-6 font-bold text-primary">{v.label}</p>
                   <h3 className="mt-1 font-serif text-3xl">{v.title}</h3>

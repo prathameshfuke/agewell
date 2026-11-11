@@ -10,12 +10,12 @@ import { useVitals } from '../hooks/useVitals'
 import { Loading, ErrorNote } from '../components/ElderNav'
 import Art from '../components/shared/Art'
 
-import { danceSticker as goodmoodSticker, fineSticker, notwellSticker } from '../assets/images'
+import { moodGood, moodFine, moodUnwell } from '../assets/images/gen'
 
 const MOODS = [
-  { key: 'good', label: 'Good', sticker: goodmoodSticker },
-  { key: 'fine', label: 'Okay', sticker: fineSticker },
-  { key: 'unwell', label: 'Not well', sticker: notwellSticker },
+  { key: 'good', label: 'Good', art: moodGood },
+  { key: 'fine', label: 'Okay', art: moodFine },
+  { key: 'unwell', label: 'Not well', art: moodUnwell },
 ]
 
 const timeOf = (iso) =>
@@ -272,8 +272,8 @@ export default function ElderDashboard() {
             </div>
             <div className="mt-5 grid grid-cols-3 gap-3">
               {MOODS.map((m) => (
-                <button key={m.key} type="button" onClick={() => sendMood(m.key)} className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-2xl border border-line p-3 hover:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
-                  <img src={m.sticker} alt="" className="sticker h-14 w-auto object-contain" />
+                <button key={m.key} type="button" onClick={() => sendMood(m.key)} className="flex min-h-[132px] flex-col items-center justify-center gap-2 rounded-2xl border border-line p-3 hover:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+                  <img src={m.art} alt="" width="400" height="400" loading="lazy" className="h-[72px] w-[72px] object-contain" />
                   <span className="text-lg font-bold">{m.label}</span>
                 </button>
               ))}

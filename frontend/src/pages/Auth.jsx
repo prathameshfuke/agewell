@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { logo, walkIllustration } from '../assets/images'
-import { together } from '../assets/images/gen'
+import { logo } from '../assets/images'
+import { together, walk } from '../assets/images/gen'
 import { Art, Notice } from '../components/family/FamilyPage'
 
 export default function Auth() {
@@ -51,7 +51,7 @@ export default function Auth() {
   return (
     <div className="min-h-screen bg-paper font-sans text-ink lg:grid lg:grid-cols-2">
       <aside className="relative hidden lg:block">
-        <img src={walkIllustration} alt="An adult walking beside an elderly woman along a path toward the sunrise" width="640" height="959" className="absolute inset-0 h-full w-full object-cover object-[50%_75%]" />
+        <img src={walk} alt="An adult walking beside an elderly woman along a path toward the sunrise" width="400" height="600" className="absolute inset-0 h-full w-full object-cover object-bottom" />
       </aside>
 
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-4 sm:px-0 lg:max-w-lg lg:px-16">

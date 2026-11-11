@@ -223,7 +223,7 @@ Return ONLY valid JSON, no explanation, no markdown:
             "audio_format": question_with_audio.get('audio_format', 'wav')
         }
     except Exception as e:
-        logger.error("Groq call failed in extract_symptoms_and_first_question: %s", e)
+        logger.error("Groq call failed in extract_symptoms_and_first_question: %s", type(e).__name__)
         return fallback
 
 
@@ -296,7 +296,7 @@ OR if enough info:
             "done": False
         }
     except Exception as e:
-        logger.error("Groq call failed in get_next_question: %s", e)
+        logger.error("Groq call failed in get_next_question: %s", type(e).__name__)
         return fallback
 
 
@@ -432,5 +432,5 @@ Return ONLY valid JSON matching exactly this schema. No markdown, no explanation
 
         return parsed
     except Exception as e:
-        logger.error("Groq call failed in generate_diagnosis_report: %s", e)
+        logger.error("Groq call failed in generate_diagnosis_report: %s", type(e).__name__)
         return fallback

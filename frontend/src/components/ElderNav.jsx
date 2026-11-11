@@ -26,7 +26,7 @@ export function ElderPage({ title, subtitle, back = true, backTo, art, children 
             <ArrowLeft className="h-6 w-6 shrink-0" strokeWidth={1.75} aria-hidden="true" /> Back
           </button>
         )}
-        <header className="flex items-end justify-between gap-4">
+        <header className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <h1>{title}</h1>
             {subtitle && <p className="measure mt-2 text-lg text-sage-600">{subtitle}</p>}
@@ -72,15 +72,11 @@ export function ErrorNote({ children, onRetry }) {
   )
 }
 
-/** Unboxed empty state: art, a short title, one line of help, optional single action. `sticker` is a legacy image override. */
-export function EmptyNote({ title, children, action, art = 'rest', sticker }) {
+/** Unboxed empty state: art, a short title, one line of help, optional single action. */
+export function EmptyNote({ title, children, action, art = 'rest' }) {
   return (
     <div className="flex flex-col items-center py-8 text-center sm:py-12">
-      {sticker ? (
-        <img src={sticker} alt="" width="337" height="340" className="sticker mb-4 h-28 w-auto" />
-      ) : (
-        <Art name={art} className="mb-4 h-28 sm:h-36" />
-      )}
+      <Art name={art} className="mb-4 h-28 sm:h-36" />
       <h2>{title}</h2>
       {children && <p className="measure mt-2 text-lg text-sage-600">{children}</p>}
       {action && <div className="mt-6 flex w-full justify-center sm:w-auto [&>*]:w-full sm:[&>*]:w-auto">{action}</div>}

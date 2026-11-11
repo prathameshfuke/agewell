@@ -5,8 +5,7 @@ import { ArrowLeft, Wifi, WifiOff, Plus, Pill, Check, AlertCircle, Settings, Ref
 import { api } from '../api/client'
 import { useAuth } from '../contexts/AuthContext'
 
-// Import stickers
-import oneSticker from '../assets/images/stickers/one.jpeg'
+import { pet } from '../assets/images/gen'
 
 export default function DispenserSetup() {
     const navigate = useNavigate()
@@ -137,7 +136,7 @@ export default function DispenserSetup() {
                             animate={{ opacity: 1, y: 0 }}
                             className="bg-white rounded-[20px] p-8 border border-line text-center"
                         >
-                            <img src={oneSticker} alt="" className="sticker w-24 h-24 mx-auto mb-4 object-contain" />
+                            <img src={pet} alt="" width="400" height="400" loading="lazy" className="w-24 h-24 mx-auto mb-4 object-contain" />
                             <h3 className="text-xl font-bold text-sage-800 mb-2">No dispenser connected</h3>
                             <p className="text-sage-500 mb-4">Add your ESP32 dispenser to get started</p>
                             <motion.button

@@ -1,34 +1,23 @@
-import * as legacy from '../../assets/images'
+import * as gen from '../../assets/images/gen'
 
-// Generated transparent illustrations live in assets/images/gen (optional; absent until generated).
-// Missing names fall back to the older JPEG stickers, which need the multiply blend on paper.
-const gen = Object.values(import.meta.glob('../../assets/images/gen/index.js', { eager: true }))[0] || {}
-
-const FALLBACK = {
-  morning: [legacy.danceSticker, 287, 340],
-  pills: [legacy.cheerSticker, 309, 340],
-  heart: [legacy.fineSticker, 340, 340],
-  call: [legacy.chatSticker, 472, 340],
-  shield: [legacy.dogSticker, 736, 601],
-  voice: [legacy.chatSticker, 472, 340],
-  together: [legacy.couplePhoto, 1024, 1210],
-  done: [legacy.bowSticker, 459, 340],
-  family: [legacy.familyPhoto, 1536, 1024],
-  rest: [legacy.sleepSticker, 337, 340],
+// name -> [svg, viewBox width, height]. `rest` is the sleeping grandparent.
+const ART = {
+  morning: [gen.morning, 400, 400],
+  pills: [gen.pills, 400, 400],
+  heart: [gen.heart, 400, 400],
+  call: [gen.call, 400, 400],
+  shield: [gen.shield, 400, 400],
+  voice: [gen.voice, 400, 400],
+  together: [gen.together, 480, 400],
+  done: [gen.done, 400, 400],
+  family: [gen.family, 480, 400],
+  rest: [gen.moodSleep, 400, 400],
 }
 
 /** Illustration by name. Size it with height utilities; it keeps its natural proportions. */
 export default function Art({ name, className = 'h-28', eager = false }) {
-  const [fallback, w, h] = FALLBACK[name] || FALLBACK.rest
-  const src = gen[name]
+  const [src, w, h] = ART[name] || ART.rest
   return (
-    <img
-      src={src || fallback}
-      alt=""
-      width={src ? (name === 'together' || name === 'family' ? 480 : 400) : w}
-      height={src ? 400 : h}
-      loading={eager ? 'eager' : 'lazy'}
-      className={`${src ? '' : 'sticker'} w-auto max-w-full object-contain ${className}`}
-    />
+    <img src={src} alt="" width={w} height={h} loading={eager ? 'eager' : 'lazy'} className={`w-auto max-w-full object-contain ${className}`} />
   )
 }

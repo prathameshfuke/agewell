@@ -97,18 +97,15 @@ export default function VoiceMemos() {
             let uploadedUrl = audioUrl
 
             if (supabase) {
-                const filename = `voice-memo-${Date.now()}.webm`
-                const { data, error } = await supabase.storage
+                // Private bucket: store the unguessable object name; readers get a short-lived signed URL.
+                const filename = `${userId}/${crypto.randomUUID()}.webm`
+                const { error } = await supabase.storage
                     .from('voice-memos')
-                    .upload(filename, audioBlob)
+                    .upload(filename, audioBlob, { contentType: 'audio/webm' })
 
                 if (error) throw error
 
-                const { data: { publicUrl } } = supabase.storage
-                    .from('voice-memos')
-                    .getPublicUrl(filename)
-
-                uploadedUrl = publicUrl
+                uploadedUrl = filename
             }
 
             // Create memo record

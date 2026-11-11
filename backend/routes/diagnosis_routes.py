@@ -14,12 +14,18 @@ from services.groq_service import (
 from services.gemini_service import analyze_medical_image
 from services.notification_service import NotificationService
 from services.pdf_service import generate_diagnosis_pdf
+from services.uploads import read_image
 from services.settings_service import get_user_setting
 
 bp = Blueprint('diagnosis', __name__, url_prefix='/api/diagnosis')
 
 notification_service = NotificationService()
 MAX_SESSIONS_PER_DAY = 9999
+
+
+def _clean_name(value):
+    """Display name from the client: one line, bounded (it ends up in SMS, email and PDF)."""
+    return ' '.join(str(value or '').split())[:80] or 'Patient'
 
 
 def _get_header_ai_keys():
@@ -33,7 +39,7 @@ def _safe_user_setting_lookup(user_id: str, key_name: str) -> str:
     try:
         return (get_user_setting(user_id, key_name) or '').strip()
     except Exception as exc:
-        print(f'Warning: unable to read app setting {key_name} for {user_id}: {exc}')
+        print(f'Warning: unable to read app setting {key_name}: {type(exc).__name__}')
         return ''
 
 
@@ -61,7 +67,7 @@ def start_session():
         data = request.get_json() or {}
 
         patient_id = data.get('patient_id')
-        raw_complaint = (data.get('raw_complaint') or '').strip()
+        raw_complaint = str(data.get('raw_complaint') or '').strip()[:2000]  # bounded: it is sent to a paid LLM
 
         if not patient_id:
             return jsonify({'error': 'patient_id is required'}), 400
@@ -117,8 +123,8 @@ def submit_answer():
         data = request.get_json() or {}
 
         session_id = data.get('session_id')
-        answer = (data.get('answer') or '').strip().lower()
-        current_question = (data.get('current_question') or '').strip()
+        answer = str(data.get('answer') or '').strip().lower()
+        current_question = str(data.get('current_question') or '').strip()[:500]
 
         if not session_id:
             return jsonify({'error': 'session_id is required'}), 400
@@ -191,7 +197,10 @@ def upload_image():
 
         ai_keys = _resolve_user_ai_keys(session['patient_id'])
 
-        image_bytes = request.files['image'].read()
+        try:
+            _, image_bytes = read_image(request.files['image'])
+        except ValueError as exc:
+            return jsonify({'error': str(exc)}), 400
         result = analyze_medical_image(image_bytes, api_key=ai_keys['gemini_api_key'])
 
         session_store.update_session(session_id, {
@@ -224,8 +233,8 @@ def generate_report():
 
         session_id = data.get('session_id')
         medications = data.get('medications')
-        medications = [str(m) for m in medications] if isinstance(medications, list) else []
-        patient_name = data.get('patient_name') or 'Patient'
+        medications = [str(m)[:100] for m in medications[:30]] if isinstance(medications, list) else []
+        patient_name = _clean_name(data.get('patient_name'))
 
         if not session_id:
             return jsonify({'error': 'session_id is required'}), 400
@@ -308,7 +317,7 @@ def export_pdf(session_id):
     Export generated diagnosis session report as a PDF.
     """
     try:
-        patient_name = request.args.get('patient_name', 'Patient')
+        patient_name = _clean_name(request.args.get('patient_name'))
 
         session = session_store.get_session(session_id)
         if not session:
@@ -389,7 +398,7 @@ def share_report():
         if not report:
             return jsonify({'error': 'Report not generated yet'}), 400
 
-        patient_name = data.get('patient_name') or 'Patient'
+        patient_name = _clean_name(data.get('patient_name'))
 
         contacts = get_family_contacts(session['patient_id'])
         notified = 0

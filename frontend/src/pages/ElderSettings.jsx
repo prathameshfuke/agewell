@@ -71,7 +71,7 @@ export default function ElderSettings() {
                   <p className="mt-2 text-lg text-sage-600">
                     Look after someone else from this account. A 4-digit PIN will protect caregiver mode, so only you can open it.
                   </p>
-                  <button type="button" onClick={() => navigate('/onboarding/role-select')} className="btn-secondary mt-4 w-full sm:w-auto">Use this account as a caregiver too</button>
+                  <button type="button" onClick={() => navigate('/onboarding/role-select')} className="btn-secondary mt-4 w-full sm:w-auto">Also use as caregiver</button>
                 </>
               )}
             </section>

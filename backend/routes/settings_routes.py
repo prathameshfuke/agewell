@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 
+from auth import is_self
 from services.settings_service import (
     ALLOWED_SETTING_KEYS,
     get_user_settings,
@@ -34,6 +35,8 @@ def save_keys():
         user_id = (data.get('user_id') or '').strip()
         if not user_id:
             return jsonify({'error': 'user_id is required'}), 400
+        if not is_self(user_id):  # provider keys are the owner's own; a linked caregiver may read them masked, not replace them
+            return jsonify({'error': 'You can only change your own keys.'}), 403
 
         payload_keys = _normalize_payload_keys(data)
         if not payload_keys:
