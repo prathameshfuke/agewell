@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from datetime import datetime
 import os
@@ -57,6 +57,39 @@ app.register_blueprint(settings_routes.bp)
 @app.route('/health', methods=['GET'])
 def health_check():
     return jsonify({'status': 'healthy', 'timestamp': datetime.utcnow().isoformat()})
+
+@app.after_request
+def hide_server_errors(response):
+    """Routes return str(e) on failure; log it, but never send DB/provider internals to clients."""
+    if response.status_code >= 500 and response.is_json:
+        app.logger.error('500 %s %s: %s', request.method, request.path, response.get_data(as_text=True)[:500])
+        response.set_data(jsonify({'error': 'Something went wrong on our side. Please try again.'}).get_data())
+    return response
+
+
+@app.route('/health/deps', methods=['GET'])
+def health_deps():
+    """Which AI/voice providers are configured and reachable. Booleans only, no secrets."""
+    import requests
+
+    def ping(url, headers):
+        try:
+            return requests.get(url, headers=headers, timeout=8).status_code == 200
+        except requests.RequestException:
+            return False
+
+    groq_key = os.getenv('GROQ_API_KEY', '').strip()
+    gemini_key = os.getenv('GEMINI_API_KEY', '').strip()
+    return jsonify({
+        'groq': {'configured': bool(groq_key), 'reachable': bool(groq_key) and ping(
+            'https://api.groq.com/openai/v1/models', {'Authorization': f'Bearer {groq_key}'})},
+        'gemini': {'configured': bool(gemini_key), 'reachable': bool(gemini_key) and ping(
+            'https://generativelanguage.googleapis.com/v1beta/models', {'x-goog-api-key': gemini_key})},
+        'bhashini': {'configured': bool(os.getenv('BHASHINI_API_KEY', '').strip())},
+        'supabase': {'configured': bool(os.getenv('SUPABASE_URL')) and bool(
+            os.getenv('SUPABASE_SERVICE_KEY') or os.getenv('SUPABASE_SECRET_KEY'))},
+    })
+
 
 @app.route('/')
 def index():

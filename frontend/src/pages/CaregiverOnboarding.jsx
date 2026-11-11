@@ -14,7 +14,7 @@ import twoSticker from '../assets/images/stickers/two.jpeg'
  */
 export default function CaregiverOnboarding() {
     const navigate = useNavigate()
-    const { user, profile, completeOnboarding, isOnboardingComplete, loading: authLoading, initialized } = useAuth()
+    const { user, profile, roles, completeOnboarding, isOnboardingComplete, loading: authLoading, initialized } = useAuth()
 
     const [step, setStep] = useState(1)
     const [loading, setLoading] = useState(false)
@@ -27,6 +27,9 @@ export default function CaregiverOnboarding() {
         consent_acknowledged: false,
         pairing_code: ''
     })
+
+    // Same email is both elder and caregiver: nobody to pair with, the account watches itself.
+    const isSelf = roles?.includes('elderly')
 
     const normalizedPairingCode = (formData.pairing_code || '').replace(/[^A-Z0-9]/gi, '').toUpperCase()
 
@@ -55,7 +58,7 @@ export default function CaregiverOnboarding() {
             setError('Please enter your name')
             return false
         }
-        if (step === 2) {
+        if (step === 2 && !isSelf) {
             if (normalizedPairingCode.length !== 6) {
                 setError('Please enter a valid 6-character pairing code')
                 return false
@@ -98,21 +101,24 @@ export default function CaregiverOnboarding() {
         setError(null)
 
         try {
-            const linkResponse = await api.joinLinkCode(user.id, normalizedPairingCode)
-            if (!linkResponse?.success) {
-                throw new Error(linkResponse?.error || 'Invalid pairing code. Please check and try again.')
-            }
+            let linkedElderId = null
+            if (!isSelf) {
+                const linkResponse = await api.joinLinkCode(user.id, normalizedPairingCode)
+                if (!linkResponse?.success) {
+                    throw new Error(linkResponse?.error || 'Invalid pairing code. Please check and try again.')
+                }
 
-            const linkedElderId = linkResponse?.link?.elder_id || linkResponse?.elder?.id
-            if (!linkedElderId) {
-                throw new Error('Could not resolve linked elder from pairing code.')
+                linkedElderId = linkResponse?.link?.elder_id || linkResponse?.elder?.id
+                if (!linkedElderId) {
+                    throw new Error('Could not resolve linked elder from pairing code.')
+                }
             }
 
             await completeOnboarding('caregiver', {
                 full_name: formData.full_name,
-                caregiver_relationship: formData.relationship,
+                caregiver_relationship: isSelf ? 'Self' : formData.relationship,
                 notifications_enabled: formData.notifications_enabled,
-                linked_elderly_id: linkedElderId
+                ...(linkedElderId ? { linked_elderly_id: linkedElderId } : {})
             })
             navigate('/family/dashboard', { replace: true })
         } catch (err) {
@@ -184,7 +190,14 @@ export default function CaregiverOnboarding() {
                         </motion.div>
                     )}
 
-                    {step === 2 && (
+                    {step === 2 && isSelf && (
+                        <motion.div key="step2-self" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full text-center">
+                            <h1 className="text-2xl font-serif font-bold text-sage-900 mb-2">Your own account</h1>
+                            <p className="text-sage-600 mb-8">Caregiver mode will show the health and medication data of this account. You will create a 4-digit PIN next, so only you can open it.</p>
+                        </motion.div>
+                    )}
+
+                    {step === 2 && !isSelf && (
                         <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full text-center">
                             <h1 className="text-2xl font-serif font-bold text-sage-900 mb-2">Connect to Elder</h1>
                             <p className="text-sage-600 mb-8">Enter the pairing code from their device</p>
