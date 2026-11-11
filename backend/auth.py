@@ -19,6 +19,7 @@ UUID_RE = re.compile(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]
 PUBLIC_PATHS = {'/', '/health', '/health/deps'}
 SELF_ONLY_KEYS = {'caregiver_id'}                      # must be the caller
 ELDER_KEYS = {'user_id', 'patient_id', 'elder_id', 'elderly_id'}  # caller or a linked elder
+SESSION_KEY = 'session_id'  # diagnosis session: its patient must be the caller or a linked elder
 
 # ponytail: in-process caches (single gunicorn worker per instance). Use Redis if scaled out.
 _token_cache = {}   # token -> (user_id, expires_at)
@@ -72,6 +73,26 @@ def can_access(caller, target):
     return allowed
 
 
+def session_patient(session_id):
+    """patient_id of a diagnosis session, or None when it does not exist."""
+    try:
+        rows = requests.get(
+            f'{SUPABASE_URL}/rest/v1/diagnosis_sessions',
+            params={'select': 'patient_id', 'id': f'eq.{session_id}', 'limit': '1'},
+            headers=_headers(), timeout=8).json()
+    except (requests.RequestException, ValueError):
+        return None
+    return rows[0]['patient_id'].lower() if isinstance(rows, list) and rows else None
+
+
+def _session_ids():
+    sources = [request.view_args or {}, request.args.to_dict()]
+    body = request.get_json(silent=True)
+    if isinstance(body, dict):
+        sources.append(body)
+    return [str(src[SESSION_KEY]) for src in sources if UUID_RE.match(str(src.get(SESSION_KEY, '')))]
+
+
 def _candidate_ids():
     """(key, value) pairs for every user-id-like input in the request."""
     sources = [request.view_args or {}, request.args.to_dict()]
@@ -88,8 +109,8 @@ def authenticate():
     """Flask before_request hook."""
     if request.method == 'OPTIONS' or request.path in PUBLIC_PATHS or not request.path.startswith('/api'):
         return None
-    if os.getenv('REQUIRE_AUTH', '1') == '0':
-        return None  # explicit local-dev escape hatch
+    if os.getenv('REQUIRE_AUTH', '1') == '0' and os.getenv('FLASK_DEBUG') == '1':
+        return None  # local-dev escape hatch: ignored unless FLASK_DEBUG=1, so a stray prod env var cannot open the API
     if not SUPABASE_URL or not SERVICE_KEY:
         return jsonify({'error': 'Authentication is not configured on the server.'}), 503
 
@@ -105,4 +126,9 @@ def authenticate():
         allowed = value == caller if key in SELF_ONLY_KEYS else can_access(caller, value)
         if not allowed:
             return jsonify({'error': 'You do not have access to this person.'}), 403
+
+    for session_id in _session_ids():
+        patient = session_patient(session_id)
+        if not patient or not can_access(caller, patient):
+            return jsonify({'error': 'You do not have access to this session.'}), 403
     return None

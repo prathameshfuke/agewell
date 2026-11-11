@@ -1,0 +1,26 @@
+# Review (branch overhaul/stabilize-redesign)
+
+Read-only review of backend/, supabase/migrations/, frontend/src and docs/CI. Ordered by severity.
+
+## High
+1. **Diagnosis session endpoints skip ownership checks.** `auth.py:19-21,83` only checks `user_id/patient_id/elder_id/elderly_id/caregiver_id`. `/answer` (`backend/routes/diagnosis_routes.py:111`), `/upload-image` (:174), `/generate-report` (:217), `/export-pdf/<session_id>` (:303), `/share` (:369), `/audit/<session_id>` (:425) take only `session_id` and never compare `session['patient_id']` with `g.user_id`. Any signed-in user holding a session UUID can read the report/PDF/audit log or trigger alerts and emails to the patient's family. UUIDs are unguessable, which limits exposure, but history/share responses leak them to every linked caregiver. Fix: load the session, then `can_access(g.user_id, session['patient_id'])`.
+2. **Legacy SQLite routes are reachable by any signed-in user.** `backend/routes/{ai,automation,health,medication,user,notification,prescription}_routes.py` use `<int:...>` ids, so `auth.py` never ownership-checks them (e.g. `notification_routes.py:214` `POST /api/alerts` writes for any `user_id`; `user_routes.py:103` lists all users). `app.py:35-57` still mounts them and `app.py:30-32` creates `agewell.db`. Delete them or unmount.
+3. **`REQUIRE_AUTH=0` disables all auth** (`auth.py:91`). One wrong env var on Render opens the API. Consider honouring it only when `FLASK_DEBUG=1`.
+
+## Medium
+4. **Migrations are not a complete schema.** `supabase/migrations/*.sql` reference `profiles`, `diagnosis_sessions`, `caregiver_links`, `can_access_user()` (migration 2, lines 7,21,35) that exist only in loose files (`supabase/schema.sql:243`, `20260330_linking_settings_migration.sql:65,133`). A fresh project cannot be built from migrations. Also `supabase/` still holds admin-creation and debug scripts (`create_admin_user.sql`, `debug_disable_triggers.sql`, ...) that should not stay in a repo others can run.
+5. **PIN reset bypasses lockout.** `reset_caregiver_pin` (`20261111000000_caregiver_pin.sql:106-134`) does not check `locked_until`; after five wrong tries, re-signing in (within 5 min, :122) lets anyone with the session set a new PIN. Consistent with "screen gate, not data boundary", but the 15-minute lock is then cosmetic. Also, the unlock flag is a plain sessionStorage value (`AuthContext.jsx:17-27`) that devtools can set.
+6. **Open CORS and unauthenticated `/health/deps` makes outbound calls.** `app.py:12` `CORS(app)` allows any origin (bearer-token auth limits CSRF risk). `app.py:72-93` is public and pings Groq/Gemini on every hit (8 s timeouts): cheap abuse vector for quota use. Restrict origins to the Vercel domain; rate-limit or cache `/health/deps`.
+7. **Link-code join has no rate limit.** `linking_routes.py:146+` accepts guesses of a 6-char code (32^6) for 24 h with no throttle, and the legacy `profiles.pairing_code` fallback (:176-190) never expires.
+8. **Error text leaks on 4xx and non-JSON paths.** Routes return `str(e)` (e.g. `settings_routes.py:72,74`); `app.py:63-69` only rewrites 5xx JSON. `ValueError` messages from services reach clients.
+9. **Sign-in/auth-state churn.** `AuthContext.jsx:233-257` re-runs `syncSession` and shows the loader on every `SIGNED_IN` event (Supabase emits it on tab refocus), re-fetching the profile; only `TOKEN_REFRESHED` is skipped.
+10. **Stale default name on signup.** `AuthContext.jsx:303` sets `full_name: 'Admin User'` for every email signup.
+
+## Low / stale
+11. **Dead frontend code:** `components/guards/index.jsx` (duplicate of the guards in `App.jsx:121-190`, never imported), `config/theme.js` (old sage palette, `primary.main '#2F5BEA'` next to sage comments), most of `components/ui/*` (only `Card`, `Button`, `CalendarHeatmap` imported), `frontend/vite.config.js.timestamp-*.mjs` (tracked build artifact).
+12. **Doc/code mismatches:** `docs/DESIGN.md` (sage-green `#5C7A6E` palette, "no harsh blues"), `docs/FRONTEND.md:64` (`/demo` page), `docs/ARCHITECTURE.md:89-90` (generic RBAC), `docs/API.md:9` ("handled by frontend") and SQLite-era routes in `docs/API.md`/`BACKEND.md`. `PinGate.jsx` uses raw `slate-*` classes (22 occurrences across files) instead of sage/cream tokens. `supabase.js` comment mentions HashRouter but the app uses BrowserRouter.
+13. **`app.py:111`** binds `0.0.0.0:5001` and `app.py:18` sets a default `SECRET_KEY`; `app.py:96-108` index lists legacy endpoints. `emergency_alert_service`, `session_store`, `audit_service`, `settings_service` each duplicate service-key lookup and accept `SUPABASE_SERVICE_ROLE_KEY`, which `auth.py:15` ignores, so auth returns 503 while other services work.
+14. **Logging:** Groq/notification services use `print` (`groq_service.py:17-417`, `notification_service.py:98`), so Render logs are unstructured and may include model output.
+15. **CI:** `ci.yml` deploy steps exit 0 when secrets are missing (silent green); no frontend tests exist; `backend` job only runs `test_auth.py` (no coverage of the session-id gap in #1).
+16. **PDF export:** `patient_name` is taken from the query string (`diagnosis_routes.py:309`) and rendered unvalidated into the PDF.
+17. **Dead weight:** `prescription/`, `project/`, `stitch_elder_dashboard/`, `frontend/font`, `frontend/assets` pending deletion.

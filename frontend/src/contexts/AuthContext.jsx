@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 
 const AuthContext = createContext({})
@@ -105,6 +105,7 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true)
     const [initialized, setInitialized] = useState(false)
     const [unlockUntil, setUnlockUntilState] = useState(readUnlockUntil)
+    const signedInUserId = useRef(null) // Supabase re-emits SIGNED_IN on tab refocus: ignore it for the same user
 
     const setUnlockUntil = useCallback((timestamp) => {
         try {
@@ -142,6 +143,7 @@ export function AuthProvider({ children }) {
         setSessionActiveRole(null)
         setOnboardingComplete(false)
         setUnlockUntil(0)
+        signedInUserId.current = null
     }, [setSessionActiveRole, setUnlockUntil])
 
     const applyProfileState = useCallback((profileData, preferredRole = null) => {
@@ -197,6 +199,7 @@ export function AuthProvider({ children }) {
             return
         }
 
+        signedInUserId.current = session.user.id
         setUser(session.user)
         await fetchProfile(session.user.id, preferredRole)
     }, [clearAuthState, fetchProfile])
@@ -237,6 +240,10 @@ export function AuthProvider({ children }) {
                 // Don't reload on TOKEN_REFRESHED if user hasn't changed
                 if (event === 'TOKEN_REFRESHED') {
                     // Token refresh doesn't change user identity, skip full reload
+                    return
+                }
+
+                if (event === 'SIGNED_IN' && session?.user?.id && session.user.id === signedInUserId.current) {
                     return
                 }
 

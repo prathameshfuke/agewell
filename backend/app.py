@@ -73,6 +73,11 @@ def hide_server_errors(response):
 def health_deps():
     """Which AI/voice providers are configured and reachable. Booleans only, no secrets."""
     import requests
+    import time
+
+    cached = getattr(health_deps, 'cache', None)
+    if cached and cached[0] > time.time():
+        return jsonify(cached[1])  # ponytail: 60s cache per instance so the public endpoint cannot burn quota
 
     def ping(url, headers):
         try:
@@ -82,7 +87,7 @@ def health_deps():
 
     groq_key = os.getenv('GROQ_API_KEY', '').strip()
     gemini_key = os.getenv('GEMINI_API_KEY', '').strip()
-    return jsonify({
+    result = {
         'groq': {'configured': bool(groq_key), 'reachable': bool(groq_key) and ping(
             'https://api.groq.com/openai/v1/models', {'Authorization': f'Bearer {groq_key}'})},
         'gemini': {'configured': bool(gemini_key), 'reachable': bool(gemini_key) and ping(
@@ -90,7 +95,9 @@ def health_deps():
         'bhashini': {'configured': bool(os.getenv('BHASHINI_API_KEY', '').strip())},
         'supabase': {'configured': bool(os.getenv('SUPABASE_URL')) and bool(
             os.getenv('SUPABASE_SERVICE_KEY') or os.getenv('SUPABASE_SECRET_KEY'))},
-    })
+    }
+    health_deps.cache = (time.time() + 60, result)
+    return jsonify(result)
 
 
 @app.route('/')

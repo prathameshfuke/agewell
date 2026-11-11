@@ -44,10 +44,10 @@ An account can hold both roles. Caregiver mode then needs a 4-digit PIN, stored 
 
 ```bash
 cd frontend && cp .env.example .env && npm install && npm run dev
-cd backend && pip install -r requirements.txt && REQUIRE_AUTH=0 python app.py
+cd backend && pip install -r requirements.txt && FLASK_DEBUG=1 REQUIRE_AUTH=0 python app.py
 ```
 
-`REQUIRE_AUTH=0` turns the backend login check off for local work only.
+`REQUIRE_AUTH=0` turns the backend login check off only when `FLASK_DEBUG=1` is also set, so a stray variable in production cannot open the API.
 
 ## Known limits
 
