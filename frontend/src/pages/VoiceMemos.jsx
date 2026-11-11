@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { notify } from '../lib/notify'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Mic, Square, Play, Pause, Trash2, Send, Clock, User } from 'lucide-react'
@@ -74,7 +75,7 @@ export default function VoiceMemos() {
             }, 1000)
         } catch (error) {
             console.error('Error starting recording:', error)
-            alert('Could not access microphone. Please allow microphone access.')
+            notify('Could not access microphone. Please allow microphone access.', { error: true })
         }
     }
 
@@ -129,11 +130,11 @@ export default function VoiceMemos() {
                 setAudioUrl(null)
                 setRecordingTime(0)
                 loadMemos()
-                alert('Voice memo sent!')
+                notify('Voice memo sent!')
             }
         } catch (error) {
             console.error('Error sending memo:', error)
-            alert('Failed to send voice memo')
+            notify('Failed to send voice memo', { error: true })
         }
     }
 

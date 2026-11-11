@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { notify } from '../lib/notify'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Camera, Image, ArrowLeft, Upload, CheckCircle, Loader2 } from 'lucide-react'
@@ -33,7 +34,7 @@ export default function PrescriptionUpload() {
     if (!file) return
 
     if (!linkedElderId) {
-      alert("No elder linked. Please pair first.")
+      notify("No elder linked. Please pair first.", { error: true })
       return
     }
 
@@ -54,10 +55,10 @@ export default function PrescriptionUpload() {
           })
         }, 1500)
       } else {
-        alert(result.error || 'Upload failed. Please try again.')
+        notify(result.error || 'Upload failed. Please try again.', { error: true })
       }
     } catch (err) {
-      alert('Upload failed. Please try again.')
+      notify('Upload failed. Please try again.', { error: true })
     } finally {
       setUploading(false)
     }
@@ -103,7 +104,7 @@ export default function PrescriptionUpload() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-sage-50 rounded-2xl p-5 border-2 border-sage-100"
+          className="bg-sage-50 rounded-2xl p-5 border border-sage-100"
         >
           <div className="font-bold text-sage-700 mb-3">Tips for best results:</div>
           <ul className="space-y-2 text-sage-600">
@@ -133,7 +134,7 @@ export default function PrescriptionUpload() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="space-y-4"
             >
-              <div className="relative rounded-3xl overflow-hidden border-2 border-sage-200 shadow-sm">
+              <div className="relative rounded-3xl overflow-hidden border border-sage-200">
                 <img
                   src={preview}
                   alt="Prescription preview"
@@ -154,7 +155,7 @@ export default function PrescriptionUpload() {
                   whileTap={{ scale: 0.98 }}
                   onClick={clearPreview}
                   disabled={uploading}
-                  className="py-4 rounded-2xl font-bold text-base sm:text-lg border-2 border-sage-200 text-sage-600 bg-white disabled:opacity-50 min-h-touch"
+                  className="py-4 rounded-2xl font-bold text-base sm:text-lg border border-sage-200 text-sage-600 bg-white disabled:opacity-50 min-h-touch"
                 >
                   Retake
                 </motion.button>
@@ -188,7 +189,7 @@ export default function PrescriptionUpload() {
               className="space-y-4"
             >
               {/* Visual Placeholder */}
-              <div className="bg-sage-50 border-2 border-dashed border-sage-300 rounded-3xl p-8 text-center">
+              <div className="bg-sage-50 border border-dashed border-sage-300 rounded-3xl p-8 text-center">
                 <div className="w-24 h-24 bg-sage-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
                   <Camera className="w-12 h-12 text-sage-400" />
                 </div>
@@ -210,7 +211,7 @@ export default function PrescriptionUpload() {
                     input.onchange = handleFileSelect
                     input.click()
                   }}
-                  className="bg-sage-500 text-white py-6 rounded-2xl flex flex-col items-center gap-3 shadow-md"
+                  className="bg-primary text-white py-6 rounded-2xl flex flex-col items-center gap-3"
                 >
                   <Camera className="w-10 h-10" />
                   <span className="text-lg font-bold">Camera</span>
@@ -220,7 +221,7 @@ export default function PrescriptionUpload() {
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={() => fileInputRef.current?.click()}
-                  className="bg-white text-sage-700 py-6 rounded-2xl flex flex-col items-center gap-3 border-2 border-sage-200 shadow-sm"
+                  className="bg-white text-sage-700 py-6 rounded-2xl flex flex-col items-center gap-3 border border-sage-200"
                 >
                   <Image className="w-10 h-10" />
                   <span className="text-lg font-bold">Gallery</span>

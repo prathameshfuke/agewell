@@ -1,75 +1,45 @@
-import { motion } from 'framer-motion'
-import { Users, UserPlus, Crown } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import Card from '../ui/Card'
 import CareTeamAvatars from './CareTeamAvatars'
 
 /**
- * CareTeamCard - Card displaying care team with animated avatars
- * Shows on Family Dashboard
- * Mobile-first design for elderly users
+ * CareTeamCard - real care team summary.
+ * members: [{ id, name, role?, avatar? }] for everyone who has access.
  */
-export default function CareTeamCard({ className = '' }) {
+export default function CareTeamCard({ members = [], loading = false, error = '', className = '' }) {
   const navigate = useNavigate()
+  const names = members.map((m) => m.name.split(' ')[0])
+  const summary =
+    names.length === 0 ? '' : names.length <= 3 ? names.join(', ') : `${names.slice(0, 3).join(', ')} and ${names.length - 3} more`
 
   return (
-    <Card className={`${className}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-sage-600" />
-          <span className="text-sage-600 font-bold text-xs sm:text-sm">
-            Care Team
-          </span>
-        </div>
-        <motion.button
-          whileTap={{ scale: 0.95 }}
+    <section className={`rounded-2xl border border-sage-200 bg-white p-5 ${className}`} aria-labelledby="care-team-title">
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="care-team-title" className="font-serif text-lg text-sage-900">Care team</h2>
+        <button
+          type="button"
           onClick={() => navigate('/family/members')}
-          className="p-2 hover:bg-sage-50 rounded-xl transition-colors"
-          aria-label="Manage team"
+          className="min-h-[44px] px-3 text-sm font-semibold text-primary hover:text-primary-dark rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
         >
-          <UserPlus className="w-5 h-5 text-sage-500" />
-        </motion.button>
+          Manage
+        </button>
       </div>
-
-      {/* Care Team Avatars */}
-      <div className="flex flex-col items-center sm:items-start gap-4">
-        <CareTeamAvatars size="lg" maxDisplay={4} />
-        
-        {/* Info Text */}
-        <div className="text-center sm:text-left w-full">
-          <p className="text-sage-700 text-sm sm:text-base font-medium break-words">
-            4 members watching over your loved one
-          </p>
-          <motion.button
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/family/members')}
-            className="text-sage-500 text-xs sm:text-sm hover:text-sage-700 mt-2 inline-flex items-center gap-1 font-medium"
-          >
-            View all members
-            <span className="text-lg">→</span>
-          </motion.button>
+      {loading ? (
+        <p className="text-sm text-sage-500 mt-2">Loading care team...</p>
+      ) : error ? (
+        <p className="text-sm text-rose-700 mt-2">{error}</p>
+      ) : members.length === 0 ? (
+        <p className="text-sm text-sage-600 mt-2">
+          No one else has access yet.{' '}
+          <button type="button" onClick={() => navigate('/link')} className="font-semibold text-primary underline underline-offset-2">
+            Share a pairing code
+          </button>
+        </p>
+      ) : (
+        <div className="flex items-center gap-3 mt-3">
+          <CareTeamAvatars members={members} maxDisplay={4} />
+          <p className="text-sm text-sage-600 min-w-0 break-words">{summary}</p>
         </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 xs:grid-cols-3 gap-2 mt-4 pt-4 border-t border-sage-100">
-        <div className="bg-sage-50 rounded-xl p-3 text-center">
-          <div className="flex items-center justify-center gap-1 text-xs text-sage-600 mb-1">
-            <Crown className="w-3 h-3" />
-            <span className="font-medium">Primary</span>
-          </div>
-          <div className="text-lg font-bold text-sage-900">1</div>
-        </div>
-        <div className="bg-sage-50 rounded-xl p-3 text-center">
-          <div className="text-xs text-sage-600 font-medium mb-1">Family</div>
-          <div className="text-lg font-bold text-sage-900">2</div>
-        </div>
-        <div className="bg-sage-50 rounded-xl p-3 text-center">
-          <div className="text-xs text-sage-600 font-medium mb-1">Healthcare</div>
-          <div className="text-lg font-bold text-sage-900">1</div>
-        </div>
-      </div>
-    </Card>
+      )}
+    </section>
   )
 }

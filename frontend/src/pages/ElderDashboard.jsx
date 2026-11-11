@@ -1,581 +1,287 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, Heart, Check, ChevronDown, ChevronUp, Pill, X, Clock, HelpCircle, Activity, Droplets, LogOut } from 'lucide-react'
+import { Bell, Check, Pill, Stethoscope, Phone, Siren, X, ChevronRight } from 'lucide-react'
 import { api } from '../api/client'
+import { useAuth } from '../contexts/AuthContext'
 import { useMedications } from '../hooks/useMedications'
 import { useNotifications } from '../hooks/useNotifications'
-import { useFakeSensorData } from '../hooks/useFakeSensorData'
-import ElderNav from '../components/ElderNav'
-import ProfileDropdown from '../components/ProfileDropdown'
-import { Card, Button, IconButton, ProgressRing } from '../components/ui'
-import { PageLayout, PageHeader, PageMain, PageSection } from '../components/layout'
-import QuickActionsGrid from '../components/dashboard/QuickActionsGrid'
-import EnvironmentWidget from '../components/dashboard/EnvironmentWidget'
-import PairingCodeDisplay from '../components/dashboard/PairingCodeDisplay' // New component
-import LiveVitalsPanel, { SensorStatusBadge } from '../components/dashboard/LiveVitalsPanel'
+import { useVitals } from '../hooks/useVitals'
+import { Loading, ErrorNote } from '../components/ElderNav'
 
-// Import stickers
 import goodmoodSticker from '../assets/images/stickers/goodmood.jpeg'
 import fineSticker from '../assets/images/stickers/fine.jpeg'
 import notwellSticker from '../assets/images/stickers/notwell.jpeg'
-import doneSticker from '../assets/images/stickers/done.jpeg'
 
-import { useAuth } from '../contexts/AuthContext'
+const MOODS = [
+  { key: 'good', label: 'Good', sticker: goodmoodSticker },
+  { key: 'fine', label: 'Okay', sticker: fineSticker },
+  { key: 'unwell', label: 'Not well', sticker: notwellSticker },
+]
 
-const WeeklyHealthSummary = lazy(() => import('../components/dashboard/WeeklyHealthSummary'))
+const timeOf = (iso) =>
+  new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+
+function useCountdown(iso) {
+  const [text, setText] = useState('')
+  useEffect(() => {
+    if (!iso) return undefined
+    const tick = () => {
+      const diff = new Date(iso) - new Date()
+      if (diff <= 0) return setText('Time to take it now')
+      const h = Math.floor(diff / 3600000)
+      const m = Math.floor((diff % 3600000) / 60000)
+      setText(h > 0 ? `In ${h} h ${m} min` : `In ${m} min`)
+    }
+    tick()
+    const id = setInterval(tick, 60000)
+    return () => clearInterval(id)
+  }, [iso])
+  return iso ? text : ''
+}
 
 export default function ElderDashboard() {
   const navigate = useNavigate()
-  const { user, profile, logout, roles } = useAuth()
+  const { user, profile } = useAuth()
   const userId = user?.id
-  const hasCaregiverRole = roles?.includes('caregiver')
 
-  const [showOkModal, setShowOkModal] = useState(false)
+  const meds = useMedications(userId)
+  const { nextMedication, schedule, completedMeds, missedMeds, loading, error, refresh } = meds
+  const { notifications, unreadCount, acknowledgeNotification } = useNotifications(userId)
+  const { readings, connected } = useVitals(userId)
+
   const [showNotifications, setShowNotifications] = useState(false)
-  const [vitalsExpanded, setVitalsExpanded] = useState(true)
-  const [selectedMood, setSelectedMood] = useState(null)
-  const [healthStats, setHealthStats] = useState(null)
-  const [healthLoading, setHealthLoading] = useState(true)
-  const [countdown, setCountdown] = useState(null)
+  const [showMood, setShowMood] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
 
-  // Live sensor simulation
-  const { readings: sensorReadings, connected: sensorConnected, lastUpdated: sensorLastUpdated } = useFakeSensorData()
+  const countdown = useCountdown(nextMedication?.scheduled_time)
+  const firstName = profile?.full_name?.split(' ')[0]
+  const contactPhone = profile?.emergency_contact_phone
 
-  const {
-    nextMedication,
-    adherenceRate,
-    loading: medsLoading,
-    markAsTaken,
-    pendingMeds,
-    completedMeds
-  } = useMedications(userId)
+  const logIdOf = (item) => item?.log?.id || item?.id
 
-  const {
-    notifications,
-    unreadCount,
-    acknowledgeNotification,
-  } = useNotifications(userId)
-
-  useEffect(() => {
-    if (!userId) return
-    let active = true
-
-    const loadHealth = async () => {
-      setHealthLoading(true)
-      const result = await api.getHealthStats(userId)
-      if (active && result.success) {
-        setHealthStats(result.stats)
-      }
-      if (active) setHealthLoading(false)
-    }
-    loadHealth()
-
-    return () => {
-      active = false
-    }
-  }, [userId])
-
-  // Countdown timer
-  useEffect(() => {
-    if (!nextMedication) {
-      setCountdown(null)
-      return
-    }
-
-    const updateCountdown = () => {
-      const now = new Date()
-      const scheduled = new Date(nextMedication.scheduled_time)
-      const diff = scheduled - now
-
-      if (diff <= 0) {
-        setCountdown({ text: 'Now', overdue: true })
-      } else {
-        const hours = Math.floor(diff / (1000 * 60 * 60))
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-
-        if (hours > 0) {
-          setCountdown({ text: `in ${hours}h ${minutes}m`, overdue: false })
-        } else {
-          setCountdown({ text: `in ${minutes}m`, overdue: false })
-        }
-      }
-    }
-
-    updateCountdown()
-    const interval = setInterval(updateCountdown, 60000)
-    return () => clearInterval(interval)
-  }, [nextMedication])
-
-  const handleMarkTaken = async () => {
-    if (!nextMedication) return
-    const logId = nextMedication.log?.id || nextMedication.id
-    if (logId) {
-      await markAsTaken(logId)
+  const run = async (fn, failText) => {
+    setBusy(true)
+    setMessage('')
+    try {
+      const result = await fn()
+      if (result && result.success === false) setMessage(failText)
+      return result
+    } catch {
+      setMessage(failText)
+      return null
+    } finally {
+      setBusy(false)
     }
   }
 
-  const handleNotSure = async () => {
-    if (!userId) return
-    await api.createAlert({
-      user_id: userId,
-      alert_type: 'medication',
-      severity: 'medium',
-      title: 'Medication Uncertainty',
-      message_elderly: 'We\'ve notified your caregiver.',
-      message_caregiver: `${nextMedication?.medication?.name || 'Medication'}: User is unsure about this dose.`
-    })
-    alert('We\'ve notified your caregiver.')
+  const tookIt = () => {
+    const id = logIdOf(nextMedication)
+    if (!id) return setMessage('We could not find this dose. Please pull to refresh and try again.')
+    return run(() => meds.markAsTaken(id), 'We could not save that. Check your connection and press the button again.')
   }
 
-  const handleSkipped = async () => {
-    if (!nextMedication) return
-    const logId = nextMedication.log?.id || nextMedication.id
-    if (logId) {
-      await api.markTaken(logId, 'missed')
-    }
+  const skipIt = () => {
+    const id = logIdOf(nextMedication)
+    if (id) run(() => meds.markAsMissed(id), 'We could not save that. Please try again.')
   }
 
-  const submitMood = async (mood) => {
-    if (!userId) return
-    setSelectedMood(mood)
-    await api.submitCheckIn(userId, mood)
+  const notSure = async () => {
+    const result = await run(
+      () =>
+        api.createAlert({
+          user_id: userId,
+          alert_type: 'medication',
+          severity: 'medium',
+          title: 'Unsure about a dose',
+          message: `${nextMedication?.medication?.name || 'A medicine'}: unsure whether this dose was taken.`,
+        }),
+      'We could not tell your caregiver. Please call them instead.'
+    )
+    if (result?.success) setMessage('Your caregiver has been told. Wait before taking it.')
   }
 
-  const vitals = healthStats?.latest || {}
+  const sendMood = async (mood) => {
+    setShowMood(false)
+    const result = await run(() => api.submitCheckIn(userId, mood), 'We could not save how you feel. Please try again.')
+    if (result?.success) setMessage(mood === 'unwell' ? 'Saved. If you feel worse, use Emergency.' : 'Saved. Thank you.')
+  }
 
-  // Calculate weekly health data for chart
-  const weeklyHealthData = healthStats?.weekly || []
-  const adherenceDisplay = Number.isFinite(adherenceRate) ? adherenceRate : 100
-  const nextMedicationTime = nextMedication
-    ? new Date(nextMedication.scheduled_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-    : null
-  const heartRateDisplay = sensorConnected ? `${sensorReadings.heartRate} bpm` : (vitals.heart_rate ? `${vitals.heart_rate} bpm` : '--')
+  const callFamily = () => {
+    if (contactPhone) window.location.href = `tel:${contactPhone}`
+    else navigate('/elder/settings')
+  }
+
+  const actions = [
+    { label: 'My medicines', icon: Pill, onClick: () => navigate('/elder/meds') },
+    { label: 'How I feel', icon: Stethoscope, onClick: () => setShowMood(true) },
+    {
+      label: 'Call family',
+      hint: profile?.emergency_contact_name || (contactPhone ? '' : 'Add a number first'),
+      icon: Phone,
+      onClick: callFamily,
+    },
+  ]
+
+  const vitalsLine = connected
+    ? [
+        readings.heartRate != null && `Heart rate ${readings.heartRate} bpm`,
+        readings.spo2 != null && `Oxygen ${readings.spo2}%`,
+      ].filter(Boolean).join('  ·  ')
+    : ''
 
   return (
-    <PageLayout
-      header={
-        <PageHeader>
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-serif font-bold text-sage-900">
-                Hello, {profile?.full_name?.split(' ')[0] || 'User'}
-              </h1>
-              <p className="text-sage-500 text-base sm:text-lg mt-1">Your most important care tasks are ready.</p>
-              <div className="flex flex-wrap items-center gap-2 mt-2">
-                <span className="inline-flex px-2.5 py-1 rounded-lg text-xs font-bold bg-sage-100 text-sage-700">
-                  {hasCaregiverRole ? 'Caregiver Connected' : 'Connected'}
-                </span>
-                <SensorStatusBadge connected={sensorConnected} />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                variant="secondary"
-                size="sm"
-                icon={LogOut}
-                onClick={logout}
-                className="!px-3 hidden sm:inline-flex"
-              >
-                Sign Out
-              </Button>
-              <IconButton
-                icon={Bell}
-                variant="primary"
-                badge={unreadCount}
-                aria-label="View Notifications"
-                onClick={() => setShowNotifications(true)}
-              />
-              <ProfileDropdown
-                user={user}
-                profile={profile}
-                onLogout={logout}
-                currentRole="elderly"
-              />
-            </div>
+    <div className="min-h-screen bg-cream-50 font-sans text-xl text-sage-900 pb-32 md:pb-12">
+      <div className="mx-auto w-full max-w-2xl px-5 pt-8">
+        <header className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="font-serif text-4xl font-bold">{firstName ? `Hello, ${firstName}` : 'Hello'}</h1>
+            <p className="mt-1 text-xl text-sage-600">
+              {new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
+            </p>
           </div>
-        </PageHeader>
-      }
-      nav={<ElderNav onImOk={() => setShowOkModal(true)} />}
-    >
-      <PageMain>
-        {/* Pairing Code Display - Only show if not linked */}
-        {profile?.pairing_code && !profile.linked_elderly_id && (
-          <PairingCodeDisplay code={profile.pairing_code} />
-        )}
-
-        <PageSection>
-          <Card className="bg-gradient-to-br from-sage-600 to-sage-800 text-white border-0 overflow-hidden relative">
-            <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-white/10 blur-2xl" />
-            <div className="relative">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-                <div>
-                  <div className="text-white/70 text-sm font-bold">Today at a Glance</div>
-                  <h2 className="text-3xl sm:text-4xl font-serif font-bold mt-1">
-                    {nextMedication ? 'Next dose is ready' : 'You are caught up'}
-                  </h2>
-                  <p className="text-white/75 mt-2 max-w-2xl">
-                    {nextMedication
-                      ? `${nextMedication.medication?.name || 'Medication'} at ${nextMedicationTime || 'the scheduled time'}`
-                      : 'No pending medication dose is scheduled right now.'}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                  <div className="rounded-2xl bg-white/15 p-3 sm:p-4 text-center backdrop-blur-sm">
-                    <div className="text-2xl sm:text-3xl font-bold">{pendingMeds.length}</div>
-                    <div className="text-white/70 text-xs font-bold">Pending</div>
-                  </div>
-                  <div className="rounded-2xl bg-white/15 p-3 sm:p-4 text-center backdrop-blur-sm">
-                    <div className="text-2xl sm:text-3xl font-bold">{completedMeds.length}</div>
-                    <div className="text-white/70 text-xs font-bold">Taken</div>
-                  </div>
-                  <div className="rounded-2xl bg-white/15 p-3 sm:p-4 text-center backdrop-blur-sm">
-                    <div className="text-2xl sm:text-3xl font-bold">{healthLoading ? '...' : heartRateDisplay}</div>
-                    <div className="text-white/70 text-xs font-bold">Heart</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </PageSection>
-
-        {/* Quick Actions Grid */}
-        <QuickActionsGrid />
-        {/* ADHERENCE + WEEKLY SUMMARY ROW */}
-        <PageSection>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Adherence Ring */}
-            <div className="col-span-1">
-              <Card className="h-full flex flex-col items-center justify-center py-4">
-                <ProgressRing
-                  progress={adherenceDisplay}
-                  size={90}
-                  strokeWidth={8}
-                  label="Adherence"
-                />
-                <div className="text-sage-500 text-xs mt-2 text-center">This Week</div>
-              </Card>
-            </div>
-
-            {/* Weekly Summary */}
-            <div className="col-span-2">
-              <Suspense fallback={<Card className="h-full flex items-center justify-center text-sage-500">Loading weekly summary...</Card>}>
-                <WeeklyHealthSummary
-                  healthData={weeklyHealthData}
-                  averageHeartRate={healthStats?.avgHeartRate || vitals.heart_rate || null}
-                  averageSteps={healthStats?.avgSteps || null}
-                  trend={healthStats?.trend || 'stable'}
-                />
-              </Suspense>
-            </div>
-          </div>
-        </PageSection>
-
-        {/* TODAY STATUS & ENVIRONMENT */}
-        <PageSection delay={0.1}>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <Card className="h-full">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-3 h-3 bg-sage-500 rounded-full" />
-                  <span className="text-sage-600 font-bold text-sm">Next Medication</span>
-                </div>
-
-                {medsLoading ? (
-                  <div className="text-center py-8">
-                    <div className="loading-spinner mx-auto" />
-                    <p className="text-sage-500 mt-4 text-lg">Loading...</p>
-                  </div>
-                ) : nextMedication ? (
-                  <>
-                    {/* Next Medication */}
-                    <div className="bg-sage-50 rounded-2xl p-5 mb-5">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-12 h-12 bg-sage-500 rounded-xl flex items-center justify-center">
-                          <Pill className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex-1" style={{ minWidth: '120px' }}>
-                          <div className="text-xl font-bold text-sage-900 break-words" style={{ wordBreak: 'normal', overflowWrap: 'break-word', hyphens: 'auto' }}>{nextMedication.medication?.name || 'Medication'}</div>
-                          <div className="text-sage-600 text-lg break-words">{nextMedication.medication?.dosage || '1 dose'}</div>
-                        </div>
-                      </div>
-
-                      <div className={`flex items-center gap-2 p-3 rounded-xl ${countdown?.overdue ? 'bg-rose-100' : 'bg-sage-100'}`}>
-                        <Clock className={`w-5 h-5 ${countdown?.overdue ? 'text-rose-600' : 'text-sage-600'}`} />
-                        <span className={`text-lg font-bold ${countdown?.overdue ? 'text-rose-700' : 'text-sage-700'}`}>
-                          {countdown?.overdue ? 'Take now!' : countdown?.text || nextMedicationTime || 'Scheduled'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* THREE LARGE ACTION BUTTONS - Mobile optimized (stack) */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <Button
-                        variant="primary"
-                        icon={Check}
-                        onClick={handleMarkTaken}
-                        className="flex-col py-5"
-                      >
-                        Taken
-                      </Button>
-
-                      <Button
-                        variant="soft-amber"
-                        icon={HelpCircle}
-                        onClick={handleNotSure}
-                        className="flex-col py-5"
-                      >
-                        Not Sure
-                      </Button>
-
-                      <Button
-                        variant="soft-sage"
-                        icon={X}
-                        onClick={handleSkipped}
-                        className="flex-col py-5"
-                      >
-                        Skipped
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  /* ALL DONE STATE with sticker */
-                  <div className="text-center py-6">
-                    <motion.img
-                      src={doneSticker}
-                      alt="All done!"
-                      className="w-28 h-auto max-h-36 mx-auto mb-4 rounded-2xl object-contain"
-                      initial={{ scale: 0.8 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: 'spring', bounce: 0.4 }}
-                    />
-                    <h2 className="text-2xl font-serif font-bold text-sage-800 mb-2">All Done for Today!</h2>
-                    <p className="text-sage-500 text-lg">No more medications scheduled</p>
-                    <p className="text-sage-400 text-base mt-2">{completedMeds.length} medications taken today</p>
-                  </div>
-                )}
-              </Card>
-            </div>
-
-            {/* Environment Widget (Right Column) */}
-            <div className="lg:col-span-1">
-              <EnvironmentWidget />
-            </div>
-          </div>
-        </PageSection>
-
-        {/* WELLNESS CHECK with stickers */}
-        <PageSection delay={0.15}>
-          <Card>
-            <h3 className="text-xl font-bold text-sage-800 mb-5">How are you feeling today?</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Good */}
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => submitMood('good')}
-                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 min-h-[100px] ${selectedMood === 'good'
-                  ? 'bg-sage-100 border-sage-400'
-                  : 'bg-sage-50 border-sage-100'
-                  }`}
-              >
-                <img src={goodmoodSticker} alt="Good" className="w-14 h-14 object-contain rounded-xl" />
-                <span className="text-base font-bold text-sage-700">Good</span>
-              </motion.button>
-
-              {/* Okay */}
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => submitMood('fine')}
-                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 min-h-[100px] ${selectedMood === 'fine'
-                  ? 'bg-cream-100 border-cream-400'
-                  : 'bg-cream-50 border-cream-100'
-                  }`}
-              >
-                <img src={fineSticker} alt="Okay" className="w-14 h-14 object-contain rounded-xl" />
-                <span className="text-base font-bold text-sage-700">Okay</span>
-              </motion.button>
-
-              {/* Not Well */}
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => submitMood('unwell')}
-                className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 min-h-[100px] ${selectedMood === 'unwell'
-                  ? 'bg-rose-100 border-rose-300'
-                  : 'bg-rose-50 border-rose-100'
-                  }`}
-              >
-                <img src={notwellSticker} alt="Not Well" className="w-14 h-14 object-contain rounded-xl" />
-                <span className="text-base font-bold text-sage-700">Not Well</span>
-              </motion.button>
-            </div>
-          </Card>
-        </PageSection>
-
-        {/* VITALS SECTION - Live Sensor Readings */}
-        <PageSection delay={0.2}>
-          <Card className="overflow-hidden p-0">
-            <button
-              onClick={() => setVitalsExpanded(!vitalsExpanded)}
-              className="w-full px-6 py-5 flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <Heart className="w-6 h-6 text-rose-400" />
-                <span className="font-bold text-sage-800 text-lg">Your Vitals</span>
-              </div>
-              {vitalsExpanded ? (
-                <ChevronUp className="w-6 h-6 text-sage-400" />
-              ) : (
-                <ChevronDown className="w-6 h-6 text-sage-400" />
-              )}
-            </button>
-
-            <AnimatePresence>
-              {vitalsExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="px-6 pb-6"
-                >
-                  <LiveVitalsPanel
-                    readings={sensorReadings}
-                    connected={sensorConnected}
-                    lastUpdated={sensorLastUpdated}
-                    compact
-                  />
-
-                  {/* View More Button */}
-                  <motion.button
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate('/elder/health')}
-                    className="w-full mt-4 py-3 bg-sage-100 text-sage-700 rounded-xl font-bold text-sm hover:bg-sage-200 transition-colors"
-                  >
-                    View Full Health Details
-                  </motion.button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </Card>
-        </PageSection>
-      </PageMain>
-
-      {/* Notifications Panel */}
-      <AnimatePresence>
-        {showNotifications && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-sage-900/30 backdrop-blur-sm"
-            onClick={() => setShowNotifications(false)}
+          <button
+            type="button"
+            onClick={() => setShowNotifications(true)}
+            aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
+            className="relative flex h-14 w-14 items-center justify-center rounded-full border border-sage-200 bg-white hover:bg-sage-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
           >
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25 }}
-              className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-6 border-b border-sage-100 flex items-center justify-between">
-                <h2 className="font-serif text-2xl font-bold text-sage-900">Notifications</h2>
-                <IconButton
-                  icon={X}
-                  variant="ghost"
-                  aria-label="Close Notifications"
-                  onClick={() => setShowNotifications(false)}
-                />
-              </div>
+            <Bell className="h-6 w-6" aria-hidden="true" />
+            {unreadCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-6 min-w-[24px] items-center justify-center rounded-full bg-primary px-1 text-sm font-bold text-white">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+        </header>
 
-              <div className="overflow-y-auto max-h-[calc(100vh-100px)]">
-                {notifications.length === 0 ? (
-                  <div className="text-center py-16 text-sage-400">
-                    <Bell className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg">No notifications</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-sage-50">
-                    {notifications.map((notif) => (
-                      <div
-                        key={notif.id}
-                        className={`p-5 cursor-pointer hover:bg-sage-50 transition-colors ${notif.status === 'active' ? 'bg-sage-50' : ''}`}
-                        onClick={() => acknowledgeNotification(notif.id)}
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className={`w-3 h-3 rounded-full mt-2 ${notif.status === 'active' ? 'bg-sage-500' : 'bg-transparent'}`} />
-                          <div className="flex-1">
-                            <div className="font-bold text-sage-800 text-lg">{notif.title}</div>
-                            <div className="text-sage-500 mt-1">{notif.message_elderly}</div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* I'm OK Modal with stickers */}
-      <AnimatePresence>
-        {showOkModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-sage-900/30 backdrop-blur-sm"
-            onClick={() => setShowOkModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white w-full max-w-sm rounded-3xl p-8 text-center relative border-2 border-sage-100 shadow-elevated"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setShowOkModal(false)}
-                className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-sage-400 hover:text-sage-600 hover:bg-sage-100 rounded-full transition-colors"
-              >
-                <X className="w-6 h-6" />
+        {/* The one focal element: today */}
+        <section className="card mt-8 animate-fade-in" aria-live="polite" aria-label="Today">
+          {loading ? (
+            <Loading label="Checking your medicines..." />
+          ) : error ? (
+            <ErrorNote onRetry={() => refresh()}>We could not load your medicines. Check your connection and try again.</ErrorNote>
+          ) : nextMedication ? (
+            <>
+              <p className="text-lg font-bold text-sage-600">Next medicine</p>
+              <h2 className="mt-1 font-serif text-4xl font-bold break-words">{nextMedication.medication?.name || 'Medicine'}</h2>
+              <p className="mt-2 text-2xl text-sage-700">
+                {[nextMedication.medication?.dosage, timeOf(nextMedication.scheduled_time)].filter(Boolean).join(' at ')}
+              </p>
+              {countdown && <p className="mt-1 text-xl text-sage-600">{countdown}</p>}
+              <button type="button" onClick={tookIt} disabled={busy} className="btn-primary mt-6 w-full min-h-[64px] text-2xl">
+                <Check className="h-7 w-7" aria-hidden="true" /> I took it
               </button>
-
-              <h3 className="text-2xl font-serif font-bold text-sage-900 mb-6">How are you feeling?</h3>
-
-              <div className="grid grid-cols-1 gap-4">
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => { if (userId) api.submitCheckIn(userId, 'good'); setShowOkModal(false); }}
-                  className="p-4 rounded-2xl border-2 bg-sage-50 border-sage-100 flex flex-col items-center gap-2 hover:bg-sage-100 transition-colors min-h-[100px]"
-                >
-                  <img src={goodmoodSticker} alt="Good" className="w-12 h-12 object-contain rounded-lg" />
-                  <span className="font-bold text-sage-700">Good</span>
-                </motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => { if (userId) api.submitCheckIn(userId, 'fine'); setShowOkModal(false); }}
-                  className="p-4 rounded-2xl border-2 bg-cream-50 border-cream-100 flex flex-col items-center gap-2 hover:bg-cream-100 transition-colors min-h-[100px]"
-                >
-                  <img src={fineSticker} alt="Okay" className="w-12 h-12 object-contain rounded-lg" />
-                  <span className="font-bold text-sage-700">Okay</span>
-                </motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => { if (userId) api.submitCheckIn(userId, 'unwell'); setShowOkModal(false); }}
-                  className="p-4 rounded-2xl border-2 bg-rose-50 border-rose-100 flex flex-col items-center gap-2 hover:bg-rose-100 transition-colors min-h-[100px]"
-                >
-                  <img src={notwellSticker} alt="Not Well" className="w-12 h-12 object-contain rounded-lg" />
-                  <span className="font-bold text-sage-700">Not Well</span>
-                </motion.button>
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
+                <button type="button" onClick={notSure} disabled={busy} className="btn-ghost">I am not sure</button>
+                <button type="button" onClick={skipIt} disabled={busy} className="btn-ghost">Skip this one</button>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </PageLayout >
+            </>
+          ) : schedule.length > 0 ? (
+            <>
+              <h2 className="font-serif text-4xl font-bold">All done for today</h2>
+              <p className="mt-2 text-2xl text-sage-700">
+                You took {completedMeds.length} of {schedule.length} medicines
+                {missedMeds.length > 0 ? `, and skipped ${missedMeds.length}` : ''}.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="font-serif text-3xl font-bold">No medicines today</h2>
+              <p className="mt-2 text-xl text-sage-600">Nothing is scheduled. Add your medicines to get reminders.</p>
+              <button type="button" onClick={() => navigate('/elder/meds')} className="btn-secondary mt-5">See my medicines</button>
+            </>
+          )}
+          {message && <p className="mt-4 text-center text-xl font-bold text-sage-800" role="status">{message}</p>}
+        </section>
+
+        <nav className="mt-6 space-y-3" aria-label="Main actions">
+          {actions.map(({ label, hint, icon: Icon, onClick }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={onClick}
+              className="flex min-h-[64px] w-full items-center gap-4 rounded-full border border-sage-200 bg-white px-6 text-left text-2xl font-bold hover:border-sage-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              <Icon className="h-7 w-7 text-primary" aria-hidden="true" />
+              <span className="flex-1">
+                {label}
+                {hint && <span className="block text-base font-normal text-sage-600">{hint}</span>}
+              </span>
+              <ChevronRight className="h-6 w-6 text-sage-400" aria-hidden="true" />
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => navigate('/elder/emergency')}
+            className="btn-danger min-h-[64px] w-full justify-start gap-4 px-6 text-2xl"
+          >
+            <Siren className="h-7 w-7" aria-hidden="true" /> Emergency
+          </button>
+        </nav>
+
+        <button
+          type="button"
+          onClick={() => navigate('/elder/health')}
+          className="mt-6 w-full rounded-3xl border border-sage-200 bg-white p-5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+        >
+          <span className="text-lg font-bold text-sage-600">My health</span>
+          <span className="mt-1 block text-xl">
+            {vitalsLine || (connected ? 'Connected. Waiting for readings.' : 'Device not connected')}
+          </span>
+        </button>
+      </div>
+
+      {showMood && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-sage-900/40 p-4 sm:items-center" role="dialog" aria-modal="true" aria-label="How do you feel">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="font-serif text-3xl font-bold">How do you feel?</h2>
+              <button type="button" onClick={() => setShowMood(false)} aria-label="Close" className="flex h-14 w-14 items-center justify-center rounded-full hover:bg-sage-100">
+                <X className="h-6 w-6" aria-hidden="true" />
+              </button>
+            </div>
+            <div className="mt-5 grid grid-cols-3 gap-3">
+              {MOODS.map((m) => (
+                <button key={m.key} type="button" onClick={() => sendMood(m.key)} className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-2xl border border-sage-200 p-3 hover:border-sage-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+                  <img src={m.sticker} alt="" className="h-14 w-14 rounded-xl object-contain" />
+                  <span className="text-lg font-bold">{m.label}</span>
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={() => navigate('/diagnosis/input')} className="btn-secondary mt-5 w-full">
+              Check my symptoms
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showNotifications && (
+        <div className="fixed inset-0 z-[60] bg-sage-900/40" onClick={() => setShowNotifications(false)}>
+          <aside role="dialog" aria-modal="true" aria-label="Notifications" className="absolute bottom-0 right-0 top-0 w-full max-w-md overflow-y-auto bg-white" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-sage-200 p-5">
+              <h2 className="font-serif text-3xl font-bold">Notifications</h2>
+              <button type="button" onClick={() => setShowNotifications(false)} aria-label="Close notifications" className="flex h-14 w-14 items-center justify-center rounded-full hover:bg-sage-100">
+                <X className="h-6 w-6" aria-hidden="true" />
+              </button>
+            </div>
+            {notifications.length === 0 ? (
+              <p className="p-8 text-center text-xl text-sage-600">You have no notifications.</p>
+            ) : (
+              <ul className="divide-y divide-sage-100">
+                {notifications.map((n) => (
+                  <li key={n.id}>
+                    <button type="button" onClick={() => acknowledgeNotification(n.id)} className="w-full p-5 text-left hover:bg-sage-50">
+                      <span className={`block text-xl ${n.status === 'active' ? 'font-bold' : ''}`}>{n.title}</span>
+                      <span className="mt-1 block text-lg text-sage-600">{n.message_elderly}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </aside>
+        </div>
+      )}
+    </div>
   )
 }

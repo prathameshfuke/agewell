@@ -25,7 +25,7 @@ export const supabase = isSupabaseConfigured()
     : null
 
 if (!isSupabaseConfigured()) {
-    console.warn('Supabase not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (or VITE_SUPABASE_PUBLISHABLE_KEY). Running in demo mode.')
+    console.warn('Supabase not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (or VITE_SUPABASE_PUBLISHABLE_KEY). Sign-in and data are disabled until it is set.')
 }
 
 const normalizeMedication = (medication = {}) => ({

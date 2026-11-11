@@ -1,80 +1,72 @@
-// AgeWell+ API Client
-// Uses Supabase when configured, falls back to mock data for development
+// AgeWell API client. Supabase for data; the Flask backend (VITE_API_URL) for AI/link/etc.
 
 import { supabase, db, isSupabaseConfigured } from '../lib/supabase'
 
-// Use environment variable for production, fallback to localhost for development
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api'
-const USER_GROQ_KEY_STORAGE = 'agewell_user_groq_api_key'
-const USER_GEMINI_KEY_STORAGE = 'agewell_user_gemini_api_key'
-
-// Check if we should use Supabase or mock/local API
-const useSupabase = isSupabaseConfigured()
-
-const getStoredUserApiKeys = () => {
-    if (typeof window === 'undefined') {
-        return { groqApiKey: '', geminiApiKey: '' }
-    }
-
-    return {
-        groqApiKey: (localStorage.getItem(USER_GROQ_KEY_STORAGE) || '').trim(),
-        geminiApiKey: (localStorage.getItem(USER_GEMINI_KEY_STORAGE) || '').trim(),
-    }
+// Production must set VITE_API_URL; only dev falls back to localhost.
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:5001/api')
+if (!API_URL) {
+    console.error('VITE_API_URL is not set for this production build. Backend API calls will fail.')
 }
 
-// Helper for fetch requests to local backend
+const useSupabase = isSupabaseConfigured()
+const NO_SUPABASE = { success: false, error: 'Supabase is not configured' }
+const REQUEST_TIMEOUT_MS = 45000 // Render free tier cold starts can take ~25s
+const TIMEOUT_MESSAGE = 'The server is taking too long to respond. Try again in a moment.'
+
+// Helper for fetch requests to the backend. Always resolves to an object; failures are { success:false, error }.
 const fetchApi = async (endpoint, options = {}) => {
+    if (!API_URL) {
+        return { success: false, error: 'The app is not connected to a server (VITE_API_URL is missing).' }
+    }
+
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
     try {
-        const providedHeaders = options.headers || {}
-        const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
-        const { groqApiKey, geminiApiKey } = getStoredUserApiKeys()
-
-        const headers = {
-            ...providedHeaders
+        const headers = { ...(options.headers || {}) }
+        try {
+            const { data: sessionData } = (await supabase?.auth.getSession()) || {}
+            const token = sessionData?.session?.access_token
+            if (token && !headers.Authorization) headers.Authorization = `Bearer ${token}`
+        } catch {
+            // no session: send unauthenticated and let the server answer 401
         }
-
+        const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
         if (!isFormData && !headers['Content-Type']) {
             headers['Content-Type'] = 'application/json'
         }
 
-        if (groqApiKey) {
-            headers['X-User-Groq-Key'] = groqApiKey
-        }
-
-        if (geminiApiKey) {
-            headers['X-User-Gemini-Key'] = geminiApiKey
-        }
-
         const response = await fetch(`${API_URL}${endpoint}`, {
+            ...options,
             headers,
-            ...options
+            signal: controller.signal,
         })
 
         const contentType = response.headers.get('content-type') || ''
         const data = contentType.includes('application/json')
-            ? await response.json()
-            : await response.text()
+            ? await response.json().catch(() => null)
+            : await response.text().catch(() => '')
 
         if (!response.ok) {
-            if (typeof data === 'object' && data !== null) {
-                return { success: false, ...data }
+            if (response.status === 401) {
+                return { ...(data && typeof data === 'object' ? data : {}), success: false, error: 'Your session has expired. Sign in again.' }
             }
-            return { success: false, error: data || `Request failed with status ${response.status}` }
+            if (data && typeof data === 'object') {
+                return { ...data, success: false, error: data.error || data.message || `Request failed (${response.status}).` }
+            }
+            return { success: false, error: (typeof data === 'string' && data.length < 200 && data) || `Request failed (${response.status}).` }
         }
 
-        return data
+        return data ?? { success: true }
     } catch (error) {
         console.error('API Error:', error)
-        return { success: false, error: error.message }
+        if (error?.name === 'AbortError') {
+            return { success: false, error: TIMEOUT_MESSAGE }
+        }
+        return { success: false, error: 'Could not reach the server. Check your connection and try again.' }
+    } finally {
+        clearTimeout(timer)
     }
-}
-
-// Mock data for development
-// Mock data removed - we only use real data or empty states
-const mockData = {
-    medications: [],
-    healthStats: { latest: {}, history: [] },
-    device: { slots: [] }
 }
 
 const dateFromInput = (date = null) => {
@@ -187,49 +179,7 @@ const groupActivities = (activities = []) => {
 
 // Unified API interface
 export const api = {
-    // ====== USER AI KEYS (LOCAL) ======
-    getUserApiKeys: () => getStoredUserApiKeys(),
-
-    saveUserApiKeys: ({ groqApiKey = '', geminiApiKey = '' } = {}) => {
-        try {
-            if (typeof window === 'undefined') {
-                return { success: false, error: 'Not available outside browser context.' }
-            }
-
-            const normalizedGroq = (groqApiKey || '').trim()
-            const normalizedGemini = (geminiApiKey || '').trim()
-
-            if (normalizedGroq) {
-                localStorage.setItem(USER_GROQ_KEY_STORAGE, normalizedGroq)
-            } else {
-                localStorage.removeItem(USER_GROQ_KEY_STORAGE)
-            }
-
-            if (normalizedGemini) {
-                localStorage.setItem(USER_GEMINI_KEY_STORAGE, normalizedGemini)
-            } else {
-                localStorage.removeItem(USER_GEMINI_KEY_STORAGE)
-            }
-
-            return { success: true }
-        } catch (error) {
-            return { success: false, error: error.message }
-        }
-    },
-
-    clearUserApiKeys: () => {
-        try {
-            if (typeof window === 'undefined') {
-                return { success: false, error: 'Not available outside browser context.' }
-            }
-
-            localStorage.removeItem(USER_GROQ_KEY_STORAGE)
-            localStorage.removeItem(USER_GEMINI_KEY_STORAGE)
-            return { success: true }
-        } catch (error) {
-            return { success: false, error: error.message }
-        }
-    },
+    // AI keys are server-side now. Inert stubs kept so older settings screens do not crash.
 
     getProfile: async (userId) => {
         if (!userId) return null
@@ -245,31 +195,6 @@ export const api = {
 
         const result = await fetchApi(`/users/${userId}`, { method: 'GET' })
         return result?.user || null
-    },
-
-    // ====== USER AI KEYS (BACKEND / SUPABASE) ======
-    getRuntimeApiKeys: async (userId) => {
-        if (!userId) {
-            return { success: false, error: 'userId is required' }
-        }
-
-        return fetchApi(`/settings/keys/${userId}`, {
-            method: 'GET'
-        })
-    },
-
-    saveRuntimeApiKeys: async (userId, keys = {}) => {
-        if (!userId) {
-            return { success: false, error: 'userId is required' }
-        }
-
-        return fetchApi('/settings/keys', {
-            method: 'POST',
-            body: JSON.stringify({
-                user_id: userId,
-                keys
-            })
-        })
     },
 
     // ====== CAREGIVER LINKING ======
@@ -328,7 +253,7 @@ export const api = {
                 return { success: false, error: error.message }
             }
         }
-        return { success: true, medications: mockData.medications }
+        return NO_SUPABASE
     },
 
     addMedication: async (medication) => {
@@ -340,9 +265,7 @@ export const api = {
                 return { success: false, error: error.message }
             }
         }
-        const newMed = { ...medication, id: Date.now().toString() }
-        mockData.medications.push(newMed)
-        return { success: true, medication: newMed }
+        return NO_SUPABASE
     },
 
     updateMedication: async (id, updates) => {
@@ -354,12 +277,7 @@ export const api = {
                 return { success: false, error: error.message }
             }
         }
-        const idx = mockData.medications.findIndex(m => m.id === id)
-        if (idx >= 0) {
-            mockData.medications[idx] = { ...mockData.medications[idx], ...updates }
-            return { success: true, medication: mockData.medications[idx] }
-        }
-        return { success: false, error: 'Not found' }
+        return NO_SUPABASE
     },
 
     // ====== SCHEDULE / ADHERENCE ======
@@ -373,7 +291,6 @@ export const api = {
         }
 
         const query = params.toString()
-        const endpoint = `/medications/schedule/${userId}${query ? `?${query}` : ''}`
 
         if (useSupabase) {
             try {
@@ -426,23 +343,7 @@ export const api = {
             }
         }
 
-        // Prefer real backend in local mode as well.
-        const backendResult = await fetchApi(endpoint, { method: 'GET' })
-        if (backendResult?.success) {
-            return backendResult
-        }
-
-        // Mock schedule based on current time
-        const now = new Date()
-        const schedule = mockData.medications.flatMap(med =>
-            (med.schedule_times || []).map(time => ({
-                id: `${med.id}-${time}`,
-                medication: med,
-                scheduled_time: `${now.toISOString().split('T')[0]}T${time}:00`,
-                status: 'pending'
-            }))
-        )
-        return { success: true, schedule }
+        return NO_SUPABASE
     },
 
     getTodaySchedule: async (userId) => {
@@ -458,7 +359,7 @@ export const api = {
                 return { success: false, error: error.message }
             }
         }
-        return { success: true }
+        return NO_SUPABASE
     },
 
     getAdherenceLogs: async (userId, days = 7) => {
@@ -492,7 +393,7 @@ export const api = {
                 return { success: false, error: error.message }
             }
         }
-        return { success: true, stats: mockData.healthStats }
+        return NO_SUPABASE
     },
 
     recordHealth: async (reading) => {
@@ -504,7 +405,7 @@ export const api = {
                 return { success: false, error: error.message }
             }
         }
-        return { success: true, reading }
+        return NO_SUPABASE
     },
 
     // ====== DEVICES ======
@@ -517,7 +418,7 @@ export const api = {
                 return { success: false, error: error.message }
             }
         }
-        return { success: true, devices: [mockData.device] }
+        return NO_SUPABASE
     },
 
     registerDevice: async (userId, deviceId, name) => {
@@ -529,7 +430,7 @@ export const api = {
                 return { success: false, error: error.message }
             }
         }
-        return { success: true, device: { ...mockData.device, device_id: deviceId, name } }
+        return NO_SUPABASE
     },
 
     getSlots: async (deviceId) => {
@@ -541,7 +442,7 @@ export const api = {
                 return { success: false, error: error.message }
             }
         }
-        return { success: true, slots: mockData.device.slots }
+        return NO_SUPABASE
     },
 
     assignSlot: async (slotId, medicationId) => {
@@ -553,7 +454,7 @@ export const api = {
                 return { success: false, error: error.message }
             }
         }
-        return { success: true }
+        return NO_SUPABASE
     },
 
     // ====== ALERTS ======
@@ -590,7 +491,7 @@ export const api = {
                 return { success: false, error: error.message }
             }
         }
-        return { success: true }
+        return NO_SUPABASE
     },
 
     getNotifications: async (userId) => {
@@ -671,7 +572,7 @@ export const api = {
                 return { success: false, error: error.message }
             }
         }
-        return { success: true }
+        return NO_SUPABASE
     },
 
     getTodayCheckins: async (userId) => {

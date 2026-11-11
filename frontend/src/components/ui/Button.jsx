@@ -32,15 +32,15 @@ export default function Button({
   type = 'button',
   ...props
 }) {
-  const baseClasses = 'font-bold transition-all duration-200 flex items-center justify-center gap-2 rounded-xl sm:rounded-2xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed break-words'
+  const baseClasses = 'font-bold transition-all duration-200 flex items-center justify-center gap-2 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed break-words'
   
   const variantClasses = {
-    primary: 'bg-sage-600 text-white hover:bg-sage-700 shadow-soft',
-    secondary: 'bg-white text-sage-700 border-2 border-sage-200 hover:border-sage-300 hover:bg-sage-50',
+    primary: 'bg-primary text-white hover:bg-primary-dark',
+    secondary: 'bg-white text-sage-700 border border-sage-300 hover:border-sage-900 hover:bg-sage-50',
     ghost: 'bg-transparent text-sage-600 hover:bg-sage-50',
     danger: 'bg-rose-500 text-white hover:bg-rose-600',
-    cream: 'bg-cream-600 text-white hover:bg-cream-700',
-    'soft-sage': 'bg-sage-100 text-sage-700 hover:bg-sage-200 border-2 border-sage-200',
+    cream: 'bg-sage-900 text-white hover:bg-sage-700',
+    'soft-sage': 'bg-sage-100 text-sage-800 hover:bg-sage-200 border border-sage-200',
     'soft-amber': 'bg-amber-100 text-amber-800 hover:bg-amber-200 border-2 border-amber-200',
   }
 

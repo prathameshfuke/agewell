@@ -1,10 +1,9 @@
-import { motion } from 'framer-motion'
 import { Activity, AlertTriangle, Bell, Home, Pill, Stethoscope, User } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../contexts/AuthContext'
 
-const HIDDEN_PREFIXES = ['/auth', '/onboarding', '/demo']
+const HIDDEN_PREFIXES = ['/auth', '/onboarding']
 
 const ELDER_TABS = [
   { key: 'home', label: 'Home', path: '/elder/dashboard', icon: Home, match: ['/elder/dashboard'] },
@@ -58,7 +57,7 @@ export default function BottomNav() {
   const tabs = normalizedRole === 'caregiver' ? CAREGIVER_TABS : ELDER_TABS
 
   return (
-    <nav className="bottom-nav fixed inset-x-0 bottom-0 z-40 md:hidden bg-white/95 backdrop-blur-xl border-t border-[#D8D2C6] shadow-[0_-8px_30px_rgba(20,24,30,0.08)]">
+    <nav className="bottom-nav fixed inset-x-0 bottom-0 z-40 md:hidden bg-white border-t border-sage-200">
       <div className="mx-auto w-full max-w-xl px-2 py-2 flex items-center justify-between gap-1">
         {tabs.map((tab) => {
           const isActive = isRouteMatch(pathname, tab.match)
@@ -69,20 +68,13 @@ export default function BottomNav() {
               key={tab.key}
               type="button"
               onClick={() => navigate(tab.path)}
-              className="relative flex-1 min-h-[56px] rounded-2xl flex flex-col items-center justify-center gap-1"
-              aria-label={tab.label}
-            >
-              {isActive && (
-                <motion.span
-                  layoutId="agewell-bottom-nav-pill"
-                  transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                  className="absolute inset-0 rounded-2xl bg-[#EEF1EA] border border-[#D8E1D3]"
-                />
-              )}
+              className={`relative flex-1 min-h-[64px] rounded-2xl flex flex-col items-center justify-center gap-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${isActive ? 'bg-sage-100' : ''}`}
+              aria-current={isActive ? 'page' : undefined}
+                          >
 
               <span className="relative z-10 flex flex-col items-center gap-1">
-                <Icon className={`w-5 h-5 ${isActive ? 'text-[#1B3D64]' : 'text-[#778488]'}`} strokeWidth={2.4} />
-                <span className={`text-[11px] font-semibold tracking-wide ${isActive ? 'text-[#1B3D64]' : 'text-[#778488]'}`}>
+                <Icon aria-hidden="true" className={`w-6 h-6 ${isActive ? 'text-primary' : 'text-sage-600'}`} strokeWidth={2.4} />
+                <span className={`text-sm font-bold ${isActive ? 'text-primary' : 'text-sage-600'}`}>
                   {tab.label}
                 </span>
               </span>

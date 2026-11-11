@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Loader2 } from 'lucide-react'
@@ -55,6 +55,11 @@ export default function QAFlow() {
     const [generating, setGenerating] = useState(false)
     const [error, setError] = useState('')
     const [extractedSymptoms, setExtractedSymptoms] = useState(initialSymptoms)
+    const audioRef = useRef(null)
+    // Stop any playing question audio when leaving the screen.
+    useEffect(() => () => { audioRef.current?.pause(); audioRef.current = null }, [])
+
+    // Audio is optional: any failure falls back to the on-screen text silently.
     const playAudio = async (base64Audio) => {
         if (!base64Audio || isPlaying) return
         let audioUrl = null
@@ -64,6 +69,7 @@ export default function QAFlow() {
             const audioBlob = new Blob([byteArray], { type: 'audio/wav' })
             audioUrl = URL.createObjectURL(audioBlob)
             const audio = new Audio(audioUrl)
+            audioRef.current = audio
             
             setIsPlaying(true)
             
@@ -97,7 +103,7 @@ export default function QAFlow() {
     const patientId = useMemo(() => {
         if (activeRole === 'caregiver') return linkedElderId
         return user?.id
-    }, [activeRole, profile, user])
+    }, [activeRole, linkedElderId, user])
 
     useEffect(() => {
         if (!sessionId || (!initialQuestion && !done)) {

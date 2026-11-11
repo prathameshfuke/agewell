@@ -41,12 +41,13 @@ export default function RoleSwitcher({ currentRole, availableRoles = [], onSwitc
     <div className="relative">
       <button
         type="button"
+        aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border border-primary-light/30 bg-primary-bg/60 text-primary-dark"
+        className="w-full flex items-center justify-between gap-3 px-4 min-h-[56px] py-3 rounded-2xl border border-sage-200 bg-white text-sage-900"
       >
         <span className="flex items-center gap-2">
           <ActiveIcon className="w-4 h-4" strokeWidth={2.3} />
-          <span className="text-sm font-semibold">
+          <span className="text-lg font-bold">
             {ROLE_LABELS[activeRole] || 'Select role'}
           </span>
         </span>
@@ -58,6 +59,7 @@ export default function RoleSwitcher({ currentRole, availableRoles = [], onSwitc
           <>
             <motion.button
               type="button"
+              aria-label="Close menu"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -69,7 +71,7 @@ export default function RoleSwitcher({ currentRole, availableRoles = [], onSwitc
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.98 }}
               transition={{ duration: 0.18 }}
-              className="absolute top-full mt-2 left-0 right-0 z-40 bg-white border border-primary-light/30 rounded-2xl shadow-xl p-1"
+              className="absolute top-full mt-2 left-0 right-0 z-40 bg-white border border-sage-200 rounded-2xl  p-1"
             >
               {roles.map((role) => {
                 const isSelected = role === activeRole
@@ -85,11 +87,11 @@ export default function RoleSwitcher({ currentRole, availableRoles = [], onSwitc
                         await onSwitch(role)
                       }
                     }}
-                    className="w-full px-3 py-3 rounded-xl text-left flex items-center justify-between hover:bg-primary-bg/60 transition-colors"
+                    className="w-full px-3 py-3 rounded-xl text-left flex items-center justify-between hover:bg-white transition-colors"
                   >
-                    <span className="flex items-center gap-2 text-primary-dark">
+                    <span className="flex items-center gap-2 text-sage-900">
                       <RoleIcon className="w-4 h-4" strokeWidth={2.3} />
-                      <span className="text-sm font-semibold">{ROLE_LABELS[role]}</span>
+                      <span className="text-lg font-bold">{ROLE_LABELS[role]}</span>
                     </span>
                     {isSelected && <Check className="w-4 h-4 text-primary" strokeWidth={2.6} />}
                   </button>

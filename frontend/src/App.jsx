@@ -6,7 +6,6 @@ import BottomNav from './components/BottomNav'
 import AppErrorBoundary from './components/AppErrorBoundary'
 import PinGate from './components/PinGate'
 
-import DemoSimulationPanel from './components/DemoSimulationPanel'
 
 const CHUNK_ERROR_RE = /chunkloaderror|failed to fetch dynamically imported module|importing a module script failed|loading chunk [\d\w-]+ failed|unexpected token '<'/i
 const LAZY_RELOAD_FLAG = 'agewell-lazy-reload-attempted'
@@ -42,7 +41,6 @@ const lazyWithRetry = (importer) => {
 const Home = lazyWithRetry(() => import('./pages/Home'))
 const Auth = lazyWithRetry(() => import('./pages/Auth'))
 const AuthCallback = lazyWithRetry(() => import('./pages/AuthCallback'))
-const DemoPage = lazyWithRetry(() => import('./pages/DemoPage'))
 
 // Onboarding
 const RoleSelect = lazyWithRetry(() => import('./pages/RoleSelect'))
@@ -209,7 +207,6 @@ function AppRoutes() {
                 <Route path="/login" element={<Navigate to="/auth" replace />} />
                 <Route path="/signup" element={<Navigate to="/auth" replace />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
-                <Route path="/demo" element={<DemoPage />} />
 
                 {/* ONBOARDING */}
                 <Route path="/onboarding/role-select" element={
@@ -333,7 +330,6 @@ function App() {
         <AuthProvider>
             <AppErrorBoundary>
                 <BrowserRouter>
-                    {import.meta.env.DEV && <DemoSimulationPanel />}
                     <BottomNav />
                     <AppRoutes />
                 </BrowserRouter>

@@ -25,12 +25,12 @@ export default function Card({
 }) {
   // Mobile-first: Start with mobile padding, scale up for desktop
   // No fixed heights - cards auto-expand with content
-  const baseClasses = 'bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 border-2 border-sage-100 w-full break-words'
+  const baseClasses = 'bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6 border border-sage-200 w-full break-words'
 
   const variantClasses = {
-    default: 'shadow-soft',
-    interactive: 'shadow-soft hover:shadow-card-hover hover:border-sage-200 cursor-pointer transition-all duration-200 active:scale-[0.98]',
-    elevated: 'shadow-elevated',
+    default: '',
+    interactive: 'hover:border-sage-300 cursor-pointer transition-all duration-200 active:scale-[0.98]',
+    elevated: 'shadow-soft',
     flush: '', // No shadow or extra styling
   }
 

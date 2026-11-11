@@ -1,167 +1,115 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { ArrowLeft, Phone } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { Phone, Siren } from 'lucide-react'
+import { api } from '../api/client'
+import { useAuth } from '../contexts/AuthContext'
+import { ElderPage } from '../components/ElderNav'
+
+const EMERGENCY_NUMBER = '112'
 
 export default function ElderEmergency() {
-    const navigate = useNavigate()
-    const [holding, setHolding] = useState(false)
-    const [progress, setProgress] = useState(0)
-    const intervalRef = useRef(null)
+  const navigate = useNavigate()
+  const { user, profile } = useAuth()
+  const [step, setStep] = useState('ask') // ask | confirm | sent
+  const [sending, setSending] = useState(false)
+  const [alertFailed, setAlertFailed] = useState(false)
 
-    const startHold = () => {
-        setHolding(true)
-        let p = 0
-        intervalRef.current = setInterval(() => {
-            p += 2
-            if (p >= 100) {
-                clearInterval(intervalRef.current)
-                triggerEmergency()
-            }
-            setProgress(p)
-        }, 30)
+  const name = profile?.emergency_contact_name
+  const phone = profile?.emergency_contact_phone
+
+  const sendAlert = async () => {
+    setSending(true)
+    setAlertFailed(false)
+    try {
+      // alerts.alert_type only allows medication/health/environmental/device/checkin
+      const result = await api.createAlert({
+        user_id: user.id,
+        alert_type: 'health',
+        severity: 'critical',
+        title: 'Emergency: needs help now',
+        message: `${profile?.full_name || 'Your family member'} pressed the emergency button.`,
+      })
+      if (!result?.success) setAlertFailed(true)
+    } catch {
+      setAlertFailed(true)
+    } finally {
+      setSending(false)
+      setStep('sent')
     }
+  }
 
-    const endHold = () => {
-        setHolding(false)
-        setProgress(0)
-        clearInterval(intervalRef.current)
-    }
+  const callCls = 'btn-primary min-h-[64px] w-full text-2xl'
 
-    const triggerEmergency = () => {
-        if (window.confirm("Calling Emergency Services...")) {
-            window.location.href = "tel:911"
-        }
-        setProgress(0)
-        setHolding(false)
-    }
+  return (
+    <ElderPage title="Emergency">
+      {step === 'ask' && (
+        <>
+          <p className="text-2xl">Do you need help right now?</p>
+          <button type="button" onClick={() => setStep('confirm')} className="btn-danger min-h-[72px] w-full text-3xl">
+            <Siren className="h-8 w-8" aria-hidden="true" /> I need help
+          </button>
+          <a href={`tel:${EMERGENCY_NUMBER}`} className="btn-secondary min-h-[64px] w-full text-2xl">
+            <Phone className="h-7 w-7" aria-hidden="true" /> Call {EMERGENCY_NUMBER} directly
+          </a>
+        </>
+      )}
 
-    return (
-        <div className="min-h-screen bg-cream-50 font-sans flex flex-col pb-24 md:pb-0">
-            {/* Header */}
-            <header className="px-5 py-4 flex items-center justify-center relative">
-                <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate(-1)}
-                    className="absolute left-5 p-2 text-sage-500 hover:bg-sage-50 rounded-lg"
-                >
-                    <ArrowLeft className="w-5 h-5" />
-                </motion.button>
-                <h1 className="text-lg font-bold text-sage-800">Emergency Support</h1>
-            </header>
-
-            <main className="flex-1 flex flex-col items-center justify-center px-6 pb-10">
-                {/* Title */}
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-center mb-8"
-                >
-                    <h2 className="text-3xl font-serif font-bold text-rose-500 mb-2">Need Help?</h2>
-                    <p className="text-sage-600">
-                        Press and hold the button for 3 seconds to call for help.
-                    </p>
-                </motion.div>
-
-                {/* SOS Button */}
-                <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.1 }}
-                    className="relative mb-6"
-                >
-                    {/* Progress Ring */}
-                    <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 200 200">
-                        <circle
-                            cx="100"
-                            cy="100"
-                            r="90"
-                            fill="none"
-                            stroke="#FEE2E2"
-                            strokeWidth="8"
-                        />
-                        <circle
-                            cx="100"
-                            cy="100"
-                            r="90"
-                            fill="none"
-                            stroke="#EF4444"
-                            strokeWidth="8"
-                            strokeLinecap="round"
-                            strokeDasharray={`${2 * Math.PI * 90}`}
-                            strokeDashoffset={`${2 * Math.PI * 90 * (1 - progress / 100)}`}
-                            className="transition-all duration-100"
-                        />
-                    </svg>
-
-                    <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onMouseDown={startHold}
-                        onMouseUp={endHold}
-                        onMouseLeave={endHold}
-                        onTouchStart={startHold}
-                        onTouchEnd={endHold}
-                        className="w-48 h-48 bg-gradient-to-br from-rose-400 to-rose-500 rounded-full flex flex-col items-center justify-center text-white shadow-xl relative z-10"
-                    >
-                        <span className="text-4xl font-bold">SOS</span>
-                        <span className="text-sm font-medium mt-1">
-                            {holding ? 'Keep Holding...' : 'Hold to Call'}
-                        </span>
-                    </motion.button>
-                </motion.div>
-
-                {/* Release Text */}
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-rose-400 font-bold text-sm mb-10"
-                >
-                    Release to Cancel
-                </motion.p>
-
-                {/* Emergency Contact Card */}
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.25 }}
-                    className="w-full max-w-sm bg-white rounded-2xl p-4 border border-sage-100 flex items-center gap-4"
-                >
-                    <div className="w-12 h-12 rounded-full bg-sage-100 flex items-center justify-center overflow-hidden">
-                        <span className="text-2xl">👩</span>
-                    </div>
-                    <div className="flex-1">
-                        <div className="text-sage-400 text-xs">Emergency Contact</div>
-                        <div className="font-bold text-sage-800">Sarah</div>
-                        <div className="text-sage-500 text-sm">(Daughter)</div>
-                    </div>
-                    <div className="w-10 h-10 bg-sage-100 rounded-full flex items-center justify-center">
-                        <Phone className="w-5 h-5 text-sage-600" />
-                    </div>
-                </motion.div>
-
-                {/* Info Text */}
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="text-sage-400 text-sm text-center mt-4 max-w-sm"
-                >
-                    Your location will be shared with Sarah and emergency services immediately.
-                </motion.p>
-
-                {/* Cancel Button */}
-                <motion.button
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.35 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate(-1)}
-                    className="mt-8 text-sage-500 font-medium flex items-center gap-2"
-                >
-                    ✕ Cancel, I'm okay
-                </motion.button>
-            </main>
+      {step === 'confirm' && (
+        <div className="card" role="alertdialog" aria-label="Confirm emergency">
+          <h2 className="font-serif text-3xl font-bold">Send an alert?</h2>
+          <p className="mt-2 text-xl text-sage-700">
+            Your caregivers will get an urgent alert. Then you can call for help.
+          </p>
+          <button type="button" onClick={sendAlert} disabled={sending} className="btn-danger mt-6 min-h-[64px] w-full text-2xl">
+            {sending ? 'Sending...' : 'Yes, send the alert'}
+          </button>
+          <button type="button" onClick={() => setStep('ask')} disabled={sending} className="btn-secondary mt-3 w-full">
+            No, I am okay
+          </button>
         </div>
-    )
+      )}
+
+      {step === 'sent' && (
+        <>
+          <div className={`rounded-3xl border p-5 ${alertFailed ? 'border-rose-200 bg-rose-50' : 'border-emerald-200 bg-emerald-50'}`} role={alertFailed ? 'alert' : 'status'}>
+            <p className="text-2xl font-bold">
+              {alertFailed ? 'The alert did not send.' : 'Your caregivers have been alerted.'}
+            </p>
+            {alertFailed && <p className="mt-1 text-xl">Please call now. Check your internet connection.</p>}
+          </div>
+          <a href={`tel:${EMERGENCY_NUMBER}`} className="btn-danger min-h-[64px] w-full text-2xl">
+            <Phone className="h-7 w-7" aria-hidden="true" /> Call {EMERGENCY_NUMBER}
+          </a>
+          {phone && (
+            <a href={`tel:${phone}`} className={callCls}>
+              <Phone className="h-7 w-7" aria-hidden="true" /> Call {name || phone}
+            </a>
+          )}
+          <button type="button" onClick={() => navigate('/elder/dashboard')} className="btn-ghost w-full">
+            I am safe now
+          </button>
+        </>
+      )}
+
+      <section className="card" aria-label="Emergency contact">
+        <p className="text-lg font-bold text-sage-600">Your emergency contact</p>
+        {phone ? (
+          <>
+            <p className="mt-1 text-2xl font-bold">{name || 'Emergency contact'}</p>
+            <p className="text-xl text-sage-700">{phone}</p>
+            <a href={`tel:${phone}`} className="btn-secondary mt-4 w-full">
+              <Phone className="h-6 w-6" aria-hidden="true" /> Call {name || 'contact'}
+            </a>
+          </>
+        ) : (
+          <>
+            <p className="mt-1 text-xl text-sage-700">You have not added an emergency contact yet.</p>
+            <button type="button" onClick={() => navigate('/elder/settings')} className="btn-secondary mt-4 w-full">
+              Add a contact in settings
+            </button>
+          </>
+        )}
+      </section>
+    </ElderPage>
+  )
 }

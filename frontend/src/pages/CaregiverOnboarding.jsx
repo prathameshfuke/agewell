@@ -130,14 +130,14 @@ export default function CaregiverOnboarding() {
 
     if (!initialized || authLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-cream-100 via-cream-50 to-sage-100/40 flex items-center justify-center">
-                <div className="loading-spinner" />
+            <div className="min-h-screen bg-cream-50 flex items-center justify-center">
+                <div className="loading-spinner" role="status" aria-label="Loading" />
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-cream-100 via-cream-50 to-sage-100/40 flex flex-col p-6">
+        <div className="min-h-screen bg-cream-50 flex flex-col p-6">
             {/* Header with Progress */}
             <div className="flex items-center justify-between mb-8">
                 <button
@@ -161,8 +161,8 @@ export default function CaregiverOnboarding() {
             <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
                 <motion.img
                     src={twoSticker}
-                    alt="Caregiver"
-                    className="w-24 h-24 rounded-3xl shadow-lg border-4 border-white mb-6"
+                    alt=""
+                    className="w-24 h-24 rounded-3xl border border-sage-200 mb-6"
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                 />
@@ -179,7 +179,7 @@ export default function CaregiverOnboarding() {
                                     </div>
                                     <span className="text-sage-700 font-bold">Your Name</span>
                                 </div>
-                                <input
+                                <input aria-label="Full name"
                                     type="text"
                                     value={formData.full_name}
                                     onChange={(e) => handleChange('full_name', e.target.value)}
@@ -208,7 +208,7 @@ export default function CaregiverOnboarding() {
                                     </div>
                                     <span className="text-sage-700 font-bold">Pairing Code</span>
                                 </div>
-                                <input
+                                <input aria-label="Pairing code"
                                     type="text"
                                     maxLength={6}
                                     value={formData.pairing_code}
@@ -226,7 +226,7 @@ export default function CaregiverOnboarding() {
                                         </div>
                                         <span className="text-sage-700 font-bold">Relationship</span>
                                     </div>
-                                    <input
+                                    <input aria-label="Your relationship to them"
                                         type="text"
                                         value={formData.relationship}
                                         onChange={(e) => handleChange('relationship', e.target.value)}
@@ -246,7 +246,7 @@ export default function CaregiverOnboarding() {
                                 <p className="text-sage-600 text-sm text-left mb-4">
                                     As a caregiver, you'll be able to monitor your loved one's medication schedule, health stats, and receive important alerts.
                                 </p>
-                                <label className="flex items-start gap-3 cursor-pointer bg-cream-50 p-4 rounded-xl border-2 border-cream-100 hover:border-cream-200 transition-colors">
+                                <label className="flex items-start gap-3 cursor-pointer bg-cream-50 p-4 rounded-xl border border-sage-200 hover:border-sage-400 transition-colors">
                                     <input
                                         type="checkbox"
                                         checked={formData.consent_acknowledged}
@@ -266,7 +266,7 @@ export default function CaregiverOnboarding() {
                     <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="w-full bg-rose-50 border-2 border-rose-200 text-rose-600 px-4 py-3 rounded-2xl text-sm mt-4 font-medium"
+                        className="w-full bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-2xl text-sm mt-4 font-medium"
                     >
                         {error}
                     </motion.div>

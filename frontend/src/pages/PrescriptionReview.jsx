@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { notify } from '../lib/notify'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle, ArrowLeft, AlertTriangle, Edit3, Loader2, ArrowRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
@@ -91,7 +92,7 @@ export default function PrescriptionReview() {
 
     const handleConfirmAll = async () => {
         if (!linkedElderId) {
-            alert('No elder linked. Please pair first.')
+            notify('No elder linked. Please pair first.', { error: true })
             return
         }
 
@@ -120,7 +121,7 @@ export default function PrescriptionReview() {
             }, 1500)
         } catch (err) {
             console.error('Failed to save medications:', err)
-            alert('Failed to save. Please try again.')
+            notify('Failed to save. Please try again.', { error: true })
         } finally {
             setSaving(false)
         }
@@ -165,9 +166,9 @@ export default function PrescriptionReview() {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.05 }}
-                            className={`bg-white rounded-2xl p-5 border-2 ${med.confirmed ? 'border-sage-300 bg-sage-50/50' :
+                            className={`bg-white rounded-2xl p-5 border ${med.confirmed ? 'border-sage-300 bg-sage-50/50' :
                                 med.uncertain ? 'border-amber-200' : 'border-sage-100'
-                                } shadow-sm`}
+                                }`}
                         >
                             {/* Medicine Header */}
                             <div className="flex items-start justify-between mb-3">

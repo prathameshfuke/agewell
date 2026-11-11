@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { notify } from '../../lib/notify'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Calendar, Clock, FileText } from 'lucide-react'
@@ -65,7 +66,7 @@ export default function DiagnosisHistory() {
 
     const openRow = (row) => {
         if (!row.report_json) {
-            alert('This session does not have a generated report yet.')
+            notify('This session does not have a generated report yet.', { error: true })
             return
         }
 
