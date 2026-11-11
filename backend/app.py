@@ -4,11 +4,13 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 from database import db
+from auth import authenticate
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+app.before_request(authenticate)
 
 # Configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///agewell.db'

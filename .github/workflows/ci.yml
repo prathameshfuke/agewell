@@ -37,6 +37,8 @@ jobs:
           cache-dependency-path: backend/requirements.txt
       - run: pip install -r backend/requirements.txt
       - run: python -m compileall -q backend
+      - run: python test_auth.py
+        working-directory: backend
 
   # Pull requests get a Vercel preview; main gets production.
   # Needs repo secrets: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID.
